@@ -45,7 +45,7 @@ return [
     |
     */
 
-    'username' => 'email',
+    'username' => 'phone',
 
     'email' => 'email',
 
@@ -60,7 +60,7 @@ return [
     |
     */
 
-    'lowercase_usernames' => true,
+    'lowercase_usernames' => false, // phone numbers are normalised to E.164 instead
 
     /*
     |--------------------------------------------------------------------------
@@ -73,7 +73,7 @@ return [
     |
     */
 
-    'home' => '/dashboard',
+    'home' => '/',
 
     /*
     |--------------------------------------------------------------------------
@@ -117,7 +117,6 @@ return [
     'limiters' => [
         'login' => 'login',
         'two-factor' => 'two-factor',
-        'passkeys' => 'passkeys',
     ],
 
     /*
@@ -135,18 +134,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Passkeys
+    | Route Paths
     |--------------------------------------------------------------------------
     |
-    | These settings configure Fortify's passkey (WebAuthn) support.
+    | User-facing paths are Portuguese (contracts/routes.md); route names stay
+    | the Fortify defaults so Wayfinder helpers keep working.
     |
     */
 
-    'passkeys' => [
-        'relying_party_id' => parse_url(config('app.url'), PHP_URL_HOST),
-        'allowed_origins' => [config('app.url')],
-        'user_handle_secret' => env('PASSKEYS_USER_HANDLE_SECRET', config('app.key')),
-        'timeout' => 60000,
+    // Fortify reads these with dot notation ("password.request" => paths.password.request),
+    // so route names containing a dot are nested.
+    'paths' => [
+        'login' => '/entrar',
+        'logout' => '/sair',
+        'password' => [
+            'request' => '/recuperar-senha',
+            'email' => '/recuperar-senha',
+            'reset' => '/redefinir-senha/{token}',
+            'update' => '/redefinir-senha',
+            'confirm' => '/confirmar-senha',
+            'confirmation' => '/estado-confirmacao-senha',
+        ],
+        'two-factor' => [
+            'login' => '/verificacao-dois-passos',
+        ],
     ],
 
     /*
@@ -161,15 +172,12 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // No self-registration: volunteers register through /cadastro (FR-001).
+        // No e-mail verification: e-mail is optional and only used for recovery (FR-006).
+        // Passkeys deferred to a later phase (research R1).
         Features::resetPasswords(),
-        Features::emailVerification(),
         Features::twoFactorAuthentication([
             'confirm' => true,
-            'confirmPassword' => true,
-            // 'window' => 0
-        ]),
-        Features::passkeys([
             'confirmPassword' => true,
         ]),
     ],

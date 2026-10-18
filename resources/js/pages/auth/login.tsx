@@ -7,10 +7,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import PasskeyVerify from '@/components/passkey-verify';
 
 type Props = {
     status?: string;
@@ -20,9 +18,13 @@ type Props = {
 export default function Login({ status, canResetPassword }: Props) {
     return (
         <>
-            <Head title="Log in" />
+            <Head title="Entrar" />
 
-            <PasskeyVerify />
+            {status && (
+                <output className="mb-4 block text-center text-sm font-medium text-green-700 dark:text-green-400">
+                    {status}
+                </output>
+            )}
 
             <Form
                 {...store.form()}
@@ -30,77 +32,85 @@ export default function Login({ status, canResetPassword }: Props) {
                 className="flex flex-col gap-6"
             >
                 {({ processing, errors }) => (
-                    <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autoComplete="email"
-                                    placeholder="email@example.com"
-                                />
-                                <InputError message={errors.email} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
-                                    {canResetPassword && (
-                                        <TextLink
-                                            href={request()}
-                                            className="ml-auto text-sm"
-                                        >
-                                            Forgot your password?
-                                        </TextLink>
-                                    )}
-                                </div>
-                                <PasswordInput
-                                    id="password"
-                                    name="password"
-                                    required
-                                    autoComplete="current-password"
-                                    placeholder="Password"
-                                />
-                                <InputError message={errors.password} />
-                            </div>
-
-                            <div className="flex items-center space-x-3">
-                                <Checkbox id="remember" name="remember" />
-                                <Label htmlFor="remember">Remember me</Label>
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="mt-4 w-full"
-                                disabled={processing}
-                                data-test="login-button"
+                    <div className="grid gap-6">
+                        <div className="grid gap-2">
+                            <Label htmlFor="phone">Número de telefone</Label>
+                            <Input
+                                id="phone"
+                                type="tel"
+                                name="phone"
+                                required
+                                inputMode="tel"
+                                autoComplete="tel"
+                                placeholder="84 123 4567"
+                                aria-describedby="phone-hint"
+                                className="min-h-11"
+                            />
+                            <p
+                                id="phone-hint"
+                                className="text-sm text-muted-foreground"
                             >
-                                {processing && <Spinner />}
-                                Log in
-                            </Button>
+                                O número que usou no cadastro.
+                            </p>
+                            <InputError message={errors.phone} />
                         </div>
 
-                        <div className="text-center text-sm text-muted-foreground">
-                            Don't have an account?{' '}
-                            <TextLink href={register()}>Sign up</TextLink>
+                        <div className="grid gap-2">
+                            <div className="flex items-center">
+                                <Label htmlFor="password">Palavra-passe</Label>
+                                {canResetPassword && (
+                                    <TextLink
+                                        href={request()}
+                                        className="ml-auto text-sm"
+                                    >
+                                        Esqueceu-se?
+                                    </TextLink>
+                                )}
+                            </div>
+                            <PasswordInput
+                                id="password"
+                                name="password"
+                                required
+                                autoComplete="current-password"
+                                className="min-h-11"
+                            />
+                            <InputError message={errors.password} />
                         </div>
-                    </>
+
+                        <div className="flex items-center gap-3">
+                            <Checkbox
+                                id="remember"
+                                name="remember"
+                                defaultChecked
+                                className="size-5"
+                            />
+                            <Label htmlFor="remember">
+                                Manter sessão iniciada neste dispositivo
+                            </Label>
+                        </div>
+
+                        <Button
+                            type="submit"
+                            className="mt-2 min-h-11 w-full"
+                            disabled={processing}
+                            data-test="login-button"
+                        >
+                            {processing && <Spinner />}
+                            Entrar
+                        </Button>
+                    </div>
                 )}
             </Form>
 
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
+            <p className="text-center text-sm text-muted-foreground">
+                Ainda não é voluntário? Peça o link de cadastro a um
+                coordenador.
+            </p>
         </>
     );
 }
 
 Login.layout = {
-    title: 'Log in to your account',
-    description: 'Enter your email and password below to log in',
+    title: 'Entrar no Cue App',
+    description: 'Indique o seu número de telefone e a palavra-passe.',
 };

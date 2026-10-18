@@ -55,46 +55,46 @@ plumbing used by every story.
 
 ### Enums, settings and catalog
 
-- [ ] T011 [P] Create enums `Role`, `VolunteerStatus`, `Level` (with ordering helper), `Period`, `Frequency` (with `monthlyCap()` per data-model), `AssignmentStatus`, `SwapStatus`, `EventStatus`, `ScheduleStatus` in `app/Enums/`
-- [ ] T012 [P] Create `settings` migration, `Setting` model and `App\Support\Settings` typed accessor with defaults (event_horizon_months=3, check_reminder_hours_before=72, reminder_hours_before=24, urgent_threshold_hours=48, swap_auto_approve=false, registration_open=true, registration_closes_at=null) in `database/migrations/`, `app/Models/Setting.php`, `app/Support/Settings.php`
-- [ ] T013 [P] Create `team_roles` migration, `TeamRole` model and `TeamRoleSeeder` with the 11 roles from FR-007 in `database/migrations/`, `app/Models/TeamRole.php`, `database/seeders/TeamRoleSeeder.php`
+- [X] T011 [P] Create enums `UserRole` (named to avoid confusion with `TeamRole`), `VolunteerStatus`, `Level` (with ordering helper), `Period`, `Frequency` (with `monthlyCap()` per data-model), `AssignmentStatus`, `SwapStatus`, `EventStatus`, `ScheduleStatus` in `app/Enums/`
+- [X] T012 [P] Create `settings` migration, `Setting` model and `App\Support\Settings` typed accessor with defaults (event_horizon_months=3, check_reminder_hours_before=72, reminder_hours_before=24, urgent_threshold_hours=48, swap_auto_approve=false, registration_open=true, registration_closes_at=null) in `database/migrations/`, `app/Models/Setting.php`, `app/Support/Settings.php`
+- [X] T013 [P] Create `team_roles` migration, `TeamRole` model and `TeamRoleSeeder` with the 11 roles from FR-007 in `database/migrations/`, `app/Models/TeamRole.php`, `database/seeders/TeamRoleSeeder.php`
 
 ### Identity, auth and authorization
 
-- [ ] T014 Modify `users` migration: add `phone` (unique), nullable unique `email`, `role` enum, `last_login_at`; update `app/Models/User.php` casts and `database/factories/UserFactory.php` with `coordinator()` / `volunteer()` states
-- [ ] T015 Configure Fortify to authenticate by normalised phone (`propaganistas/laravel-phone`, region MZ), enable password reset, 2FA and password confirmation in `config/fortify.php` and `app/Providers/FortifyServiceProvider.php`; override the password-reset response so known and unknown phone/e-mail get the same message ("Se existir uma conta com estes dados, receberá instruções.")
-- [ ] T016 Add login rate limiter (5/min per phone+IP) and `Password::defaults()` (min 8, uncompromised) in `app/Providers/AppServiceProvider.php`
-- [ ] T017 [P] Create `EnsureRole` middleware and `EnsureCoordinatorTwoFactor` middleware (redirects coordinators without confirmed 2FA to setup) in `app/Http/Middleware/` and register aliases in `bootstrap/app.php`
-- [ ] T018 [P] Configure Sanctum stateful SPA mode for same-origin `/app-api/*` with 60 req/min limiter in `config/sanctum.php`, `bootstrap/app.php` and `routes/app-api.php`
-- [ ] T019 Create Portuguese login, password reset and 2FA pages adapted from the starter kit (phone field, "lembrar-me" default on) in `resources/js/pages/auth/`
-- [ ] T020 [P] Create session management (list + revoke database sessions; changing password ends all other sessions — FR-032) controller and page in `app/Http/Controllers/Volunteer/SessionController.php` and `resources/js/pages/profile/sessions.tsx`
+- [X] T014 Modify `users` migration: add `phone` (unique), nullable unique `email`, `role` enum, `last_login_at`; update `app/Models/User.php` casts and `database/factories/UserFactory.php` with `coordinator()` / `volunteer()` states
+- [X] T015 Configure Fortify to authenticate by normalised phone (`propaganistas/laravel-phone`, region MZ), enable password reset, 2FA and password confirmation in `config/fortify.php` and `app/Providers/FortifyServiceProvider.php`; override the password-reset response so known and unknown phone/e-mail get the same message ("Se existir uma conta com estes dados, receberá instruções.")
+- [X] T016 Add login rate limiter (5/min per phone+IP) and `Password::defaults()` (min 8, uncompromised) in `app/Providers/AppServiceProvider.php`
+- [X] T017 [P] Create `EnsureRole` middleware and `EnsureCoordinatorTwoFactor` middleware (redirects coordinators without confirmed 2FA to setup) in `app/Http/Middleware/` and register aliases in `bootstrap/app.php`
+- [X] T018 [P] Configure Sanctum stateful SPA mode for same-origin `/app-api/*` with 60 req/min limiter in `config/sanctum.php`, `bootstrap/app.php` and `routes/app-api.php`
+- [X] T019 Create Portuguese login, password reset and 2FA pages adapted from the starter kit (phone field, "lembrar-me" default on) in `resources/js/pages/auth/`
+- [X] T020 [P] Create session management (list + revoke database sessions; changing password ends all other sessions — FR-032) controller and page in `app/Http/Controllers/Settings/SessionController.php` and `resources/js/pages/settings/sessions.tsx` (route `/perfil/sessoes`)
 
 ### Security baseline
 
-- [ ] T021 [P] Create `SecurityHeaders` middleware (CSP with Vite nonce, HSTS, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy) and register globally in `app/Http/Middleware/SecurityHeaders.php` and `bootstrap/app.php`
-- [ ] T022 [P] Configure secure session cookies (`Secure`, `HttpOnly`, `SameSite=Lax`, 30-day remember, 2 h idle) in `config/session.php`
-- [ ] T023 [P] Install and configure `spatie/laravel-activitylog` (exclude encrypted fields, causer = auth user, sanitiser so `full_name`, `name`, `phone`, `email`, guardian fields and 🔒 values are never stored in `properties`/descriptions — changed fields recorded as "alterado" only, subjects by ID only) in `config/activitylog.php`, `app/Support/AuditSanitizer.php` and its migration
-- [ ] T024 [P] Create Portuguese error pages for 403/404/419/429/500 via Inertia in `resources/js/pages/errors/` and exception rendering in `bootstrap/app.php`
+- [X] T021 [P] Create `SecurityHeaders` middleware (CSP with Vite nonce, HSTS, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy) and register globally in `app/Http/Middleware/SecurityHeaders.php` and `bootstrap/app.php`
+- [X] T022 [P] Configure secure session cookies (`Secure`, `HttpOnly`, `SameSite=Lax`, 30-day remember, 2 h idle) in `config/session.php`
+- [X] T023 [P] Install and configure `spatie/laravel-activitylog` (exclude encrypted fields, causer = auth user, sanitiser so `full_name`, `name`, `phone`, `email`, guardian fields and 🔒 values are never stored in `properties`/descriptions — changed fields recorded as "alterado" only, subjects by ID only) in `config/activitylog.php`, `app/Support/AuditSanitizer.php` and its migration
+- [X] T024 [P] Create Portuguese error pages for 403/404/419/429/500 via Inertia in `resources/js/pages/errors/` and exception rendering in `bootstrap/app.php`
 
 ### Frontend shell
 
-- [ ] T025 [P] Create `VolunteerLayout` with bottom navigation (Início, Escala, Trocas, Perfil) and 44 px touch targets in `resources/js/layouts/volunteer-layout.tsx`
-- [ ] T026 [P] Create `CoordinatorLayout` with sidebar (desktop) / drawer (phone) navigation in `resources/js/layouts/coordinator-layout.tsx`
-- [ ] T027 [P] Create TanStack Query client provider and `apiFetch` helper (CSRF cookie, 401 → `/entrar`) in `resources/js/lib/query-client.ts` and `resources/js/app.tsx`
-- [ ] T028 [P] Create Portuguese date/time formatters fixed to Africa/Maputo and phone display helper in `resources/js/lib/format.ts`
-- [ ] T029 [P] Create reusable `ConfirmDialog` (states who is affected) and `DataTable` (TanStack Table + shadcn Table, card layout on phone) in `resources/js/components/app/`
-- [ ] T030 Share Inertia props (`auth.user` with role and volunteerStatus, `flash`, `unreadNotifications`, `pushPrompt`) in `app/Http/Middleware/HandleInertiaRequests.php` and types in `resources/js/types/index.d.ts`
+- [X] T025 [P] Create `VolunteerLayout` with bottom navigation (Início, Escala, Trocas, Perfil) and 44 px touch targets in `resources/js/layouts/volunteer-layout.tsx`
+- [X] T026 [P] Create `CoordinatorLayout` with sidebar (desktop) / drawer (phone) navigation in `resources/js/layouts/coordinator-layout.tsx`
+- [X] T027 [P] Create TanStack Query client provider and `apiFetch` helper (XSRF cookie, 401 → `/entrar`) in `resources/js/lib/query-client.ts` and `resources/js/app.tsx`
+- [X] T028 [P] Create Portuguese date/time formatters fixed to Africa/Maputo and phone display helper in `resources/js/lib/format.ts`
+- [X] T029 [P] Create reusable `ConfirmDialog` (states who is affected) and `DataTable` (TanStack Table + shadcn Table, card layout on phone) in `resources/js/components/app/`
+- [X] T030 Share Inertia props (`auth.user` with role and volunteerStatus, `unreadNotifications`; flash uses Inertia 3's built-in `Inertia::flash`; `pushPrompt` moves to US6 T118 because it is per device) in `app/Http/Middleware/HandleInertiaRequests.php` and types in `resources/js/types/index.d.ts`
 
 ### Notification plumbing
 
-- [ ] T031 Create `notifications` table (Laravel database channel) and `notification_preferences` migration + model; base `AppNotification` class that filters channels by preferences and dispatches `afterCommit` on the queue in `app/Notifications/AppNotification.php`; scheduled daily prune of in-app notifications older than 90 days (FR-034) in `routes/console.php`
-- [ ] T032 [P] Create in-app notification centre endpoints (`unread-count`, list, mark read) in `app/Http/Controllers/AppApi/NotificationController.php` and `routes/app-api.php`, plus `useNotifications` hook and bell component in `resources/js/hooks/use-notifications.ts` and `resources/js/components/app/notification-bell.tsx`
+- [X] T031 Create `notifications` table (Laravel database channel) and `notification_preferences` migration + model; base `AppNotification` class that filters channels by preferences and dispatches `afterCommit` on the queue in `app/Notifications/AppNotification.php`; scheduled daily prune of in-app notifications older than 90 days (FR-034) in `routes/console.php`
+- [X] T032 [P] Create in-app notification centre endpoints (`unread-count`, list, mark read) in `app/Http/Controllers/AppApi/NotificationController.php` and `routes/app-api.php`, plus `useNotifications` hook and bell component in `resources/js/hooks/use-notifications.ts` and `resources/js/components/app/notification-bell.tsx`
 
 ### Foundational tests
 
-- [ ] T033 [P] Feature test: guests are redirected from every non-public route, volunteers get 403 on every `/gestao/*` and coordinator `/app-api/*` route (route-list driven) in `tests/Feature/Authorization/RouteAccessTest.php`
-- [ ] T034 [P] Feature test: login throttling, coordinator forced to 2FA setup, sessions revocable, identical reset response for known and unknown accounts in `tests/Feature/Auth/LoginSecurityTest.php`
-- [ ] T035 [P] Feature test: security headers present on HTML responses in `tests/Feature/SecurityHeadersTest.php`
+- [X] T033 [P] Feature test: guests are redirected from every non-public route, volunteers get 403 on every `/gestao/*` and coordinator `/app-api/*` route (route-list driven) in `tests/Feature/Authorization/RouteAccessTest.php`
+- [X] T034 [P] Feature test: login throttling, coordinator forced to 2FA setup, sessions revocable, identical reset response for known and unknown accounts in `tests/Feature/Auth/LoginSecurityTest.php`
+- [X] T035 [P] Feature test: security headers present on HTML responses in `tests/Feature/SecurityHeadersTest.php`
 
 **Checkpoint**: A seeded coordinator can log in with phone + password + 2FA; volunteers are
 blocked from coordinator routes; layouts render on phone and desktop.

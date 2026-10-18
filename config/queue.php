@@ -41,7 +41,8 @@ return [
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
             'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
-            'after_commit' => false,
+            // Never notify about changes that were rolled back (contracts/notifications.md).
+            'after_commit' => true,
         ],
 
         'beanstalkd' => [

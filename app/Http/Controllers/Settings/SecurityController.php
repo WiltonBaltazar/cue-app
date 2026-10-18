@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Actions\Auth\EndOtherSessions;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
 use App\Http\Requests\Settings\TwoFactorAuthenticationRequest;
@@ -22,23 +23,6 @@ class SecurityController extends Controller
     {
         $props = [
             'canManageTwoFactor' => Features::canManageTwoFactorAuthentication(),
-            'canManagePasskeys' => Features::canManagePasskeys(),
-            'passkeys' => Features::canManagePasskeys()
-                ? $user
-                    ->passkeys()
-                    ->select(['id', 'name', 'credential', 'created_at', 'last_used_at'])
-                    ->latest()
-                    ->get()
-                    ->map(fn ($passkey) => [
-                        'id' => $passkey->id,
-                        'name' => $passkey->name,
-                        'authenticator' => $passkey->authenticator,
-                        'created_at_diff' => $passkey->created_at?->diffForHumans(),
-                        'last_used_at_diff' => $passkey->last_used_at?->diffForHumans(),
-                    ])
-                    ->values()
-                    ->all()
-                : [],
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
         ];
 
@@ -55,11 +39,14 @@ class SecurityController extends Controller
     /**
      * Update the user's password.
      */
-    public function update(PasswordUpdateRequest $request, #[CurrentUser] User $user): RedirectResponse
+    public function update(PasswordUpdateRequest $request, #[CurrentUser] User $user, EndOtherSessions $endOtherSessions): RedirectResponse
     {
         $user->update([
             'password' => $request->password,
         ]);
+
+        // Changing the password signs out every other device (FR-032).
+        $endOtherSessions->handle($user, $request->session()->getId());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
 

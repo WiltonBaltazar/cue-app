@@ -48,15 +48,15 @@ export default function ManageTwoFactor(props: Props) {
         <div className="space-y-6">
             <Heading
                 variant="small"
-                title="Two-factor authentication"
-                description="Manage your two-factor authentication settings"
+                title="Verificação em dois passos"
+                description="Uma segunda protecção ao entrar: um código da aplicação autenticadora do telemóvel"
             />
             {twoFactorEnabled ? (
                 <div className="flex flex-col items-start justify-start space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        You will be prompted for a secure, random pin during
-                        login, which you can retrieve from the TOTP-supported
-                        application on your phone.
+                        Activa. Ao entrar, é pedido um código de 6 dígitos da
+                        sua aplicação autenticadora (por exemplo, Google
+                        Authenticator ou Microsoft Authenticator).
                     </p>
 
                     <div className="relative inline">
@@ -67,7 +67,7 @@ export default function ManageTwoFactor(props: Props) {
                                     type="submit"
                                     disabled={processing}
                                 >
-                                    Disable 2FA
+                                    Desactivar
                                 </Button>
                             )}
                         </Form>
@@ -82,17 +82,16 @@ export default function ManageTwoFactor(props: Props) {
             ) : (
                 <div className="flex flex-col items-start justify-start space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        When you enable two-factor authentication, you will be
-                        prompted for a secure pin during login. This pin can be
-                        retrieved from a TOTP-supported application on your
-                        phone.
+                        Depois de activar, ao entrar é pedido também um código
+                        de 6 dígitos de uma aplicação autenticadora no seu
+                        telemóvel. Obrigatório para coordenadores.
                     </p>
 
                     <div>
                         {hasSetupData ? (
                             <Button onClick={() => setShowSetupModal(true)}>
                                 <ShieldCheck />
-                                Continue setup
+                                Continuar a configuração
                             </Button>
                         ) : (
                             <Form
@@ -101,7 +100,7 @@ export default function ManageTwoFactor(props: Props) {
                             >
                                 {({ processing }) => (
                                     <Button type="submit" disabled={processing}>
-                                        Enable 2FA
+                                        Activar
                                     </Button>
                                 )}
                             </Form>
