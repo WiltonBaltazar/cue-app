@@ -94,6 +94,12 @@ class VolunteerController extends Controller
 
         return Inertia::render('coord/volunteers/edit', [
             'volunteer' => VolunteerPresenter::full($volunteer),
+            // The login account, for giving or taking away the coordinator role.
+            'account' => $volunteer->user === null ? null : [
+                'userId' => $volunteer->user->id,
+                'isCoordinator' => $volunteer->user->isCoordinator(),
+                'isMe' => $volunteer->user->is($coordinator),
+            ],
             'levels' => collect(Level::cases())->map(fn (Level $level) => ['value' => $level->value, 'label' => $level->label()]),
             // A freshly issued link is shown once, then gone (FR-006).
             'resetLink' => session('resetLink'),

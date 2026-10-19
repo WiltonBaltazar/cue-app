@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Coordinator;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Support\Settings;
 use Carbon\CarbonImmutable;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,9 +18,21 @@ use Inertia\Response;
  */
 class SettingsController extends Controller
 {
-    public function edit(Settings $settings): Response
+    public function edit(Settings $settings, #[CurrentUser] User $me): Response
     {
         return Inertia::render('coord/settings', [
+            'coordinators' => User::query()
+                ->where('role', UserRole::Coordinator)
+                ->withExists('volunteer as serves')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (User $user) => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'phone' => $user->phone,
+                    'isMe' => $user->is($me),
+                    'serves' => (bool) $user->getAttribute('serves'),
+                ]),
             'registrationOpen' => (bool) $settings->get('registration_open'),
             'registrationClosesAt' => $settings->registrationClosesAt()?->setTimezone(config('app.display_timezone'))->format('Y-m-d\TH:i'),
             'registrationIsOpen' => $settings->registrationIsOpen(),

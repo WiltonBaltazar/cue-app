@@ -1,6 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import { Check, Copy } from 'lucide-react';
 import type { FormEvent } from 'react';
+import { RoleChangeDialog } from '@/components/app/role-change-dialog';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,9 +10,19 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { CheckboxField, TextField } from '@/components/volunteer-form/fields';
 import { useClipboard } from '@/hooks/use-clipboard';
+import { formatPhone } from '@/lib/format';
 import { edit, update } from '@/routes/coord/settings';
 
+type Coordinator = {
+    id: number;
+    name: string;
+    phone: string;
+    isMe: boolean;
+    serves: boolean;
+};
+
 type Props = {
+    coordinators: Coordinator[];
     registrationOpen: boolean;
     registrationClosesAt: string | null;
     registrationIsOpen: boolean;
@@ -24,6 +35,7 @@ type Props = {
 };
 
 export default function CoordinatorSettings({
+    coordinators,
     registrationOpen,
     registrationClosesAt,
     registrationIsOpen,
@@ -200,6 +212,61 @@ export default function CoordinatorSettings({
                         Guardar
                     </Button>
                 </form>
+
+                <section
+                    aria-labelledby="coordinators-title"
+                    className="space-y-4 rounded-lg border p-4"
+                >
+                    <div>
+                        <h2 id="coordinators-title" className="font-medium">
+                            Coordenadores
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                            Quem gere escalas, cadastros e voluntários. Para dar
+                            o papel a um voluntário, abra o perfil dele em
+                            Voluntários.
+                        </p>
+                    </div>
+                    <ul className="divide-y rounded-md border">
+                        {coordinators.map((coordinator) => (
+                            <li
+                                key={coordinator.id}
+                                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+                            >
+                                <div>
+                                    <p className="font-medium">
+                                        {coordinator.name}
+                                        {coordinator.isMe && (
+                                            <span className="font-normal text-muted-foreground">
+                                                {' '}
+                                                (a sua conta)
+                                            </span>
+                                        )}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {formatPhone(coordinator.phone)}
+                                        {coordinator.serves &&
+                                            ', também serve na equipa'}
+                                    </p>
+                                </div>
+                                {coordinators.length > 1 && (
+                                    <RoleChangeDialog
+                                        userId={coordinator.id}
+                                        name={coordinator.name}
+                                        action="revoke"
+                                    >
+                                        <Button
+                                            variant="ghost"
+                                            className="min-h-11"
+                                        >
+                                            Retirar papel
+                                        </Button>
+                                    </RoleChangeDialog>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </section>
             </div>
         </>
     );

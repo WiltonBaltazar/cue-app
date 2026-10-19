@@ -6,12 +6,14 @@ use App\Http\Controllers\Coordinator\AssignmentController;
 use App\Http\Controllers\Coordinator\AuditController;
 use App\Http\Controllers\Coordinator\BulkAssignmentController;
 use App\Http\Controllers\Coordinator\ConsentController as CoordinatorConsentController;
+use App\Http\Controllers\Coordinator\CoordinatorRoleController;
 use App\Http\Controllers\Coordinator\DashboardController;
 use App\Http\Controllers\Coordinator\EventController;
 use App\Http\Controllers\Coordinator\OverviewController;
 use App\Http\Controllers\Coordinator\RegistrationController as CoordinatorRegistrationController;
 use App\Http\Controllers\Coordinator\ScheduleController;
 use App\Http\Controllers\Coordinator\SchedulePdfController;
+use App\Http\Controllers\Coordinator\ServingProfileController;
 use App\Http\Controllers\Coordinator\SettingsController;
 use App\Http\Controllers\Coordinator\SwapController as CoordinatorSwapController;
 use App\Http\Controllers\Coordinator\TeamRoleController;
@@ -91,6 +93,17 @@ Route::middleware(['auth', 'role:coordinator'])
     ->name('coord.')
     ->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
+
+        // Coordinators who also serve (camera, audio…) get a volunteer profile of their own.
+        Route::get('servir', [ServingProfileController::class, 'create'])->name('serving-profile.create');
+        Route::post('servir', [ServingProfileController::class, 'store'])->name('serving-profile.store');
+
+        Route::post('coordenadores/{user}', [CoordinatorRoleController::class, 'store'])
+            ->middleware('throttle:6,1')
+            ->name('coordinators.store');
+        Route::delete('coordenadores/{user}', [CoordinatorRoleController::class, 'destroy'])
+            ->middleware('throttle:6,1')
+            ->name('coordinators.destroy');
 
         Route::get('cadastros', [CoordinatorRegistrationController::class, 'index'])->name('registrations.index');
         Route::get('cadastros/{volunteer}', [CoordinatorRegistrationController::class, 'show'])->name('registrations.show');

@@ -1,11 +1,14 @@
 import {
     ArrowLeftRight,
     BriefcaseBusiness,
+    CalendarCheck,
     CalendarDays,
+    CalendarOff,
     CalendarRange,
     ChartColumn,
     ClipboardList,
     FileText,
+    HandHelping,
     History,
     Grid3x3,
     LayoutGrid,
@@ -13,6 +16,7 @@ import {
     Settings,
     Users,
 } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import { AppContent } from '@/components/app-content';
 import { AppShell } from '@/components/app-shell';
@@ -20,7 +24,10 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { InstallAppPrompt } from '@/components/app/install-app';
 import { PushPrompt } from '@/components/app/push-prompt';
+import { index as absences } from '@/routes/absences';
 import { audit, availability, coverage, dashboard } from '@/routes/coord';
+import { create as servingProfile } from '@/routes/coord/serving-profile';
+import { index as myShifts } from '@/routes/volunteer/shifts';
 import { edit as consent } from '@/routes/coord/consent';
 import { index as events } from '@/routes/coord/events';
 import { index as registrations } from '@/routes/coord/registrations';
@@ -56,9 +63,30 @@ export default function CoordinatorLayout({
     children,
     breadcrumbs = [],
 }: PropsWithChildren<{ breadcrumbs?: BreadcrumbItem[] }>) {
+    const { auth } = usePage().props;
+    // Coordinators who also serve have a volunteer profile and see their own shifts.
+    const ownItems: NavItem[] = auth.user?.volunteerStatus
+        ? [
+              {
+                  title: 'A minha escala',
+                  href: myShifts(),
+                  icon: CalendarCheck,
+              },
+              { title: 'Ausências', href: absences(), icon: CalendarOff },
+          ]
+        : [
+              {
+                  title: 'Também sirvo',
+                  href: servingProfile(),
+                  icon: HandHelping,
+              },
+          ];
+    // Right after "Painel": what concerns the coordinator personally.
+    const items = [navItems[0], ...ownItems, ...navItems.slice(1)];
+
     return (
         <AppShell variant="sidebar">
-            <AppSidebar items={navItems} homeHref={dashboard()} />
+            <AppSidebar items={items} homeHref={dashboard()} />
             <AppContent variant="sidebar" className="min-w-0 overflow-x-clip">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 <InstallAppPrompt className="m-4 mb-0" />

@@ -3,6 +3,7 @@ import { Check, Copy } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { ConfirmDialog } from '@/components/app/confirm-dialog';
 import { PauseCard } from '@/components/app/pause-card';
+import { RoleChangeDialog } from '@/components/app/role-change-dialog';
 import { VolunteerProfileDetails } from '@/components/app/volunteer-profile-details';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,11 @@ import type { VolunteerFull } from '@/types';
 
 type Props = {
     volunteer: VolunteerFull;
+    account: {
+        userId: number;
+        isCoordinator: boolean;
+        isMe: boolean;
+    } | null;
     levels: Option[];
     resetLink: string | null;
     resetLinkHours: number;
@@ -38,6 +44,7 @@ type Props = {
 
 export default function VolunteerEdit({
     volunteer,
+    account,
     levels,
     resetLink,
     resetLinkHours,
@@ -194,6 +201,42 @@ export default function VolunteerEdit({
                         subject={volunteer.fullName}
                     />
                 )}
+
+                {account &&
+                    (volunteer.status === 'active' ||
+                        volunteer.status === 'inactive') && (
+                        <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4">
+                            <Heading
+                                variant="small"
+                                title="Papel na aplicação"
+                                description={
+                                    account.isCoordinator
+                                        ? 'Coordenador: gere escalas, cadastros e voluntários.'
+                                        : 'Voluntário. Como coordenador, passaria também a gerir escalas, cadastros e voluntários.'
+                                }
+                            />
+                            {!account.isMe && (
+                                <RoleChangeDialog
+                                    userId={account.userId}
+                                    name={volunteer.fullName}
+                                    action={
+                                        account.isCoordinator
+                                            ? 'revoke'
+                                            : 'grant'
+                                    }
+                                >
+                                    <Button
+                                        variant="outline"
+                                        className="min-h-11"
+                                    >
+                                        {account.isCoordinator
+                                            ? 'Retirar papel'
+                                            : 'Dar papel de coordenador'}
+                                    </Button>
+                                </RoleChangeDialog>
+                            )}
+                        </section>
+                    )}
 
                 <VolunteerProfileDetails volunteer={volunteer} />
             </div>
