@@ -80,7 +80,11 @@ test('in-app notifications older than 90 days are pruned daily', function () {
     $user = User::factory()->create();
     $user->notify(testNotification('Antiga'));
     $user->notify(testNotification('Recente'));
-    DatabaseNotification::query()->where('data->title', 'Antiga')->update(['created_at' => now()->subDays(91)]);
+    // `data` is a text column, so pick the old one in PHP (no JSON operators on PostgreSQL).
+    $user->notifications()->get()
+        ->first(fn (DatabaseNotification $notification) => $notification->data['title'] === 'Antiga')
+        ->forceFill(['created_at' => now()->subDays(91)])
+        ->save();
 
     $event = collect(app(Schedule::class)->events())
         ->first(fn ($event) => $event->description === 'prune-notifications');

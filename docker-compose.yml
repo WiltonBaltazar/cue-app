@@ -3,110 +3,121 @@
 # environment variables are listed in docs/deployment.md.
 
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    expose:
-      - '80'
-    environment:
-      APP_NAME: '${APP_NAME:-Cue App}'
-      APP_ENV: production
-      APP_DEBUG: 'false'
-      APP_KEY: '${APP_KEY}'
-      APP_URL: '${APP_URL}'
-      APP_TIMEZONE: UTC
-      APP_DISPLAY_TIMEZONE: Africa/Maputo
-      APP_LOCALE: pt
-      LOG_CHANNEL: stderr
-      LOG_LEVEL: '${LOG_LEVEL:-warning}'
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        expose:
+            - '80'
+        environment:
+            APP_NAME: '${APP_NAME:-Cue App}'
+            APP_ENV: production
+            APP_DEBUG: 'false'
+            APP_KEY: '${APP_KEY}'
+            APP_URL: '${APP_URL}'
+            APP_TIMEZONE: UTC
+            APP_DISPLAY_TIMEZONE: Africa/Maputo
+            APP_LOCALE: pt
+            LOG_CHANNEL: stderr
+            LOG_LEVEL: '${LOG_LEVEL:-warning}'
 
-      DB_CONNECTION: mariadb
-      DB_HOST: mariadb
-      DB_PORT: 3306
-      DB_DATABASE: '${DB_DATABASE:-cue_app}'
-      DB_USERNAME: '${SERVICE_USER_MARIADB}'
-      DB_PASSWORD: '${SERVICE_PASSWORD_MARIADB}'
+            DB_CONNECTION: pgsql
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_DATABASE: '${DB_DATABASE:-cue_app}'
+            DB_USERNAME: '${SERVICE_USER_POSTGRES}'
+            DB_PASSWORD: '${SERVICE_PASSWORD_POSTGRES}'
 
-      REDIS_CLIENT: phpredis
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: '${SERVICE_PASSWORD_REDIS}'
-      CACHE_STORE: redis
-      QUEUE_CONNECTION: redis
-      SESSION_DRIVER: redis
-      SESSION_ENCRYPT: 'true'
-      SESSION_LIFETIME: '${SESSION_LIFETIME:-43200}'
+            REDIS_CLIENT: phpredis
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+            REDIS_PASSWORD: '${SERVICE_PASSWORD_REDIS}'
+            CACHE_STORE: redis
+            QUEUE_CONNECTION: redis
+            SESSION_DRIVER: redis
+            SESSION_ENCRYPT: 'true'
+            SESSION_LIFETIME: '${SESSION_LIFETIME:-43200}'
 
-      MAIL_MAILER: '${MAIL_MAILER:-smtp}'
-      MAIL_HOST: '${MAIL_HOST}'
-      MAIL_PORT: '${MAIL_PORT:-587}'
-      MAIL_USERNAME: '${MAIL_USERNAME}'
-      MAIL_PASSWORD: '${MAIL_PASSWORD}'
-      MAIL_FROM_ADDRESS: '${MAIL_FROM_ADDRESS}'
-      MAIL_FROM_NAME: '${MAIL_FROM_NAME:-Cue App}'
+            MAIL_MAILER: '${MAIL_MAILER:-smtp}'
+            MAIL_HOST: '${MAIL_HOST}'
+            MAIL_PORT: '${MAIL_PORT:-587}'
+            MAIL_USERNAME: '${MAIL_USERNAME}'
+            MAIL_PASSWORD: '${MAIL_PASSWORD}'
+            MAIL_FROM_ADDRESS: '${MAIL_FROM_ADDRESS}'
+            MAIL_FROM_NAME: '${MAIL_FROM_NAME:-Cue App}'
 
-      TURNSTILE_SITE_KEY: '${TURNSTILE_SITE_KEY}'
-      TURNSTILE_SECRET_KEY: '${TURNSTILE_SECRET_KEY}'
-      VAPID_SUBJECT: '${APP_URL}'
-      VAPID_PUBLIC_KEY: '${VAPID_PUBLIC_KEY}'
-      VAPID_PRIVATE_KEY: '${VAPID_PRIVATE_KEY}'
+            TURNSTILE_SITE_KEY: '${TURNSTILE_SITE_KEY}'
+            TURNSTILE_SECRET_KEY: '${TURNSTILE_SECRET_KEY}'
+            VAPID_SUBJECT: '${APP_URL}'
+            VAPID_PUBLIC_KEY: '${VAPID_PUBLIC_KEY}'
+            VAPID_PRIVATE_KEY: '${VAPID_PRIVATE_KEY}'
 
-      # "local" keeps backups in the app-storage volume; set "backups" once the
-      # off-site bucket below is configured (docs/deployment.md).
-      BACKUP_DISKS: '${BACKUP_DISKS:-local}'
-      BACKUP_ARCHIVE_PASSWORD: '${BACKUP_ARCHIVE_PASSWORD}'
-      BACKUP_MAIL_TO: '${BACKUP_MAIL_TO}'
-      BACKUP_AWS_ACCESS_KEY_ID: '${BACKUP_AWS_ACCESS_KEY_ID}'
-      BACKUP_AWS_SECRET_ACCESS_KEY: '${BACKUP_AWS_SECRET_ACCESS_KEY}'
-      BACKUP_AWS_DEFAULT_REGION: '${BACKUP_AWS_DEFAULT_REGION:-auto}'
-      BACKUP_AWS_BUCKET: '${BACKUP_AWS_BUCKET}'
-      BACKUP_AWS_ENDPOINT: '${BACKUP_AWS_ENDPOINT}'
-    volumes:
-      - app-storage:/var/www/html/storage
-    depends_on:
-      mariadb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1/up']
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 90s
+            # "local" keeps backups in the app-storage volume; set "backups" once the
+            # off-site bucket below is configured (docs/deployment.md).
+            BACKUP_DISKS: '${BACKUP_DISKS:-local}'
+            BACKUP_ARCHIVE_PASSWORD: '${BACKUP_ARCHIVE_PASSWORD}'
+            BACKUP_MAIL_TO: '${BACKUP_MAIL_TO}'
+            BACKUP_AWS_ACCESS_KEY_ID: '${BACKUP_AWS_ACCESS_KEY_ID}'
+            BACKUP_AWS_SECRET_ACCESS_KEY: '${BACKUP_AWS_SECRET_ACCESS_KEY}'
+            BACKUP_AWS_DEFAULT_REGION: '${BACKUP_AWS_DEFAULT_REGION:-auto}'
+            BACKUP_AWS_BUCKET: '${BACKUP_AWS_BUCKET}'
+            BACKUP_AWS_ENDPOINT: '${BACKUP_AWS_ENDPOINT}'
+        volumes:
+            - app-storage:/var/www/html/storage
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        healthcheck:
+            test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1/up']
+            interval: 30s
+            timeout: 5s
+            retries: 3
+            start_period: 90s
 
-  mariadb:
-    image: 'mariadb:11.4'
-    restart: unless-stopped
-    environment:
-      MARIADB_DATABASE: '${DB_DATABASE:-cue_app}'
-      MARIADB_USER: '${SERVICE_USER_MARIADB}'
-      MARIADB_PASSWORD: '${SERVICE_PASSWORD_MARIADB}'
-      MARIADB_ROOT_PASSWORD: '${SERVICE_PASSWORD_MARIADBROOT}'
-    volumes:
-      - mariadb-data:/var/lib/mysql
-    healthcheck:
-      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+    postgres:
+        image: 'postgres:17-alpine'
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: '${DB_DATABASE:-cue_app}'
+            POSTGRES_USER: '${SERVICE_USER_POSTGRES}'
+            POSTGRES_PASSWORD: '${SERVICE_PASSWORD_POSTGRES}'
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"',
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 30s
 
-  redis:
-    image: 'redis:7.4-alpine'
-    restart: unless-stopped
-    command: ['redis-server', '--requirepass', '${SERVICE_PASSWORD_REDIS}', '--appendonly', 'yes']
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ['CMD', 'redis-cli', '-a', '${SERVICE_PASSWORD_REDIS}', 'ping']
-      interval: 10s
-      timeout: 5s
-      retries: 10
+    redis:
+        image: 'redis:7.4-alpine'
+        restart: unless-stopped
+        command:
+            [
+                'redis-server',
+                '--requirepass',
+                '${SERVICE_PASSWORD_REDIS}',
+                '--appendonly',
+                'yes',
+            ]
+        volumes:
+            - redis-data:/data
+        healthcheck:
+            test:
+                ['CMD', 'redis-cli', '-a', '${SERVICE_PASSWORD_REDIS}', 'ping']
+            interval: 10s
+            timeout: 5s
+            retries: 10
 
 volumes:
-  app-storage:
-  mariadb-data:
-  redis-data:
+    app-storage:
+    postgres-data:
+    redis-data:
