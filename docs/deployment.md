@@ -38,6 +38,11 @@ Data lives in three volumes: `postgres-data`, `redis-data` (queue and sessions) 
 To update, push to `main` and redeploy (or turn on auto-deploy); remember to commit the
 frontend build (`npm run build`) with frontend changes.
 
+**Running the stack locally** (`docker compose up`): Coolify's generated variables don't
+exist outside Coolify, so add them to `.env` first, or PostgreSQL refuses to start
+("superuser password is not specified"):
+`SERVICE_USER_POSTGRES`, `SERVICE_PASSWORD_POSTGRES` and `SERVICE_PASSWORD_REDIS`.
+
 ## 1. Server packages
 
 ```bash
