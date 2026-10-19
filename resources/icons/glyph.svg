@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <mask id="m" maskUnits="userSpaceOnUse" x="0" y="-22" width="512" height="512">
+      <g fill="#fff">
+        <!-- slate body -->
+        <path d="M112 262h288v118a28 28 0 0 1-28 28H140a28 28 0 0 1-28-28z"/>
+        <!-- lower stick -->
+        <rect x="112" y="200" width="288" height="50" rx="10"/>
+        <!-- clapper arm, opened about the left hinge -->
+        <rect x="112" y="138" width="288" height="50" rx="10" transform="rotate(-16 112 200)"/>
+      </g>
+      <g fill="#000">
+        <!-- stripes on the lower stick -->
+        <path d="M168 200h40l-34 50h-40zM248 200h40l-34 50h-40zM328 200h40l-34 50h-40z"/>
+        <!-- stripes on the arm -->
+        <g transform="rotate(-16 112 200)">
+          <path d="M194 138h40l-34 50h-40zM274 138h40l-34 50h-40zM354 138h40l-34 50h-40z"/>
+        </g>
+      </g>
+    </mask>
+  </defs>
+  <rect width="512" height="512" fill="#fff" mask="url(#m)" transform="translate(0 22)"/>
+</svg>

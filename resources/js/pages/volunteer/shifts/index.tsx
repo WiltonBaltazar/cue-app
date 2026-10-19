@@ -1,9 +1,15 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { CalendarDays } from 'lucide-react';
 import { ShiftCard } from '@/components/app/shift-card';
 import type { Shift } from '@/components/app/shift-card';
 
 export default function MyShifts({ shifts }: { shifts: Shift[] }) {
+    // "Não posso ir" on the 72 h check push lands here with ?recusar={id}.
+    const { url } = usePage();
+    const declineId = Number(
+        new URLSearchParams(url.split('?')[1] ?? '').get('recusar'),
+    );
+
     return (
         <>
             <Head title="A minha escala" />
@@ -26,7 +32,11 @@ export default function MyShifts({ shifts }: { shifts: Shift[] }) {
                 <ol className="mt-4 space-y-3">
                     {shifts.map((shift) => (
                         <li key={shift.id}>
-                            <ShiftCard shift={shift} actions />
+                            <ShiftCard
+                                shift={shift}
+                                actions
+                                declineOpen={shift.id === declineId}
+                            />
                         </li>
                     ))}
                 </ol>

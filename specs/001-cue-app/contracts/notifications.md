@@ -15,11 +15,16 @@ Every notification is a queued Laravel Notification sent on `database` (in-app c
 }
 ```
 
+`shift_check` also carries
+`"actions": [{"action": "decline", "title": "Não posso ir", "url": "/minha-escala?recusar={id}"}]`;
+the in-app page then opens the decline confirmation (a push never declines by itself).
+
 Rules (Principle V): ≤ 120 chars body; no phone, e-mail, birth date, motivations or other 🔒
 data; `url` is a relative in-app path; `tag` collapses repeated updates for the same item.
 TTL 24 h (reminders: until event start). Urgency `high` for urgent swaps and cancellations.
 
-`notificationclick` → focus an open client or open `url`.
+`notificationclick` → focus an open client or open `url` (or the tapped action's `url`);
+only same-origin paths are ever opened.
 
 ## Types
 
@@ -41,6 +46,10 @@ TTL 24 h (reminders: until event start). Urgency `high` for urgent swaps and can
 ## Delivery
 
 - Dispatched after DB commit (`afterCommit`) on the queue; target SC-007 < 1 min.
+- `shift_check` / `shift_reminder`: `shifts:remind` runs every 5 minutes and marks
+  `assignments.check_sent_at` / `reminder_sent_at`, so each goes out once per assignment
+  (reset when another volunteer takes the place). A shift booked inside the reminder
+  window gets only the reminder.
 - 404/410 from push service → delete subscription.
 - Other failures → retry 3× with backoff; in-app copy always persists.
 - Users with no subscription see the `pushPrompt` banner with install instructions (iOS:

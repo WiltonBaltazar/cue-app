@@ -279,19 +279,19 @@ push and a reminder.
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T112 [P] [US6] Feature test: notifications respect preferences, payloads contain no sensitive fields, 410 responses delete subscriptions, reminders (72 h check with decline link, 24 h) sent once per assignment in `tests/Feature/Notifications/PushDeliveryTest.php`
+- [X] T112 [P] [US6] Feature test: notifications respect preferences, payloads contain no sensitive fields, 410 responses delete subscriptions, reminders (72 h check with decline link, 24 h) sent once per assignment in `tests/Feature/Notifications/PushDeliveryTest.php`
 
 ### Implementation for User Story 6
 
-- [ ] T113 [US6] Configure `laravel-notification-channels/webpush` (VAPID keys, `push_subscriptions` migration, `HasPushSubscriptions` on User) in `config/webpush.php` and `app/Models/User.php`
-- [ ] T114 [US6] Add `webpush` channel with minimal payload (title, body ≤ 120 chars, url, tag, TTL, urgency) to `app/Notifications/AppNotification.php`
-- [ ] T115 [US6] Create push subscription endpoints (POST/DELETE `/app-api/push-subscriptions`) in `app/Http/Controllers/AppApi/PushSubscriptionController.php`
-- [ ] T116 [US6] Configure `vite-plugin-pwa` (injectManifest, Portuguese manifest, maskable icons) in `vite.config.ts` and `public/icons/`
-- [ ] T117 [US6] Write service worker (precache shell, offline "Sem ligação" page, cached own shifts read-only, `push` and `notificationclick` handlers) in `resources/js/sw.ts`
-- [ ] T118 [US6] Create `usePushSubscription` hook and enable-notifications banner with iOS "Adicionar ao ecrã principal" instructions in `resources/js/hooks/use-push-subscription.ts` and `resources/js/components/app/push-prompt.tsx`
-- [ ] T119 [US6] Create notification preferences page in `app/Http/Controllers/Volunteer/NotificationPreferenceController.php` and `resources/js/pages/volunteer/profile/notifications.tsx`
-- [ ] T120 [US6] Implement `ShiftCheck` (72 h, "Não posso ir" action) and `ShiftReminder` (24 h) notifications and scheduled `SendShiftReminders` command in `app/Notifications/` and `app/Console/Commands/SendShiftReminders.php`
-- [ ] T121 [US6] Add the `webpush` channel to the `AvailabilityConflict` notification (created in T081a) in `app/Notifications/AvailabilityConflict.php`
+- [X] T113 [US6] Configure `laravel-notification-channels/webpush` (VAPID keys, `push_subscriptions` migration, `HasPushSubscriptions` on User) in `config/webpush.php` and `app/Models/User.php`
+- [X] T114 [US6] Add `webpush` channel with minimal payload (title, body ≤ 120 chars, url, tag, TTL, urgency) to `app/Notifications/AppNotification.php`
+- [X] T115 [US6] Create push subscription endpoints (POST/DELETE `/app-api/push-subscriptions`) in `app/Http/Controllers/AppApi/PushSubscriptionController.php`
+- [X] T116 [US6] Configure `vite-plugin-pwa` (injectManifest, Portuguese manifest, maskable icons) in `vite.config.ts` and `public/icons/`
+- [X] T117 [US6] Write service worker (precache shell, offline "Sem ligação" page, cached own shifts read-only, `push` and `notificationclick` handlers) in `resources/js/sw.ts`
+- [X] T118 [US6] Create `usePushSubscription` hook and enable-notifications banner with iOS "Adicionar ao ecrã principal" instructions in `resources/js/hooks/use-push-subscription.ts` and `resources/js/components/app/push-prompt.tsx`
+- [X] T119 [US6] Create notification preferences page in `app/Http/Controllers/Volunteer/NotificationPreferenceController.php` and `resources/js/pages/volunteer/profile/notifications.tsx`
+- [X] T120 [US6] Implement `ShiftCheck` (72 h, "Não posso ir" action) and `ShiftReminder` (24 h) notifications and scheduled `SendShiftReminders` command in `app/Notifications/` and `app/Console/Commands/SendShiftReminders.php`
+- [X] T121 [US6] Add the `webpush` channel to the `AvailabilityConflict` notification (created in T081a) in `app/Notifications/AvailabilityConflict.php`
 
 **Checkpoint**: All user stories functional.
 

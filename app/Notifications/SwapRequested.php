@@ -28,4 +28,9 @@ class SwapRequested extends AppNotification
     {
         return '/trocas';
     }
+
+    public function pushUrgency(): string
+    {
+        return $this->urgent ? 'high' : 'normal';
+    }
 }

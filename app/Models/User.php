@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 
 /**
  * @property int $id
@@ -38,7 +39,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, LogsAuditActivity, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, HasPushSubscriptions, LogsAuditActivity, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * Role is not mass assignable; it changes only through audited coordinator actions.

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AppApi\NotificationController;
 use App\Http\Controllers\AppApi\OverviewController;
 use App\Http\Controllers\AppApi\PositionCandidateController;
+use App\Http\Controllers\AppApi\PushSubscriptionController;
 use App\Http\Controllers\AppApi\SwapCandidateController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
 Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
 Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+
+// This device's Web Push subscription (US6).
+Route::post('push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
+Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
 
 // Colleagues who could take one of my shifts (directed swap).
 Route::get('assignments/{assignment}/swap-candidates', SwapCandidateController::class)->name('assignments.swap-candidates');

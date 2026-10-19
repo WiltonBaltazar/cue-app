@@ -28,4 +28,9 @@ class EventCancelled extends AppNotification
     {
         return '/minha-escala';
     }
+
+    public function pushUrgency(): string
+    {
+        return 'high';
+    }
 }

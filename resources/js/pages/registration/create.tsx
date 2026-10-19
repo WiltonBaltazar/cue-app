@@ -11,6 +11,7 @@ import {
     CheckboxField,
     RadioGroupField,
     TextAreaField,
+    PhoneField,
     TextField,
 } from '@/components/volunteer-form/fields';
 import { RolePicker } from '@/components/volunteer-form/role-picker';
@@ -411,10 +412,8 @@ export default function RegistrationCreate({
                                     required
                                     error={fieldErrors.guardian_name}
                                 />
-                                <TextField
+                                <PhoneField
                                     label="Telefone do encarregado"
-                                    type="tel"
-                                    inputMode="tel"
                                     value={data.guardian_phone}
                                     onChange={(event) =>
                                         setData(
@@ -432,11 +431,9 @@ export default function RegistrationCreate({
 
                 {step === 1 && (
                     <>
-                        <TextField
+                        <PhoneField
                             label="Número de telefone"
-                            type="tel"
-                            inputMode="tel"
-                            autoComplete="tel"
+                            autoComplete="tel-national"
                             placeholder="84 123 4567"
                             value={data.phone}
                             onChange={(event) =>

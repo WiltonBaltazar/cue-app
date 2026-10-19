@@ -19,3 +19,6 @@ Schedule::command('swaps:expire')->everyFifteenMinutes()->withoutOverlapping();
 
 // Pauses with a return date end on that date (FR-005a).
 Schedule::command('volunteers:resume-paused')->dailyAt('00:15')->withoutOverlapping();
+
+// 72 h "Ainda pode ir?" and 24 h reminder, each once per assignment (US6).
+Schedule::command('shifts:remind')->everyFiveMinutes()->withoutOverlapping();

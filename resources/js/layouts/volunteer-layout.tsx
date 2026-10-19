@@ -3,6 +3,7 @@ import { ArrowLeftRight, CalendarDays, House, UserRound } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import AppLogo from '@/components/app-logo';
 import { NotificationBell } from '@/components/app/notification-bell';
+import { PushPrompt } from '@/components/app/push-prompt';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
@@ -89,6 +90,7 @@ export default function VolunteerLayout({ children }: PropsWithChildren) {
             </header>
 
             <main className="mx-auto w-full max-w-3xl flex-1 px-4 pt-4 pb-24 md:pb-8">
+                <PushPrompt className="mb-4" />
                 {children}
             </main>
 

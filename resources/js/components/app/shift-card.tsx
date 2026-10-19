@@ -34,9 +34,12 @@ export type Shift = {
 export function ShiftCard({
     shift,
     actions = false,
+    declineOpen = false,
 }: {
     shift: Shift;
     actions?: boolean;
+    /** Open the "Não posso ir" confirmation straight away (72 h check push). */
+    declineOpen?: boolean;
 }) {
     const [swapOpen, setSwapOpen] = useState(false);
     const label = `${shift.eventName} · ${shift.role} · ${formatLongDate(`${shift.date}T12:00:00Z`)}`;
@@ -109,6 +112,7 @@ export function ShiftCard({
                         description={`${label}. Os coordenadores são avisados e o turno é oferecido aos colegas que podem assumir.`}
                         confirmLabel="Não posso ir"
                         destructive
+                        defaultOpen={declineOpen}
                         onConfirm={() =>
                             router.post(
                                 decline(shift.id).url,

@@ -31,4 +31,9 @@ class AvailabilityConflict extends AppNotification
     {
         return "/gestao/escalas/{$this->scheduleId}";
     }
+
+    public function pushTag(): string
+    {
+        return "availability-conflict-{$this->scheduleId}";
+    }
 }

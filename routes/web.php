@@ -19,6 +19,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Public\RegistrationController;
 use App\Http\Controllers\Volunteer\AbsenceController;
 use App\Http\Controllers\Volunteer\ConsentController;
+use App\Http\Controllers\Volunteer\NotificationPreferenceController;
 use App\Http\Controllers\Volunteer\PauseController;
 use App\Http\Controllers\Volunteer\ProfileController as VolunteerProfileController;
 use App\Http\Controllers\Volunteer\ShiftController;
@@ -66,6 +67,10 @@ Route::middleware('auth')->group(function () {
     // Reachable while a registration needs correction, so the volunteer can fix it.
     Route::get('perfil/dados', [VolunteerProfileController::class, 'edit'])->name('volunteer.profile.edit');
     Route::put('perfil/dados', [VolunteerProfileController::class, 'update'])->name('volunteer.profile.update');
+
+    // Coordinators have notification preferences too (FR-025).
+    Route::get('perfil/notificacoes', [NotificationPreferenceController::class, 'edit'])->name('notification-preferences.edit');
+    Route::put('perfil/notificacoes', [NotificationPreferenceController::class, 'update'])->name('notification-preferences.update');
 
     // Paused volunteers keep access so they can resume (FR-005a).
     Route::post('perfil/pausa', [PauseController::class, 'pause'])->name('profile.pause');

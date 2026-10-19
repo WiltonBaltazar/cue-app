@@ -1,10 +1,10 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
+import { PhoneInput } from '@/components/phone-input';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/login';
@@ -35,13 +35,11 @@ export default function Login({ status, canResetPassword }: Props) {
                     <div className="grid gap-6">
                         <div className="grid gap-2">
                             <Label htmlFor="phone">Número de telefone</Label>
-                            <Input
+                            <PhoneInput
                                 id="phone"
-                                type="tel"
                                 name="phone"
                                 required
-                                inputMode="tel"
-                                autoComplete="tel"
+                                autoComplete="tel-national"
                                 placeholder="84 123 4567"
                                 aria-describedby="phone-hint"
                                 className="min-h-11"

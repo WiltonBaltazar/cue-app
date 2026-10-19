@@ -29,4 +29,9 @@ class ReplacementNeeded extends AppNotification
     {
         return "/gestao/escalas/{$this->scheduleId}";
     }
+
+    public function pushUrgency(): string
+    {
+        return $this->urgent ? 'high' : 'normal';
+    }
 }

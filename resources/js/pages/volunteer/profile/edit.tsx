@@ -2,11 +2,13 @@ import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { PauseCard } from '@/components/app/pause-card';
 import Heading from '@/components/heading';
+import { localPhone } from '@/components/phone-input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { AvailabilityGrid } from '@/components/volunteer-form/availability-grid';
 import {
     CheckboxField,
+    PhoneField,
     RadioGroupField,
     TextAreaField,
     TextField,
@@ -52,7 +54,9 @@ export default function VolunteerProfileEdit({
         birth_date: volunteer.birthDate,
         neighbourhood: volunteer.neighbourhood ?? '',
         guardian_name: volunteer.guardianName ?? '',
-        guardian_phone: volunteer.guardianPhone ?? '',
+        guardian_phone: volunteer.guardianPhone
+            ? localPhone(volunteer.guardianPhone)
+            : '',
         education_level: volunteer.educationLevel ?? '',
         training: volunteer.training ?? '',
         skills: volunteer.skills.map((skill) => ({
@@ -137,10 +141,8 @@ export default function VolunteerProfileEdit({
                                 }
                                 error={errors.guardian_name}
                             />
-                            <TextField
+                            <PhoneField
                                 label="Telefone do encarregado"
-                                type="tel"
-                                inputMode="tel"
                                 value={data.guardian_phone}
                                 onChange={(event) =>
                                     setData(

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#171717" />
+        <title>Sem ligação - Cue App</title>
+        <style>
+            :root {
+                color-scheme: light dark;
+                --bg: #ffffff;
+                --fg: #171717;
+                --muted: #525252;
+                --border: #e5e5e5;
+            }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --bg: #0a0a0a;
+                    --fg: #fafafa;
+                    --muted: #a3a3a3;
+                    --border: #262626;
+                }
+            }
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                margin: 0;
+                min-height: 100svh;
+                display: grid;
+                place-items: center;
+                padding: 16px;
+                background: var(--bg);
+                color: var(--fg);
+                font:
+                    16px/1.5 system-ui,
+                    -apple-system,
+                    'Segoe UI',
+                    sans-serif;
+            }
+            main {
+                max-width: 26rem;
+                text-align: center;
+            }
+            img {
+                width: 64px;
+                height: 64px;
+                border-radius: 14px;
+            }
+            h1 {
+                font-size: 1.5rem;
+                margin: 1rem 0 0.5rem;
+            }
+            p {
+                color: var(--muted);
+                margin: 0 0 1.5rem;
+            }
+            a,
+            button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 44px;
+                padding: 0 1rem;
+                border-radius: 8px;
+                font: inherit;
+                font-weight: 500;
+                text-decoration: none;
+                cursor: pointer;
+            }
+            .primary {
+                background: var(--fg);
+                color: var(--bg);
+                border: 0;
+            }
+            .secondary {
+                background: transparent;
+                color: var(--fg);
+                border: 1px solid var(--border);
+                margin-top: 0.75rem;
+            }
+            .actions {
+                display: flex;
+                flex-direction: column;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <img src="/icons/icon-192.png" alt="" />
+            <h1>Sem ligação</h1>
+            <p>
+                Não foi possível ligar à Cue App. Verifique a internet e tente
+                outra vez. Pode ver a última cópia dos seus turnos, só para
+                consulta.
+            </p>
+            <div class="actions">
+                <a class="primary" href="">Tentar outra vez</a>
+                <a class="secondary" href="/minha-escala"
+                    >Ver os meus turnos guardados</a
+                >
+            </div>
+        </main>
+    </body>
+</html>

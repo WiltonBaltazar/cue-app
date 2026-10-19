@@ -53,6 +53,8 @@ class HandleInertiaRequests extends Middleware
                 ],
             ],
             'unreadNotifications' => $user?->unreadNotifications()->count() ?? 0,
+            // Public by design: browsers need it to subscribe this device to push (R12).
+            'vapidPublicKey' => $user === null ? null : config('webpush.vapid.public_key'),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

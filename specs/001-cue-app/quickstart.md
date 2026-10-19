@@ -56,7 +56,7 @@ All must pass before a feature is "done" (constitution: Quality Gates).
 | 11 | US4 | Volunteer opens a swap; eligible colleague accepts; coordinator approves | Schedule updated; both notified; ineligible users never see the request |
 | 12 | US4 | After publish, check a shift's status, then tap "Não posso ir" | Starts Confirmed; decline opens swap request and notifies coordinator |
 | 13 | US5 | Open `/gestao/disponibilidade` and `/gestao/cobertura` | Matrix with filters; roles in shortage flagged |
-| 14 | US6 | Enable notifications, run `php artisan schedule:test` for reminders | Reminder push received |
+| 14 | US6 | Enable notifications (production build: `npm run build`), then `php artisan shifts:remind` with a shift ≤ 24 h away | Reminder push received |
 | 15 | Sec | Log in as volunteer, request `/gestao/cadastros/1` and `/app-api/assignments/1/substitutes` | 403 for both |
 | 16 | Sec | Inspect Inertia props on `/escala/{id}` | Colleagues show only short name + role; no phone/e-mail |
 | 17 | Sec | 6 wrong logins in 1 min | Throttled with Portuguese message |

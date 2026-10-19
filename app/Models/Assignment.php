@@ -25,6 +25,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $override_note
  * @property CarbonImmutable|null $conflict_flagged_at
  * @property CarbonImmutable|null $responded_at
+ * @property CarbonImmutable|null $check_sent_at
+ * @property CarbonImmutable|null $reminder_sent_at
  * @property int $lock_version
  * @property int|null $updated_by
  * @property-read Schedule $schedule
@@ -64,6 +66,8 @@ class Assignment extends Model
             'is_locked' => 'boolean',
             'conflict_flagged_at' => 'immutable_datetime',
             'responded_at' => 'immutable_datetime',
+            'check_sent_at' => 'immutable_datetime',
+            'reminder_sent_at' => 'immutable_datetime',
             'lock_version' => 'integer',
         ];
     }
@@ -73,6 +77,12 @@ class Assignment extends Model
         // Optimistic concurrency (FR-013): every change bumps the version.
         static::updating(function (self $assignment): void {
             $assignment->lock_version = $assignment->getOriginal('lock_version') + 1;
+
+            // A new person in the place (manual change or swap) gets their own check and reminder.
+            if ($assignment->isDirty('volunteer_id')) {
+                $assignment->check_sent_at = null;
+                $assignment->reminder_sent_at = null;
+            }
         });
     }
 

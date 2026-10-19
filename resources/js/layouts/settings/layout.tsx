@@ -8,6 +8,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editNotifications } from '@/routes/notification-preferences';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import { index as sessions } from '@/routes/sessions';
@@ -18,6 +19,7 @@ const sidebarNavItems: NavItem[] = [
     { title: 'Conta', href: edit(), icon: null },
     { title: 'Segurança', href: editSecurity(), icon: null },
     { title: 'Sessões', href: sessions(), icon: null },
+    { title: 'Notificações', href: editNotifications(), icon: null },
     { title: 'Aparência', href: editAppearance(), icon: null },
 ];
 
@@ -35,7 +37,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         <div className="py-6 md:px-4">
             <Heading
                 title="Perfil"
-                description="Gerir a sua conta, a segurança e as sessões"
+                description="Gerir a sua conta, a segurança, as sessões e as notificações"
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">

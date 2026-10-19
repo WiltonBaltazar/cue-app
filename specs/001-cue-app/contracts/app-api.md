@@ -26,7 +26,12 @@ Rate limit: 60 req/min per user.
 ### `POST /app-api/push-subscriptions`
 
 Body: standard `PushSubscription.toJSON()` (`endpoint`, `keys.p256dh`, `keys.auth`) +
-`deviceLabel` (string ≤ 60). → `201`. `DELETE` same path with `endpoint` → `204`.
+optional `contentEncoding` (`aes128gcm` | `aesgcm`). → `204`; subscribing again from the
+same browser updates its keys and moves it to the signed-in user. `endpoint` must be
+`https` on a known browser push service (FCM, Mozilla, Apple, Windows), so the server
+never POSTs to arbitrary hosts. The device label ("iPhone", "Android", …) is derived from
+the user agent server-side; the user agent itself is not stored.
+`DELETE` same path with `endpoint` → `204` (only the caller's own subscription).
 
 ### `GET /app-api/swaps/{swap}/eligible` (requester only)
 

@@ -17,6 +17,7 @@ import { AppContent } from '@/components/app-content';
 import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
+import { PushPrompt } from '@/components/app/push-prompt';
 import { availability, coverage, dashboard } from '@/routes/coord';
 import { edit as consent } from '@/routes/coord/consent';
 import { index as events } from '@/routes/coord/events';
@@ -57,6 +58,7 @@ export default function CoordinatorLayout({
             <AppSidebar items={navItems} homeHref={dashboard()} />
             <AppContent variant="sidebar" className="min-w-0 overflow-x-clip">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
+                <PushPrompt className="m-4 mb-0" />
                 {children}
             </AppContent>
         </AppShell>

@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import InputError from '@/components/input-error';
+import { PhoneInput } from '@/components/phone-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -54,6 +55,49 @@ export function TextField({
                 )}
             </Label>
             <Input
+                id={id}
+                className="min-h-11"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={describedBy(hintId, errorId, hint, error)}
+                {...inputProps}
+            />
+            {hint && (
+                <p id={hintId} className="text-sm text-muted-foreground">
+                    {hint}
+                </p>
+            )}
+            <InputError id={errorId} message={error} />
+        </div>
+    );
+}
+
+/**
+ * TextField for phone numbers, with the fixed "+258" prefix.
+ */
+export function PhoneField({
+    label,
+    hint,
+    error,
+    optional,
+    className,
+    ...inputProps
+}: FieldProps & Omit<ComponentProps<typeof PhoneInput>, 'className'>) {
+    const id = useId();
+    const hintId = `${id}-hint`;
+    const errorId = `${id}-error`;
+
+    return (
+        <div className={cn('grid gap-2', className)}>
+            <Label htmlFor={id}>
+                {label}
+                {optional && (
+                    <span className="font-normal text-muted-foreground">
+                        {' '}
+                        (opcional)
+                    </span>
+                )}
+            </Label>
+            <PhoneInput
                 id={id}
                 className="min-h-11"
                 aria-invalid={error ? true : undefined}

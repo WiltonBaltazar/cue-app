@@ -23,6 +23,8 @@ type Props = {
     cancelLabel?: string;
     destructive?: boolean;
     processing?: boolean;
+    /** Open on mount, e.g. when arriving from a notification action. */
+    defaultOpen?: boolean;
     onConfirm: () => void;
 };
 
@@ -37,9 +39,10 @@ export function ConfirmDialog({
     cancelLabel = 'Cancelar',
     destructive = false,
     processing = false,
+    defaultOpen = false,
     onConfirm,
 }: Props) {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(defaultOpen);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
