@@ -6,17 +6,26 @@ FROM php:8.4-fpm-bookworm
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Nginx and Supervisor; the MariaDB client for the nightly backup's dump.
+# Nginx and Supervisor; pg_dump for the nightly backup, from PostgreSQL's own
+# repository so it matches the server (Debian's client is 15, too old for a 17 server).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        nginx supervisor mariadb-client curl unzip ca-certificates \
+        nginx supervisor curl unzip ca-certificates gnupg \
+    && install -d /usr/share/postgresql-common/pgdg \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+        -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+        > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-17 \
+    && apt-get purge -y gnupg && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/nginx/sites-enabled/default
 
-# PHP extensions: Redis, MariaDB/MySQL, Web Push signing (gmp, bcmath), intl, zip (backups),
+# PHP extensions: Redis, PostgreSQL, Web Push signing (gmp, bcmath), intl, zip (backups),
 # gd (PDF), pcntl (graceful queue stops), opcache.
 COPY --from=mlocati/php-extension-installer:2.7 /usr/bin/install-php-extensions /usr/local/bin/
-RUN install-php-extensions redis pdo_mysql gmp bcmath intl zip gd exif pcntl opcache
+RUN install-php-extensions redis pdo_pgsql gmp bcmath intl zip gd exif pcntl opcache
 
 COPY --from=composer:2.8 /usr/bin/composer /usr/local/bin/composer
 

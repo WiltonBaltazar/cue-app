@@ -13,27 +13,29 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    # Same database as production (docker-compose.yml).
     services:
-      mysql:
-        image: mysql:8.4
+      postgres:
+        image: postgres:17-alpine
         env:
-          MYSQL_DATABASE: cue_app
-          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          POSTGRES_DB: cue_app
+          POSTGRES_USER: cue
+          POSTGRES_PASSWORD: cue
         ports:
-          - 3306:3306
+          - 5432:5432
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-cmd="pg_isready -U cue -d cue_app"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
 
     env:
-      DB_CONNECTION: mysql
+      DB_CONNECTION: pgsql
       DB_HOST: 127.0.0.1
-      DB_PORT: 3306
+      DB_PORT: 5432
       DB_DATABASE: cue_app
-      DB_USERNAME: root
-      DB_PASSWORD: ''
+      DB_USERNAME: cue
+      DB_PASSWORD: cue
 
     steps:
       - name: Checkout code
