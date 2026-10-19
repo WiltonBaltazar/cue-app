@@ -34,3 +34,12 @@ Schedule::command('volunteers:process-removals')->hourly()->withoutOverlapping()
 Schedule::command('backup:clean')->dailyAt('01:00')->withoutOverlapping();
 Schedule::command('backup:run')->dailyAt('01:30')->withoutOverlapping();
 Schedule::command('backup:monitor')->dailyAt('07:00');
+
+// Shared hosting has no Supervisor: a worker started every minute runs the queue
+// (push, e-mail) for 50 s and exits. Off where Supervisor runs one (deployment.md).
+if (config('queue.work_from_scheduler')) {
+    Schedule::command('queue:work --stop-when-empty --max-time=50 --sleep=3 --tries=3')
+        ->everyMinute()
+        ->withoutOverlapping(2)
+        ->runInBackground();
+}

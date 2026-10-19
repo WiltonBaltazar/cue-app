@@ -127,4 +127,17 @@ return [
         'table' => 'failed_jobs',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Queue Worker From The Scheduler
+    |--------------------------------------------------------------------------
+    |
+    | For hosting without Supervisor (shared hosting): the scheduler starts a
+    | worker every minute that works for under a minute and exits, so the one
+    | cron line also runs the queue. Leave off where a Supervisor worker runs.
+    |
+    */
+
+    'work_from_scheduler' => (bool) env('QUEUE_WORK_FROM_SCHEDULER', false),
+
 ];

@@ -140,6 +140,13 @@ sudo supervisorctl reread && sudo supervisorctl update
 
 Push must reach phones within a minute (SC-007), so keep the worker running at all times.
 
+### Shared hosting (no Supervisor)
+
+Set `QUEUE_WORK_FROM_SCHEDULER=true` in `.env` and skip Supervisor. The scheduler then
+starts a worker every minute that runs the queue for 50 seconds and exits, so the single
+cron line below also delivers push and e-mail, within about a minute. Leave it `false`
+where a Supervisor worker runs, so two workers don't compete.
+
 ## 5. Scheduler (cron)
 
 ```cron
