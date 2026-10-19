@@ -2,9 +2,12 @@
 
 use App\Http\Controllers\Auth\PasswordSetupController;
 use App\Http\Controllers\Coordinator\ActivityTemplateController;
+use App\Http\Controllers\Coordinator\AssignmentController;
 use App\Http\Controllers\Coordinator\ConsentController as CoordinatorConsentController;
 use App\Http\Controllers\Coordinator\EventController;
 use App\Http\Controllers\Coordinator\RegistrationController as CoordinatorRegistrationController;
+use App\Http\Controllers\Coordinator\ScheduleController;
+use App\Http\Controllers\Coordinator\SchedulePdfController;
 use App\Http\Controllers\Coordinator\SettingsController;
 use App\Http\Controllers\Coordinator\TeamRoleController;
 use App\Http\Controllers\Coordinator\VolunteerController;
@@ -12,6 +15,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Public\RegistrationController;
 use App\Http\Controllers\Volunteer\ConsentController;
 use App\Http\Controllers\Volunteer\ProfileController as VolunteerProfileController;
+use App\Http\Controllers\Volunteer\ShiftController;
 use App\Http\Controllers\Volunteer\StatusController;
 use Illuminate\Support\Facades\Route;
 use Spatie\Honeypot\ProtectAgainstSpam;
@@ -31,6 +35,8 @@ Route::post('definir-senha/{token}', [PasswordSetupController::class, 'store'])
 
 Route::middleware(['auth', 'volunteer.active'])->group(function () {
     Route::get('/', HomeController::class)->name('home');
+    Route::get('minha-escala', [ShiftController::class, 'index'])->name('volunteer.shifts.index');
+    Route::get('escala/{schedule}', [ShiftController::class, 'team'])->name('schedules.show');
 });
 
 Route::middleware('auth')->group(function () {
@@ -80,6 +86,17 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::get('eventos/{event}/editar', [EventController::class, 'edit'])->name('events.edit');
         Route::put('eventos/{event}', [EventController::class, 'update'])->name('events.update');
         Route::post('eventos/{event}/cancelar', [EventController::class, 'cancel'])->name('events.cancel');
+
+        Route::get('escalas', [ScheduleController::class, 'index'])->name('schedules.index');
+        Route::post('escalas', [ScheduleController::class, 'store'])->name('schedules.store');
+        Route::get('escalas/{schedule}', [ScheduleController::class, 'edit'])->name('schedules.edit');
+        Route::post('escalas/{schedule}/gerar', [ScheduleController::class, 'generate'])->name('schedules.generate');
+        Route::post('escalas/{schedule}/publicar', [ScheduleController::class, 'publish'])->name('schedules.publish');
+        Route::get('escalas/{schedule}/pdf', SchedulePdfController::class)->name('schedules.pdf');
+
+        Route::post('atribuicoes', [AssignmentController::class, 'store'])->name('assignments.store');
+        Route::put('atribuicoes/{assignment}', [AssignmentController::class, 'update'])->name('assignments.update');
+        Route::delete('atribuicoes/{assignment}', [AssignmentController::class, 'destroy'])->name('assignments.destroy');
 
         Route::get('definicoes', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::put('definicoes', [SettingsController::class, 'update'])->name('settings.update');

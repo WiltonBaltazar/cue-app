@@ -201,6 +201,22 @@ class Volunteer extends Model
         $query->whereIn('status', [VolunteerStatus::Pending, VolunteerStatus::NeedsCorrection]);
     }
 
+    /**
+     * @return HasMany<Absence, $this>
+     */
+    public function absences(): HasMany
+    {
+        return $this->hasMany(Absence::class);
+    }
+
+    /**
+     * @return HasMany<Assignment, $this>
+     */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(Assignment::class);
+    }
+
     public function birthDate(): CarbonImmutable
     {
         return CarbonImmutable::parse($this->birth_date);

@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\DB;
  * - re-syncs future, non-customised, scheduled occurrences with the template;
  * - removes future, non-customised, scheduled occurrences that no longer match
  *   (weekday changed or template deactivated).
- * Past, customised and cancelled occurrences are never touched.
+ * Past, customised and cancelled occurrences, and any occurrence that already has
+ * assignments, are never touched.
  */
 class GenerateOccurrences
 {
@@ -55,6 +56,7 @@ class GenerateOccurrences
 
         $existing = $template->events()
             ->where('date', '>=', $today->toDateString())
+            ->withCount('assignments')
             ->get()
             ->keyBy(fn (Event $event) => $event->date->toDateString());
 
@@ -72,7 +74,7 @@ class GenerateOccurrences
                 $event = new Event(['activity_template_id' => $template->id, 'type' => EventType::Recurring]);
                 $this->applyTemplate($event, $template, $date);
                 $created++;
-            } elseif (! $event->is_customized && ! $event->isCancelled()) {
+            } elseif (! $event->is_customized && ! $event->isCancelled() && $event->assignments_count === 0) {
                 $this->applyTemplate($event, $template, $date);
             }
         }
@@ -112,6 +114,7 @@ class GenerateOccurrences
             ->where('date', '>=', $today->toDateString())
             ->where('is_customized', false)
             ->where('status', EventStatus::Scheduled)
+            ->whereDoesntHave('assignments')
             ->get()
             ->reject(fn (Event $event) => $template->is_active && $template->occursOn($event->date))
             ->each(fn (Event $event) => $event->delete());

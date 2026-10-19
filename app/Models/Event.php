@@ -99,6 +99,14 @@ class Event extends Model
     }
 
     /**
+     * @return HasMany<Assignment, $this>
+     */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(Assignment::class);
+    }
+
+    /**
      * @param  Builder<self>  $query
      */
     public function scopeScheduled(Builder $query): void

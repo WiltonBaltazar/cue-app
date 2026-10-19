@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\VolunteerShifts;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -19,6 +20,8 @@ class HomeController extends Controller
             return to_route('coord.dashboard');
         }
 
-        return Inertia::render('volunteer/home');
+        return Inertia::render('volunteer/home', [
+            'nextShifts' => $user->volunteer === null ? [] : VolunteerShifts::upcoming($user->volunteer, 3),
+        ]);
     }
 }

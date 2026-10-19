@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AppApi\NotificationController;
+use App\Http\Controllers\AppApi\PositionCandidateController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,3 +19,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
 Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
 Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+
+// Coordinator-only: schedule editor helpers.
+Route::middleware('role:coordinator')->group(function () {
+    Route::get('positions/{position}/candidates', [PositionCandidateController::class, 'index'])->name('positions.candidates');
+    Route::post('assignments/check', [PositionCandidateController::class, 'check'])->name('assignments.check');
+});

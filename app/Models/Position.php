@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use App\Enums\Level;
+use Database\Factories\PositionFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Places for one team role at one event, with an optional minimum level.
@@ -19,6 +22,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Position extends Model
 {
+    /** @use HasFactory<PositionFactory> */
+    use HasFactory;
+
     protected $fillable = ['event_id', 'team_role_id', 'quantity', 'min_level'];
 
     /**
@@ -38,6 +44,14 @@ class Position extends Model
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    /**
+     * @return HasMany<Assignment, $this>
+     */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(Assignment::class);
     }
 
     /**

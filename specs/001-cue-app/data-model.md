@@ -228,6 +228,7 @@ draft ──regenerate──▶ draft    (only unlocked/auto assignments replace
 | is_locked | bool | manual edits survive regeneration |
 | override_note | string null | required when coordinator overrides a hard constraint |
 | responded_at | timestamp null | |
+| conflict_flagged_at | timestamp null | set when a later availability change clashes with this published shift; the shift is kept (spec edge case) |
 | lock_version | int | optimistic concurrency; incremented on every update; stale writes rejected (FR-013) |
 | updated_by | FK users null | shown in the conflict message |
 

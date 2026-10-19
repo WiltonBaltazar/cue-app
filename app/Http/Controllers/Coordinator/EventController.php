@@ -45,7 +45,7 @@ class EventController extends Controller
         ]);
     }
 
-    public function show(Event $event): Response
+    public function show(Event $event, CancelEvent $cancelEvent): Response
     {
         Gate::authorize('view', $event);
 
@@ -53,8 +53,7 @@ class EventController extends Controller
 
         return Inertia::render('coord/events/show', [
             'event' => EventPresenter::full($event),
-            // People to notify on cancellation; assignments arrive with User Story 3.
-            'affectedVolunteers' => 0,
+            'affectedVolunteers' => $cancelEvent->affectedCount($event),
         ]);
     }
 

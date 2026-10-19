@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { House, UserRound } from 'lucide-react';
+import { CalendarDays, House, UserRound } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import AppLogo from '@/components/app-logo';
 import { NotificationBell } from '@/components/app/notification-bell';
@@ -7,14 +7,20 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
+import { index as myShifts } from '@/routes/volunteer/shifts';
 import type { NavItem } from '@/types';
 
 /**
- * Volunteer navigation. "Escala" and "Trocas" join when their pages exist
- * (User Stories 3 and 4).
+ * Volunteer navigation. "Trocas" joins with User Story 4.
  */
 const navItems: (NavItem & { matchPrefix?: string })[] = [
     { title: 'Início', href: home(), icon: House },
+    {
+        title: 'Escala',
+        href: myShifts(),
+        icon: CalendarDays,
+        matchPrefix: '/escala',
+    },
     {
         title: 'Perfil',
         href: editProfile(),
@@ -32,9 +38,9 @@ export default function VolunteerLayout({ children }: PropsWithChildren) {
     const { isCurrentUrl } = useCurrentUrl();
 
     const isActive = (item: (typeof navItems)[number]) =>
-        item.matchPrefix
-            ? isCurrentUrl(item.matchPrefix, undefined, true)
-            : isCurrentUrl(item.href);
+        isCurrentUrl(item.href) ||
+        (item.matchPrefix !== undefined &&
+            isCurrentUrl(item.matchPrefix, undefined, true));
 
     return (
         <div className="flex min-h-svh flex-col bg-background">

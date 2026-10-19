@@ -38,9 +38,11 @@ Colleagues eligible to receive a directed swap.
 
 ## Coordinator-only (`role:coordinator`)
 
-### `GET /app-api/assignments/{assignment}/substitutes`
+### `GET /app-api/positions/{position}/candidates?substituir={assignment}`
 
-Ordered by eligibility then lowest recent load (FR-019).
+Ranked candidates for an open place or to replace someone (`substituir`), ordered by
+eligibility, number of broken rules, then the generator's ranking (FR-019). Only volunteers
+who have the position's role are listed.
 
 ```json
 {
@@ -52,7 +54,7 @@ Ordered by eligibility then lowest recent load (FR-019).
 ```
 
 `violations` values: `availability`, `absence`, `min_level`, `frequency_cap`,
-`same_event`, `time_overlap`, `inactive`.
+`same_event`, `time_overlap`, `inactive`, `role` (does not have the role at all).
 
 ### `POST /app-api/assignments/check`
 
