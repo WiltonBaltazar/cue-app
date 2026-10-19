@@ -27,14 +27,30 @@ export function VolunteerProfileDetails({
                 </h2>
                 <dl className="divide-y">
                     <Row label="Nome">{volunteer.fullName}</Row>
+                    <Row label="Alcunha">{volunteer.nickname}</Row>
                     <Row label="Data de nascimento">
                         {formatDate(volunteer.birthDate)} ({volunteer.age} anos)
                     </Row>
                     <Row label="Bairro">{volunteer.neighbourhood}</Row>
                     <Row label="Telefone">
-                        {volunteer.phone ? formatPhone(volunteer.phone) : null}
+                        {volunteer.phone
+                            ? `${formatPhone(volunteer.phone)}${volunteer.phoneHasWhatsapp ? ' (WhatsApp)' : ''}`
+                            : null}
                     </Row>
+                    {volunteer.whatsappPhone && (
+                        <Row label="WhatsApp">
+                            {formatPhone(volunteer.whatsappPhone)}
+                        </Row>
+                    )}
                     <Row label="E-mail">{volunteer.email}</Row>
+                    <Row label="Redes sociais">
+                        {volunteer.socialMedia
+                            .map(
+                                (profile) =>
+                                    `${profile.network}: ${profile.handle}`,
+                            )
+                            .join('\n')}
+                    </Row>
                     {volunteer.isMinor && (
                         <>
                             <Row label="Encarregado">
@@ -65,6 +81,31 @@ export function VolunteerProfileDetails({
                 </dl>
             </section>
 
+            <section aria-labelledby="experience">
+                <h2 id="experience" className="font-semibold">
+                    Áreas e experiência
+                </h2>
+                <dl className="divide-y">
+                    <Row label="Outra área de interesse">
+                        {volunteer.otherArea}
+                    </Row>
+                    <Row label="Tem experiência em">
+                        {[
+                            ...volunteer.experienceAreas,
+                            volunteer.otherExperience,
+                        ]
+                            .filter(Boolean)
+                            .join(', ') || 'Ainda sem experiência'}
+                    </Row>
+                    <Row label="Descrição da experiência">
+                        {volunteer.experienceDescription}
+                    </Row>
+                    <Row label="Pode apoiar outros">
+                        {volunteer.canSupportOthers ? 'Sim' : 'Não'}
+                    </Row>
+                </dl>
+            </section>
+
             <section aria-labelledby="availability">
                 <h2 id="availability" className="font-semibold">
                     Disponibilidade
@@ -75,29 +116,36 @@ export function VolunteerProfileDetails({
                             .map((slot) => slot.label)
                             .join('\n')}
                     </Row>
-                    <Row label="Frequência">{volunteer.maxFrequencyLabel}</Row>
+                    <Row label="Outros dias">
+                        {volunteer.otherDaysByArrangement
+                            ? 'Mediante combinação prévia'
+                            : 'Não'}
+                    </Row>
+                    <Row label="Frequência">
+                        {volunteer.frequencyNote
+                            ? `${volunteer.maxFrequencyLabel} — ${volunteer.frequencyNote}`
+                            : volunteer.maxFrequencyLabel}
+                    </Row>
                     <Row label="Horários variáveis">
                         {volunteer.variableHours ? 'Sim' : 'Não'}
                     </Row>
-                    <Row label="Formações e reuniões">
-                        {volunteer.availableForTraining
-                            ? 'Disponível'
-                            : 'Não disponível'}
-                    </Row>
-                    <Row label="Pode apoiar outros">
-                        {volunteer.canSupportOthers ? 'Sim' : 'Não'}
+                    <Row label="Reuniões e formações">
+                        {volunteer.trainingAvailabilityLabel}
                     </Row>
                 </dl>
             </section>
 
             <section aria-labelledby="motivations">
                 <h2 id="motivations" className="font-semibold">
-                    Compromissos e motivações
+                    Compromissos, motivações e sugestões
                 </h2>
                 <dl className="divide-y">
                     <Row label="Compromissos">{volunteer.commitments}</Row>
                     <Row label="Motivações">{volunteer.motivations}</Row>
+                    <Row label="Expectativas">{volunteer.expectations}</Row>
+                    <Row label="Sonhos e objectivos">{volunteer.goals}</Row>
                     <Row label="Comentários">{volunteer.comments}</Row>
+                    <Row label="Sugestões">{volunteer.suggestions}</Row>
                 </dl>
             </section>
         </div>

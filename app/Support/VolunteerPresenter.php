@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Enums\Period;
 use App\Models\Availability;
+use App\Models\TeamRole;
 use App\Models\Volunteer;
 use App\Models\VolunteerSkill;
 
@@ -47,7 +48,11 @@ class VolunteerPresenter
             'email' => $volunteer->user?->email,
             'birthDate' => $volunteer->birth_date === null ? null : $volunteer->birthDate()->toDateString(),
             'age' => $volunteer->birth_date === null ? null : $volunteer->age(),
+            'nickname' => $volunteer->nickname,
             'neighbourhood' => $volunteer->neighbourhood,
+            'phoneHasWhatsapp' => $volunteer->phone_has_whatsapp,
+            'whatsappPhone' => $volunteer->whatsapp_phone,
+            'socialMedia' => $volunteer->social_media ?? [],
             'guardianName' => $volunteer->guardian_name,
             'guardianPhone' => $volunteer->guardian_phone,
             'guardianConsent' => $volunteer->guardian_consent_confirmed_at === null ? null : [
@@ -56,13 +61,24 @@ class VolunteerPresenter
             ],
             'educationLevel' => $volunteer->education_level,
             'training' => $volunteer->training,
+            'otherArea' => $volunteer->other_area,
+            'experienceRoleIds' => $volunteer->experience_role_ids ?? [],
+            'experienceAreas' => TeamRole::query()->whereKey($volunteer->experience_role_ids ?? [])->ordered()->pluck('name'),
+            'otherExperience' => $volunteer->other_experience,
+            'experienceDescription' => $volunteer->experience_description,
             'commitments' => $volunteer->commitments,
             'motivations' => $volunteer->motivations,
+            'expectations' => $volunteer->expectations,
+            'goals' => $volunteer->goals,
             'comments' => $volunteer->comments,
+            'suggestions' => $volunteer->suggestions,
             'maxFrequency' => $volunteer->max_frequency->value,
             'maxFrequencyLabel' => $volunteer->max_frequency->label(),
+            'frequencyNote' => $volunteer->frequency_note,
             'variableHours' => $volunteer->variable_hours,
-            'availableForTraining' => $volunteer->available_for_training,
+            'otherDaysByArrangement' => $volunteer->other_days_by_arrangement,
+            'trainingAvailability' => $volunteer->training_availability->value,
+            'trainingAvailabilityLabel' => $volunteer->training_availability->label(),
             'canSupportOthers' => $volunteer->can_support_others,
             'reviewNotes' => $volunteer->review_notes,
             'reviewedAt' => $volunteer->reviewed_at?->toIso8601String(),

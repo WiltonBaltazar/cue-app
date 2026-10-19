@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\Frequency;
 use App\Enums\Level;
 use App\Enums\Period;
+use App\Enums\TrainingAvailability;
 use App\Models\ConsentVersion;
 use App\Models\User;
 use App\Models\Volunteer;
@@ -33,6 +34,7 @@ class StoreRegistrationRequest extends FormRequest
         $this->merge([
             'phone_e164' => Phone::normalize($this->string('phone')->toString()),
             'guardian_phone_e164' => Phone::normalize($this->string('guardian_phone')->toString()),
+            'whatsapp_phone_e164' => Phone::normalize($this->string('whatsapp_phone')->toString()),
             'is_minor' => $this->ageFromBirthDate() !== null && $this->ageFromBirthDate() < Volunteer::ADULT_AGE,
         ]);
     }
@@ -48,6 +50,7 @@ class StoreRegistrationRequest extends FormRequest
         return [
             // I. Identificação
             'full_name' => ['required', 'string', 'min:3', 'max:160'],
+            'nickname' => ['nullable', 'string', 'max:80'],
             'birth_date' => [
                 'required',
                 'date_format:Y-m-d',
@@ -58,7 +61,12 @@ class StoreRegistrationRequest extends FormRequest
 
             // II. Contactos
             'phone' => ['required', 'string', 'max:30'],
+            'phone_has_whatsapp' => ['boolean'],
             'email' => ['nullable', 'string', 'email', 'max:190', Rule::unique(User::class, 'email')],
+            'whatsapp_phone' => ['nullable', 'string', 'max:30'],
+            'social_media' => ['array', 'max:10'],
+            'social_media.*.network' => ['required', 'string', Rule::in(Volunteer::SOCIAL_NETWORKS)],
+            'social_media.*.handle' => ['required', 'string', 'max:120'],
             'password' => ['required', 'string', Password::defaults(), 'confirmed'],
             'guardian_name' => [Rule::requiredIf($isMinor), 'nullable', 'string', 'max:160'],
             'guardian_phone' => [Rule::requiredIf($isMinor), 'nullable', 'string', 'max:30'],
@@ -67,26 +75,39 @@ class StoreRegistrationRequest extends FormRequest
             'education_level' => ['nullable', 'string', 'max:120'],
             'training' => ['nullable', 'string', 'max:255'],
 
-            // IV. Áreas de serviço
-            'skills' => ['required', 'array', 'min:1'],
+            // III. Áreas de interesse e serviço
+            'skills' => [Rule::requiredIf(blank($this->input('other_area'))), 'array'],
             'skills.*.team_role_id' => ['required', 'integer', 'distinct', Rule::exists('team_roles', 'id')->where('is_active', true)],
-            'skills.*.has_experience' => ['boolean'],
-            'level' => ['required', new Enum(Level::class)],
             'preferred_role_id' => ['nullable', 'integer', Rule::in($this->collect('skills')->pluck('team_role_id')->all())],
-            'can_support_others' => ['boolean'],
+            'other_area' => ['nullable', 'string', 'max:120'],
+
+            // IV. Experiência e competências
+            'no_experience' => ['boolean'],
+            'experience_role_ids' => ['array'],
+            'experience_role_ids.*' => ['integer', 'distinct', Rule::exists('team_roles', 'id')->where('is_active', true)],
+            'other_experience' => ['nullable', 'string', 'max:120'],
+            'experience_description' => ['nullable', 'string', 'max:2000'],
+            'level' => ['required', new Enum(Level::class)],
 
             // V. Disponibilidade
-            'availability' => ['required', 'array', 'min:1'],
+            'availability' => [Rule::requiredIf(! $this->boolean('variable_hours') && ! $this->boolean('other_days_by_arrangement')), 'array'],
             'availability.*.weekday' => ['required', 'integer', 'between:1,7'],
             'availability.*.period' => ['required', new Enum(Period::class)],
+            'other_days_by_arrangement' => ['boolean'],
             'max_frequency' => ['required', new Enum(Frequency::class)],
+            'frequency_note' => ['nullable', 'string', 'max:255'],
             'variable_hours' => ['boolean'],
-            'available_for_training' => ['boolean'],
-
-            // VI–VII. Compromissos, motivações, comentários
+            'training_availability' => ['required', new Enum(TrainingAvailability::class)],
             'commitments' => ['nullable', 'string', 'max:2000'],
+
+            // VI. Motivação, expectativas e sonhos
             'motivations' => ['nullable', 'string', 'max:2000'],
+            'expectations' => ['nullable', 'string', 'max:2000'],
+            'goals' => ['nullable', 'string', 'max:2000'],
+
+            // VII. Comentários e sugestões
             'comments' => ['nullable', 'string', 'max:2000'],
+            'suggestions' => ['nullable', 'string', 'max:2000'],
 
             // Declaração
             'consent_accepted' => ['accepted'],
@@ -113,6 +134,14 @@ class StoreRegistrationRequest extends FormRequest
                     $validator->errors()->add('phone', 'Já existe uma conta com este número. Entre ou recupere a palavra-passe.');
                 }
 
+                if (! $this->boolean('phone_has_whatsapp') && filled($this->input('whatsapp_phone')) && ! is_string($this->input('whatsapp_phone_e164'))) {
+                    $validator->errors()->add('whatsapp_phone', 'Indique um número de WhatsApp válido, por exemplo 84 123 4567.');
+                }
+
+                if (! $this->boolean('no_experience') && blank($this->input('experience_role_ids')) && blank($this->input('other_experience'))) {
+                    $validator->errors()->add('experience_role_ids', 'Indique as áreas em que tem experiência, ou marque que ainda não tem experiência.');
+                }
+
                 if ($this->boolean('is_minor') && filled($this->input('guardian_phone')) && ! is_string($this->input('guardian_phone_e164'))) {
                     $validator->errors()->add('guardian_phone', 'Indique um número de telefone válido para o encarregado.');
                 }
@@ -130,9 +159,8 @@ class StoreRegistrationRequest extends FormRequest
             'consent_accepted.accepted' => 'Para enviar o cadastro tem de aceitar a declaração.',
             'consent_version.in' => 'A declaração foi actualizada entretanto. Leia a nova versão e aceite novamente.',
             'skills.required' => 'Escolha pelo menos uma área de serviço.',
-            'skills.min' => 'Escolha pelo menos uma área de serviço.',
-            'availability.required' => 'Indique pelo menos um dia e período em que está disponível.',
-            'availability.min' => 'Indique pelo menos um dia e período em que está disponível.',
+            'availability.required' => 'Indique pelo menos um dia e período em que está disponível, ou que tem horários variáveis.',
+            'training_availability.required' => 'Indique se pode participar em reuniões e formações.',
             'guardian_name.required' => 'Menores de 18 anos têm de indicar o nome do encarregado.',
             'guardian_phone.required' => 'Menores de 18 anos têm de indicar o telefone do encarregado.',
         ];
@@ -145,6 +173,16 @@ class StoreRegistrationRequest extends FormRequest
     {
         return [
             'full_name' => 'nome completo',
+            'nickname' => 'alcunha',
+            'whatsapp_phone' => 'número de WhatsApp',
+            'social_media.*.handle' => 'perfil',
+            'other_area' => 'outra área',
+            'other_experience' => 'outra experiência',
+            'experience_description' => 'descrição da experiência',
+            'frequency_note' => 'outra situação',
+            'expectations' => 'expectativas',
+            'goals' => 'sonhos e objectivos',
+            'suggestions' => 'sugestões',
             'birth_date' => 'data de nascimento',
             'neighbourhood' => 'bairro',
             'phone' => 'telefone',

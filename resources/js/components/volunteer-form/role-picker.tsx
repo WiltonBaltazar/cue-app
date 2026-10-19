@@ -12,8 +12,8 @@ type Props = {
 };
 
 /**
- * Choose service areas, mark experience, and pick the area of greatest interest
- * (form section IV, FR-004).
+ * Choose service areas and the area of greatest interest (form section III, FR-004).
+ * Experience is asked separately, in ExperiencePicker.
  */
 export function RolePicker({
     roles,
@@ -27,10 +27,7 @@ export function RolePicker({
 
     const toggle = (roleId: number, checked: boolean) => {
         if (checked) {
-            onChange([
-                ...value,
-                { team_role_id: roleId, has_experience: false },
-            ]);
+            onChange([...value, { team_role_id: roleId }]);
 
             return;
         }
@@ -42,23 +39,14 @@ export function RolePicker({
         }
     };
 
-    const setExperience = (roleId: number, hasExperience: boolean) =>
-        onChange(
-            value.map((skill) =>
-                skill.team_role_id === roleId
-                    ? { ...skill, has_experience: hasExperience }
-                    : skill,
-            ),
-        );
-
     return (
         <fieldset className="grid gap-3">
             <legend className="mb-1 text-sm font-medium">
                 Em que áreas gostaria de servir?
             </legend>
             <p className="text-sm text-muted-foreground">
-                Escolha uma ou mais. Depois indique se já tem experiência e qual
-                é a área de maior interesse.
+                Pode escolher mais do que uma. Depois indique a área de maior
+                interesse.
             </p>
 
             <ul className="grid gap-2">
@@ -92,20 +80,6 @@ export function RolePicker({
 
                             {skill && (
                                 <div className="mt-1 flex flex-wrap gap-x-6 gap-y-1 pl-8 text-sm">
-                                    <label className="flex min-h-11 cursor-pointer items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={skill.has_experience}
-                                            onChange={(event) =>
-                                                setExperience(
-                                                    role.id,
-                                                    event.target.checked,
-                                                )
-                                            }
-                                            className="size-4 accent-primary"
-                                        />
-                                        Já tenho experiência
-                                    </label>
                                     <label className="flex min-h-11 cursor-pointer items-center gap-2">
                                         <input
                                             type="radio"

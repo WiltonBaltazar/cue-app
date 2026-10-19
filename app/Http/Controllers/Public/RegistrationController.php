@@ -6,11 +6,13 @@ use App\Actions\Registration\SubmitRegistration;
 use App\Enums\Frequency;
 use App\Enums\Level;
 use App\Enums\Period;
+use App\Enums\TrainingAvailability;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRegistrationRequest;
 use App\Models\Availability;
 use App\Models\ConsentVersion;
 use App\Models\TeamRole;
+use App\Models\Volunteer;
 use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -33,10 +35,12 @@ class RegistrationController extends Controller
         return Inertia::render('registration/create', [
             'declaration' => ['version' => $declaration->version, 'body' => $declaration->body],
             'teamRoles' => TeamRole::query()->active()->ordered()->get(['id', 'name', 'description']),
-            'levels' => collect(Level::cases())->map(fn (Level $level) => ['value' => $level->value, 'label' => $level->label()]),
+            'levels' => collect(Level::cases())->map(fn (Level $level) => ['value' => $level->value, 'label' => $level->selfAssessmentLabel()]),
             'frequencies' => collect(Frequency::cases())->map(fn (Frequency $frequency) => ['value' => $frequency->value, 'label' => $frequency->label()]),
             'periods' => collect(Period::cases())->map(fn (Period $period) => ['value' => $period->value, 'label' => $period->label()]),
-            'weekdays' => collect(Availability::WEEKDAYS)->map(fn (string $label, int $day) => ['value' => $day, 'label' => $label])->values(),
+            'weekdays' => Availability::weekdayOptions(),
+            'trainingAvailabilities' => collect(TrainingAvailability::cases())->map(fn (TrainingAvailability $option) => ['value' => $option->value, 'label' => $option->label()]),
+            'socialNetworks' => Volunteer::SOCIAL_NETWORKS,
             'honeypot' => $honeypot->toArray(),
             'turnstileSiteKey' => config('services.turnstile.site_key'),
         ]);
@@ -46,7 +50,7 @@ class RegistrationController extends Controller
     {
         abort_unless($settings->registrationIsOpen(), 403, 'O cadastro está fechado.');
 
-        $submitRegistration->handle($request->validated() + $request->only(['phone_e164', 'guardian_phone_e164']));
+        $submitRegistration->handle($request->validated() + $request->only(['phone_e164', 'guardian_phone_e164', 'whatsapp_phone_e164']));
 
         return to_route('registration.submitted');
     }

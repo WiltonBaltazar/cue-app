@@ -252,9 +252,11 @@ test('an availability change hitting a published shift flags it without removing
     $this->actingAs($this->coordinator)->post(route('coord.schedules.publish', $this->scenario->schedule));
 
     $this->actingAs($volunteer->user)->put(route('volunteer.profile.update'), [
-        'skills' => [['team_role_id' => $this->scenario->camera->id, 'has_experience' => true]],
+        'skills' => [['team_role_id' => $this->scenario->camera->id]],
+        'experience_role_ids' => [$this->scenario->camera->id],
         'availability' => [['weekday' => 2, 'period' => 'evening']],
         'max_frequency' => 'weekly',
+        'training_availability' => 'regular',
     ])->assertSessionHasNoErrors();
 
     $assignment = Assignment::query()->firstOrFail();

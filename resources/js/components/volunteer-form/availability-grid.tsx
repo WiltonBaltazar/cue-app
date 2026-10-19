@@ -51,7 +51,14 @@ export function AvailabilityGrid({
                         key={day.value}
                         className="grid grid-cols-[6rem_1fr] items-center gap-2"
                     >
-                        <span className="text-sm font-medium">{day.label}</span>
+                        <span className="grid text-sm font-medium">
+                            {day.label}
+                            {day.hint && (
+                                <span className="text-xs font-normal text-muted-foreground">
+                                    {day.hint}
+                                </span>
+                            )}
+                        </span>
                         <div className="grid grid-cols-3 gap-2">
                             {periods.map((period) => {
                                 const checked = isChecked(
@@ -72,7 +79,7 @@ export function AvailabilityGrid({
                                             type="checkbox"
                                             className="sr-only"
                                             checked={checked}
-                                            aria-label={`${day.label}, ${period.label}`}
+                                            aria-label={`${day.hint ? `${day.label} (${day.hint})` : day.label}, ${period.label}`}
                                             onChange={(event) =>
                                                 toggle(
                                                     day.value,

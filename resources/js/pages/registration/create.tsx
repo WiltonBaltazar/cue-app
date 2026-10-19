@@ -14,7 +14,10 @@ import {
     PhoneField,
     TextField,
 } from '@/components/volunteer-form/fields';
+import { EducationField } from '@/components/volunteer-form/education-field';
+import { ExperiencePicker } from '@/components/volunteer-form/experience-picker';
 import { RolePicker } from '@/components/volunteer-form/role-picker';
+import { SocialMediaList } from '@/components/volunteer-form/social-media-list';
 import { Turnstile } from '@/components/volunteer-form/turnstile';
 import type {
     Option,
@@ -42,6 +45,8 @@ type Props = {
     frequencies: Option[];
     periods: Option[];
     weekdays: Option<number>[];
+    trainingAvailabilities: Option[];
+    socialNetworks: string[];
     honeypot: Honeypot;
     turnstileSiteKey: string | null;
 };
@@ -64,6 +69,7 @@ const STEPS = [
         title: 'Identificação',
         fields: [
             'full_name',
+            'nickname',
             'birth_date',
             'neighbourhood',
             'guardian_name',
@@ -72,27 +78,54 @@ const STEPS = [
     },
     {
         title: 'Contactos e conta',
-        fields: ['phone', 'email', 'password', 'password_confirmation'],
+        fields: [
+            'phone',
+            'phone_has_whatsapp',
+            'whatsapp_phone',
+            'email',
+            'social_media',
+            'password',
+            'password_confirmation',
+        ],
     },
     {
         title: 'Escolaridade e formação',
         fields: ['education_level', 'training'],
     },
     {
-        title: 'Áreas de serviço',
-        fields: ['skills', 'level', 'preferred_role_id', 'can_support_others'],
+        title: 'Áreas de interesse e serviço',
+        fields: ['skills', 'preferred_role_id', 'other_area'],
+    },
+    {
+        title: 'Experiência e competências',
+        fields: [
+            'experience_role_ids',
+            'other_experience',
+            'no_experience',
+            'experience_description',
+            'level',
+        ],
     },
     {
         title: 'Disponibilidade',
         fields: [
             'availability',
+            'other_days_by_arrangement',
             'max_frequency',
+            'frequency_note',
             'variable_hours',
-            'available_for_training',
+            'training_availability',
+            'commitments',
         ],
     },
-    { title: 'Compromissos', fields: ['commitments'] },
-    { title: 'Motivações e comentários', fields: ['motivations', 'comments'] },
+    {
+        title: 'Motivação, expectativas e sonhos',
+        fields: ['motivations', 'expectations', 'goals'],
+    },
+    {
+        title: 'Comentários e sugestões',
+        fields: ['comments', 'suggestions'],
+    },
     {
         title: 'Declaração',
         fields: [
@@ -109,16 +142,22 @@ const DRAFT_KEY = 'cue.registration-draft';
 /** Only non-sensitive fields survive a reload (P1); sensitive ones stay in memory. */
 const DRAFT_FIELDS = [
     'full_name',
+    'nickname',
     'phone',
+    'phone_has_whatsapp',
     'email',
     'skills',
-    'level',
     'preferred_role_id',
-    'can_support_others',
+    'other_area',
+    'experience_role_ids',
+    'other_experience',
+    'no_experience',
+    'level',
     'availability',
+    'other_days_by_arrangement',
     'max_frequency',
     'variable_hours',
-    'available_for_training',
+    'training_availability',
 ] as const;
 
 function readDraft(): { step: number; data: Partial<RegistrationForm> } | null {
@@ -147,6 +186,8 @@ export default function RegistrationCreate({
     frequencies,
     periods,
     weekdays,
+    trainingAvailabilities,
+    socialNetworks,
     honeypot,
     turnstileSiteKey,
 }: Props) {
@@ -160,8 +201,12 @@ export default function RegistrationCreate({
 
     const form = useForm<RegistrationForm>({
         full_name: '',
+        nickname: '',
         birth_date: '',
         neighbourhood: '',
+        phone_has_whatsapp: true,
+        whatsapp_phone: '',
+        social_media: [],
         guardian_name: '',
         guardian_phone: '',
         phone: '',
@@ -171,16 +216,26 @@ export default function RegistrationCreate({
         education_level: '',
         training: '',
         skills: [],
-        level: '',
         preferred_role_id: null,
+        other_area: '',
+        experience_role_ids: [],
+        other_experience: '',
+        no_experience: false,
+        experience_description: '',
+        level: '',
         can_support_others: false,
         availability: [],
+        other_days_by_arrangement: false,
         max_frequency: '',
+        frequency_note: '',
         variable_hours: false,
-        available_for_training: false,
+        training_availability: '',
         commitments: '',
         motivations: '',
+        expectations: '',
+        goals: '',
         comments: '',
+        suggestions: '',
         consent_accepted: false,
         consent_version: declaration.version,
         'cf-turnstile-response': '',
@@ -206,6 +261,18 @@ export default function RegistrationCreate({
             // Storage unavailable (private mode): nothing to keep.
         }
     }, [data, step]);
+
+    // A declaration published while the form was open arrives with the validation error:
+    // switch to it and ask for acceptance again, so the person accepts what they read.
+    useEffect(() => {
+        if (data.consent_version !== declaration.version) {
+            setData((current) => ({
+                ...current,
+                consent_version: declaration.version,
+                consent_accepted: false,
+            }));
+        }
+    }, [declaration.version, data.consent_version, setData]);
 
     const onTurnstileToken = useCallback(
         (token: string) => setData('cf-turnstile-response', token),
@@ -243,15 +310,29 @@ export default function RegistrationCreate({
                     return 'As palavras-passe não coincidem.';
                 return null;
             case 3:
-                if (data.skills.length === 0)
+                if (data.skills.length === 0 && !data.other_area.trim())
                     return 'Escolha pelo menos uma área de serviço.';
-                if (!data.level) return 'Indique o seu nível de experiência.';
                 return null;
             case 4:
-                if (data.availability.length === 0)
+                if (
+                    !data.no_experience &&
+                    data.experience_role_ids.length === 0 &&
+                    !data.other_experience.trim()
+                )
+                    return 'Indique as áreas em que tem experiência, ou marque que ainda não tem experiência.';
+                if (!data.level) return 'Indique o seu nível de competência.';
+                return null;
+            case 5:
+                if (
+                    data.availability.length === 0 &&
+                    !data.variable_hours &&
+                    !data.other_days_by_arrangement
+                )
                     return 'Indique pelo menos um dia e período.';
                 if (!data.max_frequency)
                     return 'Indique com que frequência pode servir.';
+                if (!data.training_availability)
+                    return 'Indique se pode participar em reuniões e formações.';
                 return null;
             default:
                 return null;
@@ -316,8 +397,8 @@ export default function RegistrationCreate({
 
             <h1 className="text-2xl font-semibold">Cadastro de voluntário</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-                Equipa de Rádio e Televisão Alfa &amp; Ómega. Leva cerca de 10
-                minutos.
+                Equipa de Filmagem e Transmissão dos Cultos da Rádio e Televisão
+                Alfa &amp; Ómega. Leva cerca de 15 minutos.
             </p>
 
             <nav aria-label="Progresso do cadastro" className="mt-6">
@@ -371,6 +452,17 @@ export default function RegistrationCreate({
                             autoComplete="name"
                             required
                             error={fieldErrors.full_name}
+                        />
+                        <TextField
+                            label="Alcunha ou nome pelo qual é conhecido"
+                            optional
+                            autoComplete="nickname"
+                            maxLength={80}
+                            value={data.nickname}
+                            onChange={(event) =>
+                                setData('nickname', event.target.value)
+                            }
+                            error={fieldErrors.nickname}
                         />
                         <TextField
                             label="Data de nascimento"
@@ -443,6 +535,30 @@ export default function RegistrationCreate({
                             hint="Vai usar este número para entrar no Cue App."
                             error={fieldErrors.phone}
                         />
+                        <CheckboxField
+                            label="Uso este número no WhatsApp"
+                            checked={data.phone_has_whatsapp}
+                            onChange={(checked) =>
+                                setData('phone_has_whatsapp', checked)
+                            }
+                        />
+                        {!data.phone_has_whatsapp && (
+                            <PhoneField
+                                label="Número de WhatsApp"
+                                optional
+                                autoComplete="off"
+                                placeholder="84 123 4567"
+                                value={data.whatsapp_phone}
+                                onChange={(event) =>
+                                    setData(
+                                        'whatsapp_phone',
+                                        event.target.value,
+                                    )
+                                }
+                                hint="Se tem WhatsApp noutro número."
+                                error={fieldErrors.whatsapp_phone}
+                            />
+                        )}
                         <TextField
                             label="E-mail"
                             optional
@@ -454,6 +570,14 @@ export default function RegistrationCreate({
                             }
                             hint="Com e-mail pode recuperar a palavra-passe sozinho."
                             error={fieldErrors.email}
+                        />
+                        <SocialMediaList
+                            networks={socialNetworks}
+                            value={data.social_media}
+                            onChange={(profiles) =>
+                                setData('social_media', profiles)
+                            }
+                            errors={fieldErrors}
                         />
                         <div className="grid gap-2">
                             <Label htmlFor="password">Palavra-passe</Label>
@@ -497,20 +621,19 @@ export default function RegistrationCreate({
 
                 {step === 2 && (
                     <>
-                        <TextField
-                            label="Escolaridade"
-                            optional
-                            placeholder="Ex.: 12.ª classe, licenciatura"
+                        <EducationField
                             value={data.education_level}
-                            onChange={(event) =>
-                                setData('education_level', event.target.value)
+                            onChange={(level) =>
+                                setData('education_level', level)
                             }
                             error={fieldErrors.education_level}
                         />
                         <TextField
-                            label="Formação ou profissão"
+                            label="Cursos, certificados ou formações"
                             optional
-                            placeholder="Ex.: informática, electricidade, design"
+                            placeholder="Ex.: curso de informática, certificado de electricista"
+                            hint="Académicos, técnicos ou profissionais que sejam úteis à equipa."
+                            maxLength={255}
                             value={data.training}
                             onChange={(event) =>
                                 setData('training', event.target.value)
@@ -532,26 +655,79 @@ export default function RegistrationCreate({
                             }
                             error={fieldErrors.skills}
                         />
-                        <RadioGroupField
-                            legend="Qual é o seu nível de experiência?"
-                            name="level"
-                            options={levels}
-                            value={data.level}
-                            onChange={(level) => setData('level', level)}
-                            hint="Um coordenador pode ajustar o nível em cada área."
-                            error={fieldErrors.level}
-                        />
-                        <CheckboxField
-                            label="Posso apoiar e ensinar outros membros"
-                            checked={data.can_support_others}
-                            onChange={(checked) =>
-                                setData('can_support_others', checked)
+                        <TextField
+                            label="Outra área"
+                            optional
+                            placeholder="Qual?"
+                            maxLength={120}
+                            value={data.other_area}
+                            onChange={(event) =>
+                                setData('other_area', event.target.value)
                             }
+                            error={fieldErrors.other_area}
                         />
                     </>
                 )}
 
                 {step === 4 && (
+                    <>
+                        <ExperiencePicker
+                            roles={teamRoles}
+                            value={data.experience_role_ids}
+                            onChange={(roleIds) =>
+                                setData('experience_role_ids', roleIds)
+                            }
+                            other={data.other_experience}
+                            onOtherChange={(other) =>
+                                setData('other_experience', other)
+                            }
+                            noExperience={data.no_experience}
+                            onNoExperienceChange={(noExperience) => {
+                                setData((current) => ({
+                                    ...current,
+                                    no_experience: noExperience,
+                                    level: noExperience
+                                        ? 'beginner'
+                                        : current.level,
+                                }));
+                            }}
+                            error={
+                                fieldErrors.experience_role_ids ??
+                                fieldErrors.other_experience
+                            }
+                        />
+                        {!data.no_experience && (
+                            <>
+                                <TextAreaField
+                                    label="Descreva brevemente a sua experiência"
+                                    optional
+                                    hint="Há quanto tempo, onde, e que equipamentos ou programas sabe usar."
+                                    value={data.experience_description}
+                                    onChange={(event) =>
+                                        setData(
+                                            'experience_description',
+                                            event.target.value,
+                                        )
+                                    }
+                                    error={fieldErrors.experience_description}
+                                />
+                                <RadioGroupField
+                                    legend="Como avalia o seu nível nas áreas em que tem experiência?"
+                                    name="level"
+                                    options={levels}
+                                    value={data.level}
+                                    onChange={(level) =>
+                                        setData('level', level)
+                                    }
+                                    hint="Se varia de área para área, indique o nível da área em que tem mais experiência. Um coordenador ajusta o nível em cada área."
+                                    error={fieldErrors.level}
+                                />
+                            </>
+                        )}
+                    </>
+                )}
+
+                {step === 5 && (
                     <>
                         <AvailabilityGrid
                             weekdays={weekdays}
@@ -560,8 +736,23 @@ export default function RegistrationCreate({
                             onChange={(slots) => setData('availability', slots)}
                             error={fieldErrors.availability}
                         />
+                        <CheckboxField
+                            label="Posso servir noutros dias, mediante combinação prévia"
+                            checked={data.other_days_by_arrangement}
+                            onChange={(checked) =>
+                                setData('other_days_by_arrangement', checked)
+                            }
+                        />
+                        <CheckboxField
+                            label="Tenho horários variáveis, conforme a minha agenda"
+                            hint="Pode ser escalado em qualquer dia, com menos prioridade. Se puder, marque também os dias e períodos mais prováveis."
+                            checked={data.variable_hours}
+                            onChange={(checked) =>
+                                setData('variable_hours', checked)
+                            }
+                        />
                         <RadioGroupField
-                            legend="Com que frequência pode servir?"
+                            legend="Com que frequência pode participar nas actividades da equipa?"
                             name="max_frequency"
                             options={frequencies}
                             value={data.max_frequency}
@@ -570,41 +761,43 @@ export default function RegistrationCreate({
                             }
                             error={fieldErrors.max_frequency}
                         />
-                        <CheckboxField
-                            label="Tenho horários variáveis"
-                            hint="Pode ser escalado em qualquer dia, com menos prioridade."
-                            checked={data.variable_hours}
-                            onChange={(checked) =>
-                                setData('variable_hours', checked)
+                        <TextField
+                            label="Outra situação ou detalhe sobre a frequência"
+                            optional
+                            maxLength={255}
+                            value={data.frequency_note}
+                            onChange={(event) =>
+                                setData('frequency_note', event.target.value)
                             }
+                            error={fieldErrors.frequency_note}
                         />
-                        <CheckboxField
-                            label="Estou disponível para formações e reuniões"
-                            checked={data.available_for_training}
-                            onChange={(checked) =>
-                                setData('available_for_training', checked)
+                        <TextAreaField
+                            label="Há compromissos que limitam a sua disponibilidade?"
+                            optional
+                            hint="Trabalho, estudos, família, outros ministérios… Diga quais e em que dias ou horários."
+                            value={data.commitments}
+                            onChange={(event) =>
+                                setData('commitments', event.target.value)
                             }
+                            error={fieldErrors.commitments}
+                        />
+                        <RadioGroupField
+                            legend="Pode participar em reuniões, formações, ensaios técnicos e outras actividades extraordinárias?"
+                            name="training_availability"
+                            options={trainingAvailabilities}
+                            value={data.training_availability}
+                            onChange={(answer) =>
+                                setData('training_availability', answer)
+                            }
+                            error={fieldErrors.training_availability}
                         />
                     </>
-                )}
-
-                {step === 5 && (
-                    <TextAreaField
-                        label="Tem outros compromissos na igreja ou no trabalho?"
-                        optional
-                        hint="Ajuda a evitar escalas em dias em que já está ocupado."
-                        value={data.commitments}
-                        onChange={(event) =>
-                            setData('commitments', event.target.value)
-                        }
-                        error={fieldErrors.commitments}
-                    />
                 )}
 
                 {step === 6 && (
                     <>
                         <TextAreaField
-                            label="Porque quer servir na equipa de mídia?"
+                            label="O que o levou a juntar-se à equipa de Filmagem e Transmissão dos Cultos?"
                             optional
                             value={data.motivations}
                             onChange={(event) =>
@@ -613,7 +806,30 @@ export default function RegistrationCreate({
                             error={fieldErrors.motivations}
                         />
                         <TextAreaField
-                            label="Comentários"
+                            label="O que espera aprender, desenvolver ou alcançar nesta equipa?"
+                            optional
+                            value={data.expectations}
+                            onChange={(event) =>
+                                setData('expectations', event.target.value)
+                            }
+                            error={fieldErrors.expectations}
+                        />
+                        <TextAreaField
+                            label="Que sonhos, projectos ou objectivos gostaria de concretizar neste serviço?"
+                            optional
+                            value={data.goals}
+                            onChange={(event) =>
+                                setData('goals', event.target.value)
+                            }
+                            error={fieldErrors.goals}
+                        />
+                    </>
+                )}
+
+                {step === 7 && (
+                    <>
+                        <TextAreaField
+                            label="Há alguma informação adicional que queira partilhar connosco?"
                             optional
                             value={data.comments}
                             onChange={(event) =>
@@ -621,10 +837,19 @@ export default function RegistrationCreate({
                             }
                             error={fieldErrors.comments}
                         />
+                        <TextAreaField
+                            label="Tem sugestões para melhorar a organização, o funcionamento ou a qualidade técnica da equipa?"
+                            optional
+                            value={data.suggestions}
+                            onChange={(event) =>
+                                setData('suggestions', event.target.value)
+                            }
+                            error={fieldErrors.suggestions}
+                        />
                     </>
                 )}
 
-                {step === 7 && (
+                {step === 8 && (
                     <>
                         <div className="max-h-80 overflow-y-auto rounded-lg border bg-muted/30 p-4 text-sm leading-6 whitespace-pre-line">
                             {declaration.body}
@@ -697,6 +922,7 @@ export default function RegistrationCreate({
 
 function toRoman(value: number): string {
     return (
-        ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][value - 1] ?? String(value)
+        ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'][value - 1] ??
+        String(value)
     );
 }

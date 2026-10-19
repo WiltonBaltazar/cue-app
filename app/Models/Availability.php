@@ -26,6 +26,26 @@ class Availability extends Model
         7 => 'Domingo',
     ];
 
+    /** Regular service on that weekday, shown beside the day on the availability grid. */
+    public const WEEKDAY_SERVICES = [
+        2 => 'Estudo Bíblico',
+        7 => 'Culto',
+    ];
+
+    /**
+     * Weekday options for the availability grid.
+     *
+     * @return list<array{value: int, label: string, hint: string|null}>
+     */
+    public static function weekdayOptions(): array
+    {
+        return array_map(
+            fn (int $day, string $label) => ['value' => $day, 'label' => $label, 'hint' => self::WEEKDAY_SERVICES[$day] ?? null],
+            array_keys(self::WEEKDAYS),
+            self::WEEKDAYS,
+        );
+    }
+
     protected $fillable = ['volunteer_id', 'weekday', 'period'];
 
     /**

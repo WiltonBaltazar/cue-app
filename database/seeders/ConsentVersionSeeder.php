@@ -14,9 +14,9 @@ class ConsentVersionSeeder extends Seeder
     public const BODY = <<<'TEXT'
         Declaro que as informações prestadas nesta ficha são verdadeiras.
 
-        Autorizo a equipa da Rádio e Televisão Alfa & Ómega (RTVAO) da IEAD – Ministério Alfa & Ómega a guardar e usar estes dados apenas para organizar a minha participação como voluntário: cadastro, escalas, trocas, ausências e notificações.
+        Autorizo a equipa da Rádio e Televisão Alfa & Ómega (RTVAO) da IEAD – Ministério Alfa & Ómega a guardar e usar estes dados apenas para organizar a minha participação como voluntário: cadastro, escalas, trocas, ausências, notificações, identificação de competências e formação da equipa.
 
-        Sei que os meus dados pessoais (data de nascimento, escolaridade, compromissos, motivações e contactos) só são vistos pelos coordenadores e por mim, e que os colegas apenas vêem o meu primeiro nome, a inicial do apelido e a função nas escalas.
+        Sei que os meus dados pessoais (data de nascimento, contactos e redes sociais, escolaridade, experiência, compromissos, motivações, expectativas e sugestões) só são vistos pelos coordenadores e por mim, e que os colegas apenas vêem o meu primeiro nome, a inicial do apelido e a função nas escalas.
 
         Sei que posso consultar e corrigir os meus dados a qualquer momento, e pedir a sua remoção, ficando apenas registos anónimos de participação.
         TEXT;

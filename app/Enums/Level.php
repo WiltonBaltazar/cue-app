@@ -22,6 +22,14 @@ enum Level: string
         };
     }
 
+    /**
+     * How the registration form asks for the level (question 9): "mentor" is described.
+     */
+    public function selfAssessmentLabel(): string
+    {
+        return $this === self::Mentor ? 'Posso apoiar outros membros e orientar a sua aprendizagem' : $this->label();
+    }
+
     public function rank(): int
     {
         return match ($this) {

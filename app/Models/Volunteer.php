@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Concerns\LogsAuditActivity;
 use App\Enums\Frequency;
 use App\Enums\GuardianConsentMethod;
+use App\Enums\TrainingAvailability;
 use App\Enums\VolunteerStatus;
 use Carbon\CarbonImmutable;
 use Database\Factories\VolunteerFactory;
@@ -23,20 +24,33 @@ use Illuminate\Support\Str;
  * @property int|null $user_id
  * @property VolunteerStatus $status
  * @property string $full_name
+ * @property string|null $nickname
  * @property string|null $birth_date Y-m-d (encrypted); null once anonymised
  * @property int|null $birth_year
  * @property bool $is_minor
  * @property string|null $guardian_name
  * @property string|null $guardian_phone
  * @property string|null $neighbourhood
+ * @property bool $phone_has_whatsapp
+ * @property string|null $whatsapp_phone E.164, only when WhatsApp is on another number
+ * @property list<array{network: string, handle: string}>|null $social_media
  * @property string|null $education_level
  * @property string|null $training
+ * @property string|null $other_area
+ * @property list<int>|null $experience_role_ids roles with experience, whether or not the person serves in them
+ * @property string|null $other_experience
+ * @property string|null $experience_description
  * @property string|null $commitments
  * @property string|null $motivations
+ * @property string|null $expectations
+ * @property string|null $goals
  * @property string|null $comments
+ * @property string|null $suggestions
  * @property Frequency $max_frequency
+ * @property string|null $frequency_note
  * @property bool $variable_hours
- * @property bool $available_for_training
+ * @property bool $other_days_by_arrangement
+ * @property TrainingAvailability $training_availability
  * @property bool $can_support_others
  * @property CarbonImmutable $consent_accepted_at
  * @property int $consent_version
@@ -65,21 +79,36 @@ class Volunteer extends Model
 
     public const ADULT_AGE = 18;
 
+    public const SOCIAL_NETWORKS = ['Facebook', 'Instagram', 'TikTok', 'YouTube', 'X (Twitter)', 'LinkedIn', 'Outra'];
+
     protected $fillable = [
         'user_id',
         'full_name',
+        'nickname',
         'birth_date',
         'guardian_name',
         'guardian_phone',
         'neighbourhood',
+        'phone_has_whatsapp',
+        'whatsapp_phone',
+        'social_media',
         'education_level',
         'training',
+        'other_area',
+        'experience_role_ids',
+        'other_experience',
+        'experience_description',
         'commitments',
         'motivations',
+        'expectations',
+        'goals',
         'comments',
+        'suggestions',
         'max_frequency',
+        'frequency_note',
         'variable_hours',
-        'available_for_training',
+        'other_days_by_arrangement',
+        'training_availability',
         'can_support_others',
     ];
 
@@ -88,6 +117,7 @@ class Volunteer extends Model
      */
     protected $attributes = [
         'status' => 'pending',
+        'training_availability' => 'none',
     ];
 
     /**
@@ -103,14 +133,24 @@ class Volunteer extends Model
             'guardian_name' => 'encrypted',
             'guardian_phone' => 'encrypted',
             'neighbourhood' => 'encrypted',
+            'phone_has_whatsapp' => 'boolean',
+            'whatsapp_phone' => 'encrypted',
+            'social_media' => 'encrypted:array',
             'education_level' => 'encrypted',
             'training' => 'encrypted',
+            'experience_role_ids' => 'array',
+            'experience_description' => 'encrypted',
             'commitments' => 'encrypted',
             'motivations' => 'encrypted',
+            'expectations' => 'encrypted',
+            'goals' => 'encrypted',
             'comments' => 'encrypted',
+            'suggestions' => 'encrypted',
             'max_frequency' => Frequency::class,
+            'frequency_note' => 'encrypted',
             'variable_hours' => 'boolean',
-            'available_for_training' => 'boolean',
+            'other_days_by_arrangement' => 'boolean',
+            'training_availability' => TrainingAvailability::class,
             'can_support_others' => 'boolean',
             'consent_accepted_at' => 'datetime',
             'consent_version' => 'integer',

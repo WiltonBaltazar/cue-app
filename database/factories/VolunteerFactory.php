@@ -6,6 +6,7 @@ use App\Enums\Frequency;
 use App\Enums\GuardianConsentMethod;
 use App\Enums\Level;
 use App\Enums\Period;
+use App\Enums\TrainingAvailability;
 use App\Enums\VolunteerStatus;
 use App\Models\ConsentVersion;
 use App\Models\TeamRole;
@@ -37,7 +38,7 @@ class VolunteerFactory extends Factory
             'comments' => null,
             'max_frequency' => Frequency::TwoThreeMonthly,
             'variable_hours' => false,
-            'available_for_training' => true,
+            'training_availability' => TrainingAvailability::Regular,
             'can_support_others' => false,
         ];
     }

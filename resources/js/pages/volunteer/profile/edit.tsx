@@ -14,7 +14,10 @@ import {
     TextAreaField,
     TextField,
 } from '@/components/volunteer-form/fields';
+import { EducationField } from '@/components/volunteer-form/education-field';
+import { ExperiencePicker } from '@/components/volunteer-form/experience-picker';
 import { RolePicker } from '@/components/volunteer-form/role-picker';
+import { SocialMediaList } from '@/components/volunteer-form/social-media-list';
 import type {
     Option,
     TeamRoleOption,
@@ -31,6 +34,8 @@ type Props = {
     frequencies: Option[];
     periods: Option[];
     weekdays: Option<number>[];
+    trainingAvailabilities: Option[];
+    socialNetworks: string[];
 };
 
 type ProfileForm = VolunteerFormFields & {
@@ -49,11 +54,19 @@ export default function VolunteerProfileEdit({
     frequencies,
     periods,
     weekdays,
+    trainingAvailabilities,
+    socialNetworks,
 }: Props) {
     const form = useForm<ProfileForm>({
         full_name: volunteer.fullName,
         birth_date: volunteer.birthDate,
+        nickname: volunteer.nickname ?? '',
         neighbourhood: volunteer.neighbourhood ?? '',
+        phone_has_whatsapp: volunteer.phoneHasWhatsapp,
+        whatsapp_phone: volunteer.whatsappPhone
+            ? localPhone(volunteer.whatsappPhone)
+            : '',
+        social_media: volunteer.socialMedia,
         guardian_name: volunteer.guardianName ?? '',
         guardian_phone: volunteer.guardianPhone
             ? localPhone(volunteer.guardianPhone)
@@ -62,22 +75,33 @@ export default function VolunteerProfileEdit({
         training: volunteer.training ?? '',
         skills: volunteer.skills.map((skill) => ({
             team_role_id: skill.teamRoleId,
-            has_experience: skill.hasExperience,
         })),
         preferred_role_id:
             volunteer.skills.find((skill) => skill.isPreferred)?.teamRoleId ??
             null,
+        other_area: volunteer.otherArea ?? '',
+        experience_role_ids: volunteer.experienceRoleIds,
+        other_experience: volunteer.otherExperience ?? '',
+        no_experience:
+            volunteer.experienceRoleIds.length === 0 &&
+            !volunteer.otherExperience,
+        experience_description: volunteer.experienceDescription ?? '',
         can_support_others: volunteer.canSupportOthers,
         availability: volunteer.availability.map(({ weekday, period }) => ({
             weekday,
             period,
         })),
+        other_days_by_arrangement: volunteer.otherDaysByArrangement,
         max_frequency: volunteer.maxFrequency,
+        frequency_note: volunteer.frequencyNote ?? '',
         variable_hours: volunteer.variableHours,
-        available_for_training: volunteer.availableForTraining,
+        training_availability: volunteer.trainingAvailability,
         commitments: volunteer.commitments ?? '',
         motivations: volunteer.motivations ?? '',
+        expectations: volunteer.expectations ?? '',
+        goals: volunteer.goals ?? '',
         comments: volunteer.comments ?? '',
+        suggestions: volunteer.suggestions ?? '',
     });
 
     const { data, setData, processing } = form;
@@ -114,6 +138,16 @@ export default function VolunteerProfileEdit({
                         error={errors.full_name}
                     />
                     <TextField
+                        label="Alcunha ou nome pelo qual é conhecido"
+                        optional
+                        maxLength={80}
+                        value={data.nickname}
+                        onChange={(event) =>
+                            setData('nickname', event.target.value)
+                        }
+                        error={errors.nickname}
+                    />
+                    <TextField
                         label="Data de nascimento"
                         type="date"
                         value={data.birth_date}
@@ -131,6 +165,33 @@ export default function VolunteerProfileEdit({
                             setData('neighbourhood', event.target.value)
                         }
                         error={errors.neighbourhood}
+                    />
+                    <CheckboxField
+                        label="Uso o meu número de telefone no WhatsApp"
+                        checked={data.phone_has_whatsapp}
+                        onChange={(checked) =>
+                            setData('phone_has_whatsapp', checked)
+                        }
+                    />
+                    {!data.phone_has_whatsapp && (
+                        <PhoneField
+                            label="Número de WhatsApp"
+                            optional
+                            value={data.whatsapp_phone}
+                            onChange={(event) =>
+                                setData('whatsapp_phone', event.target.value)
+                            }
+                            hint="Se tem WhatsApp noutro número."
+                            error={errors.whatsapp_phone}
+                        />
+                    )}
+                    <SocialMediaList
+                        networks={socialNetworks}
+                        value={data.social_media}
+                        onChange={(profiles) =>
+                            setData('social_media', profiles)
+                        }
+                        errors={errors}
                     />
                     {volunteer.isMinor && (
                         <>
@@ -159,18 +220,15 @@ export default function VolunteerProfileEdit({
 
                 <section className="space-y-4">
                     <Heading variant="small" title="Escolaridade e formação" />
-                    <TextField
-                        label="Escolaridade"
-                        optional
+                    <EducationField
                         value={data.education_level}
-                        onChange={(event) =>
-                            setData('education_level', event.target.value)
-                        }
+                        onChange={(level) => setData('education_level', level)}
                         error={errors.education_level}
                     />
                     <TextField
-                        label="Formação ou profissão"
+                        label="Cursos, certificados ou formações"
                         optional
+                        maxLength={255}
                         value={data.training}
                         onChange={(event) =>
                             setData('training', event.target.value)
@@ -195,6 +253,48 @@ export default function VolunteerProfileEdit({
                         }
                         error={errors.skills}
                     />
+                    <TextField
+                        label="Outra área"
+                        optional
+                        maxLength={120}
+                        value={data.other_area}
+                        onChange={(event) =>
+                            setData('other_area', event.target.value)
+                        }
+                        error={errors.other_area}
+                    />
+                    <ExperiencePicker
+                        roles={teamRoles}
+                        value={data.experience_role_ids}
+                        onChange={(roleIds) =>
+                            setData('experience_role_ids', roleIds)
+                        }
+                        other={data.other_experience}
+                        onOtherChange={(other) =>
+                            setData('other_experience', other)
+                        }
+                        noExperience={data.no_experience}
+                        onNoExperienceChange={(noExperience) =>
+                            setData('no_experience', noExperience)
+                        }
+                        error={
+                            errors.experience_role_ids ??
+                            errors.other_experience
+                        }
+                    />
+                    <TextAreaField
+                        label="Descreva brevemente a sua experiência"
+                        optional
+                        hint="Há quanto tempo, onde, e que equipamentos ou programas sabe usar."
+                        value={data.experience_description}
+                        onChange={(event) =>
+                            setData(
+                                'experience_description',
+                                event.target.value,
+                            )
+                        }
+                        error={errors.experience_description}
+                    />
                     <CheckboxField
                         label="Posso apoiar e ensinar outros membros"
                         checked={data.can_support_others}
@@ -217,6 +317,13 @@ export default function VolunteerProfileEdit({
                         onChange={(slots) => setData('availability', slots)}
                         error={errors.availability}
                     />
+                    <CheckboxField
+                        label="Posso servir noutros dias, mediante combinação prévia"
+                        checked={data.other_days_by_arrangement}
+                        onChange={(checked) =>
+                            setData('other_days_by_arrangement', checked)
+                        }
+                    />
                     <RadioGroupField
                         legend="Com que frequência pode servir?"
                         name="max_frequency"
@@ -227,29 +334,42 @@ export default function VolunteerProfileEdit({
                         }
                         error={errors.max_frequency}
                     />
+                    <TextField
+                        label="Outra situação ou detalhe sobre a frequência"
+                        optional
+                        maxLength={255}
+                        value={data.frequency_note}
+                        onChange={(event) =>
+                            setData('frequency_note', event.target.value)
+                        }
+                        error={errors.frequency_note}
+                    />
                     <CheckboxField
-                        label="Tenho horários variáveis"
+                        label="Tenho horários variáveis, conforme a minha agenda"
                         checked={data.variable_hours}
                         onChange={(checked) =>
                             setData('variable_hours', checked)
                         }
                     />
-                    <CheckboxField
-                        label="Estou disponível para formações e reuniões"
-                        checked={data.available_for_training}
-                        onChange={(checked) =>
-                            setData('available_for_training', checked)
+                    <RadioGroupField
+                        legend="Pode participar em reuniões, formações, ensaios técnicos e outras actividades extraordinárias?"
+                        name="training_availability"
+                        options={trainingAvailabilities}
+                        value={data.training_availability}
+                        onChange={(answer) =>
+                            setData('training_availability', answer)
                         }
+                        error={errors.training_availability}
                     />
                 </section>
 
                 <section className="space-y-4">
                     <Heading
                         variant="small"
-                        title="Compromissos e motivações"
+                        title="Compromissos, motivações e sugestões"
                     />
                     <TextAreaField
-                        label="Outros compromissos"
+                        label="Compromissos que limitam a sua disponibilidade"
                         optional
                         value={data.commitments}
                         onChange={(event) =>
@@ -267,6 +387,24 @@ export default function VolunteerProfileEdit({
                         error={errors.motivations}
                     />
                     <TextAreaField
+                        label="O que espera aprender ou alcançar"
+                        optional
+                        value={data.expectations}
+                        onChange={(event) =>
+                            setData('expectations', event.target.value)
+                        }
+                        error={errors.expectations}
+                    />
+                    <TextAreaField
+                        label="Sonhos, projectos ou objectivos"
+                        optional
+                        value={data.goals}
+                        onChange={(event) =>
+                            setData('goals', event.target.value)
+                        }
+                        error={errors.goals}
+                    />
+                    <TextAreaField
                         label="Comentários"
                         optional
                         value={data.comments}
@@ -274,6 +412,15 @@ export default function VolunteerProfileEdit({
                             setData('comments', event.target.value)
                         }
                         error={errors.comments}
+                    />
+                    <TextAreaField
+                        label="Sugestões para a equipa"
+                        optional
+                        value={data.suggestions}
+                        onChange={(event) =>
+                            setData('suggestions', event.target.value)
+                        }
+                        error={errors.suggestions}
                     />
                 </section>
 

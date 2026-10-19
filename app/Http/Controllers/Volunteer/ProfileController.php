@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Volunteer;
 use App\Actions\Volunteers\UpdateAvailability;
 use App\Enums\Frequency;
 use App\Enums\Period;
+use App\Enums\TrainingAvailability;
 use App\Enums\VolunteerStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateVolunteerProfileRequest;
@@ -38,7 +39,9 @@ class ProfileController extends Controller
             'teamRoles' => TeamRole::query()->active()->ordered()->get(['id', 'name', 'description']),
             'frequencies' => collect(Frequency::cases())->map(fn (Frequency $frequency) => ['value' => $frequency->value, 'label' => $frequency->label()]),
             'periods' => collect(Period::cases())->map(fn (Period $period) => ['value' => $period->value, 'label' => $period->label()]),
-            'weekdays' => collect(Availability::WEEKDAYS)->map(fn (string $label, int $day) => ['value' => $day, 'label' => $label])->values(),
+            'weekdays' => Availability::weekdayOptions(),
+            'socialNetworks' => Volunteer::SOCIAL_NETWORKS,
+            'trainingAvailabilities' => collect(TrainingAvailability::cases())->map(fn (TrainingAvailability $option) => ['value' => $option->value, 'label' => $option->label()]),
         ]);
     }
 
@@ -49,14 +52,22 @@ class ProfileController extends Controller
 
         $data = $request->validated();
 
-        DB::transaction(function () use ($volunteer, $data, $request, $updateAvailability): void {
+        $noExperience = (bool) ($data['no_experience'] ?? false);
+        $experienceRoleIds = $noExperience ? [] : array_values(array_map('intval', $data['experience_role_ids'] ?? []));
+
+        DB::transaction(function () use ($volunteer, $data, $request, $updateAvailability, $noExperience, $experienceRoleIds): void {
             $volunteer->fill([
                 ...array_intersect_key($data, array_flip([
-                    'full_name', 'birth_date', 'neighbourhood', 'guardian_name', 'education_level',
-                    'training', 'commitments', 'motivations', 'comments', 'can_support_others',
-                    'available_for_training',
+                    'full_name', 'nickname', 'birth_date', 'neighbourhood', 'phone_has_whatsapp',
+                    'guardian_name', 'education_level', 'training', 'other_area', 'experience_description',
+                    'commitments', 'motivations', 'expectations', 'goals', 'comments', 'suggestions',
+                    'can_support_others', 'frequency_note', 'other_days_by_arrangement', 'training_availability',
                 ])),
+                'experience_role_ids' => $experienceRoleIds,
+                'other_experience' => $noExperience ? null : ($data['other_experience'] ?? null),
                 'guardian_phone' => $request->input('guardian_phone_e164'),
+                'whatsapp_phone' => ($data['phone_has_whatsapp'] ?? false) ? null : $request->input('whatsapp_phone_e164'),
+                'social_media' => array_values($data['social_media'] ?? []),
             ]);
             $volunteer->save();
 
@@ -64,11 +75,11 @@ class ProfileController extends Controller
                 $volunteer->user?->update(['name' => $data['full_name']]);
             }
 
-            $this->syncSkills($volunteer, $data['skills'], $data['preferred_role_id'] ?? null);
+            $this->syncSkills($volunteer, $data['skills'] ?? [], $experienceRoleIds, $data['preferred_role_id'] ?? null);
 
             $updateAvailability->handle(
                 $volunteer,
-                $data['availability'],
+                $data['availability'] ?? [],
                 Frequency::from($data['max_frequency']),
                 (bool) ($data['variable_hours'] ?? false),
             );
@@ -83,9 +94,10 @@ class ProfileController extends Controller
      * Keeps coordinator-set levels for roles that stay; new roles start as beginner
      * (column default).
      *
-     * @param  list<array{team_role_id: int, has_experience?: bool}>  $skills
+     * @param  list<array{team_role_id: int}>  $skills
+     * @param  list<int>  $experienceRoleIds
      */
-    private function syncSkills(Volunteer $volunteer, array $skills, ?int $preferredRoleId): void
+    private function syncSkills(Volunteer $volunteer, array $skills, array $experienceRoleIds, ?int $preferredRoleId): void
     {
         $chosen = collect($skills)->keyBy(fn (array $skill) => (int) $skill['team_role_id']);
 
@@ -96,7 +108,7 @@ class ProfileController extends Controller
                 ['team_role_id' => $roleId],
                 [
                     'interested' => true,
-                    'has_experience' => (bool) ($skill['has_experience'] ?? false),
+                    'has_experience' => in_array($roleId, $experienceRoleIds, true),
                     'is_preferred' => $roleId === $preferredRoleId,
                 ],
             );
