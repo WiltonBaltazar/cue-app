@@ -14,4 +14,9 @@ class SchedulePolicy extends CoordinatorOnlyPolicy
     {
         return $user->isCoordinator() || ($schedule?->isPublished() ?? false);
     }
+
+    public function delete(User $user): bool
+    {
+        return $user->isCoordinator();
+    }
 }

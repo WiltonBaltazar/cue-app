@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Coordinator;
 
+use App\Actions\Scheduling\DeleteSchedule;
 use App\Actions\Scheduling\GenerateSchedule;
 use App\Actions\Scheduling\PublishSchedule;
 use App\Domain\Scheduling\Violation;
@@ -21,11 +22,11 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Schedules: create a period, generate, edit, publish (US3).
+ * Schedules: create a period, generate, edit, publish, delete (US3).
  */
 class ScheduleController extends Controller
 {
-    public function index(): Response
+    public function index(DeleteSchedule $delete): Response
     {
         Gate::authorize('viewAny', Schedule::class);
 
@@ -40,6 +41,7 @@ class ScheduleController extends Controller
                     'status' => $schedule->status->value,
                     'statusLabel' => $schedule->status->label(),
                     'assignments' => $schedule->assignments_count,
+                    'deleteImpact' => $delete->impact($schedule),
                 ])->values(),
             'suggestedStart' => $nextMonth->toDateString(),
             'suggestedEnd' => $nextMonth->endOfMonth()->toDateString(),
@@ -159,6 +161,43 @@ class ScheduleController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => "Escala publicada. {$notified} voluntários notificados."]);
 
         return to_route('coord.schedules.edit', $schedule);
+    }
+
+    public function destroy(Schedule $schedule, DeleteSchedule $delete): RedirectResponse
+    {
+        Gate::authorize('delete', $schedule);
+
+        $notified = $delete->handle($schedule);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $this->deletedMessage(1, $notified)]);
+
+        return to_route('coord.schedules.index');
+    }
+
+    public function destroyMany(Request $request, DeleteSchedule $delete): RedirectResponse
+    {
+        Gate::authorize('delete', Schedule::class);
+
+        $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer', 'distinct', 'exists:schedules,id'],
+        ], [
+            'ids.required' => 'Seleccione pelo menos uma escala.',
+        ]);
+
+        $schedules = Schedule::query()->whereKey($request->array('ids'))->get();
+        $notified = $schedules->sum(fn (Schedule $schedule) => $delete->handle($schedule));
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $this->deletedMessage($schedules->count(), $notified)]);
+
+        return to_route('coord.schedules.index');
+    }
+
+    private function deletedMessage(int $deleted, int $notified): string
+    {
+        $text = $deleted === 1 ? 'Escala apagada.' : "{$deleted} escalas apagadas.";
+
+        return $notified > 0 ? "{$text} {$notified} voluntários foram avisados." : $text;
     }
 
     /**

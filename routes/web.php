@@ -130,7 +130,9 @@ Route::middleware(['auth', 'role:coordinator'])
 
         Route::get('escalas', [ScheduleController::class, 'index'])->name('schedules.index');
         Route::post('escalas', [ScheduleController::class, 'store'])->name('schedules.store');
+        Route::delete('escalas', [ScheduleController::class, 'destroyMany'])->name('schedules.destroy-many');
         Route::get('escalas/{schedule}', [ScheduleController::class, 'edit'])->name('schedules.edit');
+        Route::delete('escalas/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
         Route::post('escalas/{schedule}/gerar', [ScheduleController::class, 'generate'])->name('schedules.generate');
         Route::post('escalas/{schedule}/publicar', [ScheduleController::class, 'publish'])->name('schedules.publish');
         Route::get('escalas/{schedule}/pdf', SchedulePdfController::class)->name('schedules.pdf');
