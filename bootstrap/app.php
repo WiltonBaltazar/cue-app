@@ -31,6 +31,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // Behind the reverse proxy (Coolify/Traefik), which terminates TLS: trust its
+        // X-Forwarded-* headers so URLs, secure cookies and HSTS see HTTPS. The app
+        // container is only reachable through that proxy.
+        $middleware->trustProxies(at: '*');
+
         // Check the role before route-model binding, so a volunteer gets 403 rather than
         // learning which IDs exist from 404s.
         $middleware->prependToPriorityList(SubstituteBindings::class, EnsureRole::class);

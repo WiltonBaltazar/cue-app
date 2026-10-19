@@ -1,9 +1,42 @@
 # Deployment
 
-Production runs on one Ubuntu VPS: Nginx, PHP-FPM 8.4, MySQL 8.4, Supervisor for the
-queue worker, cron for the scheduler and Let's Encrypt TLS (research R21). Laravel Forge
-or Laravel Cloud can provision the same setup; the notes below are what has to be true
-either way.
+The recommended way is **Docker on Coolify** (below): one image runs Nginx, PHP-FPM, the
+queue worker and the scheduler under Supervisor, next to MariaDB and Redis. Nothing has
+to be installed or scheduled by hand. Sections 1–8 describe the same setup on a plain
+VPS without Docker.
+
+## Coolify (Docker)
+
+Files: `Dockerfile`, `docker-compose.yml`, `docker/` (Nginx, PHP, PHP-FPM, Supervisor,
+entrypoint).
+
+1. **New resource → Docker Compose**, from this repository, branch `main`, compose file
+   `docker-compose.yml`.
+2. **Domain**: on the `app` service, e.g. `https://escalas.example.org` (port 80). Coolify
+   issues the certificate.
+3. **Environment variables** (Coolify generates `SERVICE_USER_*`/`SERVICE_PASSWORD_*`
+   itself). Set at least:
+
+   | Variable | How to get it |
+   |----------|---------------|
+   | `APP_KEY` | `php artisan key:generate --show` on any machine. **Never change it later**: the 🔒 fields are encrypted with it. Keep a copy in the password manager. |
+   | `APP_URL` | The domain above, with `https://` |
+   | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | `php artisan webpush:vapid --show`, once. Changing them drops every device's push subscription. |
+   | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile widget for the domain; without them registration is refused |
+   | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS` | SMTP account (password resets, backup alerts) |
+   | `BACKUP_*` (optional) | Off-site bucket, see [Backups](#6-backups). Until then backups stay in the `app-storage` volume (`BACKUP_DISKS=local`). |
+
+4. **Deploy.** On every start the container waits for MariaDB, runs the migrations and the
+   reference seeders (team roles, declaration), links storage and caches the config, then
+   Supervisor starts Nginx, PHP-FPM, the queue worker and the scheduler. Set
+   `RUN_MIGRATIONS=false` to skip the migrations on a start.
+5. **First coordinator**, once: in Coolify, open the `app` container's **Terminal** and run
+   `php artisan coordinators:create`.
+
+Data lives in three volumes: `mariadb-data`, `redis-data` (queue and sessions) and
+`app-storage` (local backups, logs). Logs of every process are in Coolify's log view.
+To update, push to `main` and redeploy (or turn on auto-deploy); remember to commit the
+frontend build (`npm run build`) with frontend changes.
 
 ## 1. Server packages
 

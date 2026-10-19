@@ -1,0 +1,26 @@
+# Keep secrets, dependencies and local state out of the image.
+.git
+.github
+.env
+.env.*
+!.env.example
+node_modules
+vendor
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/app/private/*
+storage/app/public/*
+storage/pail
+bootstrap/cache/*.php
+public/hot
+public/storage
+database/*.sqlite
+tests/Browser/Screenshots
+.phpunit.cache
+.claude
+.agents
+.idea
+.vscode
+.DS_Store
