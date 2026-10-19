@@ -4,8 +4,10 @@ namespace App\Domain\Scheduling;
 
 /**
  * A scheduling rule a candidate would break (FR-011). Hard rules are never broken by
- * automatic generation; coordinators may override them with a note (FR-013). The declared
- * frequency is soft: preferred, but exceeded when nobody else can fill a position.
+ * automatic generation; coordinators may override them with a note (FR-013). Soft rules
+ * (declared frequency, minimum level, overlapping times) are preferences: broken only when
+ * nobody else can fill a position, and only a warning in manual edits. Whoever cannot
+ * make it asks for a substitute.
  */
 enum Violation: string
 {
@@ -34,7 +36,21 @@ enum Violation: string
 
     public function isHard(): bool
     {
-        return $this !== self::FrequencyCap;
+        return ! in_array($this, [self::FrequencyCap, self::MinLevel, self::TimeOverlap], true);
+    }
+
+    /**
+     * How much the generator avoids breaking a soft rule: going over someone's frequency
+     * first, then a level below the minimum, a clash with another event last.
+     */
+    public function softCost(): int
+    {
+        return match ($this) {
+            self::FrequencyCap => 1,
+            self::MinLevel => 4,
+            self::TimeOverlap => 8,
+            default => 0,
+        };
     }
 
     /**

@@ -9,7 +9,8 @@ use App\Models\Volunteer;
 /**
  * Ranked candidates for a position, for the editor's picker and substitute suggestions
  * (FR-019): eligible people first (those within their frequency before those over it),
- * ordered like the generator, then the rest by how few rules they would break.
+ * ordered like the generator, then the rest by how few rules they would break. People
+ * already on this event, and the person being replaced, are left out.
  */
 class CandidateFinder
 {
@@ -39,11 +40,15 @@ class CandidateFinder
         $rows = [];
 
         foreach ($context->volunteers() as $volunteer) {
-            if ($volunteer->levelIn($slot->roleId) === null) {
+            if ($volunteer->levelIn($slot->roleId) === null || $volunteer->id === $replacing?->volunteer_id) {
                 continue;
             }
 
             $violations = $this->checker->check($volunteer, $slot, $context, automatic: false);
+
+            if (in_array(Violation::SameEvent, $violations, true)) {
+                continue;
+            }
             $eligible = Violation::hard($violations) === [];
 
             $rows[] = [

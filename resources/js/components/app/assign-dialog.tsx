@@ -118,7 +118,7 @@ export function AssignDialog({
         }
     };
 
-    const needsNote = selected !== null && !selected.eligible;
+    const hasWarnings = selected !== null && selected.violations.length > 0;
 
     return (
         <Dialog
@@ -212,10 +212,11 @@ export function AssignDialog({
                     </fieldset>
                 )}
 
-                {needsNote && (
+                {hasWarnings && (
                     <TextAreaField
-                        label="Motivo para avançar mesmo assim"
-                        hint="Fica registado na auditoria."
+                        label="Nota"
+                        optional
+                        hint="Por exemplo, se já confirmou com a pessoa. Fica registada na auditoria."
                         value={note}
                         onChange={(event) => setNote(event.target.value)}
                         error={errors.override_note}
@@ -225,6 +226,7 @@ export function AssignDialog({
                 <InputError
                     message={
                         errors.lock_version ??
+                        errors.volunteer_id ??
                         errors.position_id ??
                         errors.schedule ??
                         errors.violations
@@ -241,11 +243,7 @@ export function AssignDialog({
                     </Button>
                     <Button
                         className="min-h-11"
-                        disabled={
-                            !selected ||
-                            processing ||
-                            (needsNote && !note.trim())
-                        }
+                        disabled={!selected || processing}
                         onClick={save}
                     >
                         {processing && <Spinner />}

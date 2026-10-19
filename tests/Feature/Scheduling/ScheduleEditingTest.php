@@ -3,6 +3,7 @@
 use App\Actions\Events\GenerateOccurrences;
 use App\Enums\AssignmentStatus;
 use App\Enums\Frequency;
+use App\Enums\Level;
 use App\Enums\Period;
 use App\Enums\ScheduleStatus;
 use App\Models\ActivityTemplate;
@@ -45,6 +46,25 @@ test('creating a schedule generates a proposal and reports gaps', function () {
         ->and($schedule->generation_report[0]['missing'] ?? null)->toBe(1);
 });
 
+test('a schedule can be created empty, to fill by hand', function () {
+    $this->scenario->schedule->delete();
+    $this->scenario->volunteer();
+    $month = LocalTime::today()->next('Sunday');
+
+    $this->actingAs($this->coordinator)
+        ->post(route('coord.schedules.store'), [
+            'starts_on' => $month->startOfMonth()->toDateString(),
+            'ends_on' => $month->endOfMonth()->toDateString(),
+            'generate' => false,
+        ])
+        ->assertSessionHasNoErrors();
+
+    $schedule = Schedule::query()->firstOrFail();
+
+    expect($schedule->assignments()->count())->toBe(0)
+        ->and($schedule->generation_report)->toBeNull();
+});
+
 test('schedules can not overlap', function () {
     $this->actingAs($this->coordinator)
         ->post(route('coord.schedules.store'), [
@@ -72,7 +92,7 @@ test('regenerating keeps manual assignments and replaces automatic ones', functi
         ->and($assignments->firstWhere('volunteer_id', $manual->id)?->is_locked)->toBeTrue();
 });
 
-test('a manual edit that breaks a rule needs a note and is audited', function () {
+test('a manual edit that breaks a rule only warns: no note needed, and it is audited', function () {
     $unavailable = $this->scenario->volunteer(slots: [[2, Period::Evening]]);
 
     $this->actingAs($this->coordinator)
@@ -80,23 +100,35 @@ test('a manual edit that breaks a rule needs a note and is audited', function ()
             'position_id' => $this->scenario->position->id,
             'volunteer_id' => $unavailable->id,
         ])
-        ->assertSessionHasErrors(['override_note', 'violations']);
-
-    expect(Assignment::query()->count())->toBe(0);
-
-    $this->actingAs($this->coordinator)
-        ->post(route('coord.assignments.store'), [
-            'position_id' => $this->scenario->position->id,
-            'volunteer_id' => $unavailable->id,
-            'override_note' => 'Confirmou por telefone que pode vir.',
-        ])
         ->assertSessionHasNoErrors();
 
     $assignment = Assignment::query()->firstOrFail();
 
-    expect($assignment->override_note)->toBe('Confirmou por telefone que pode vir.')
+    expect($assignment->override_note)->toBeNull()
         ->and($assignment->source)->toBe(Assignment::SOURCE_MANUAL)
         ->and(Activity::query()->where('subject_type', Assignment::class)->where('subject_id', $assignment->id)->where('causer_id', $this->coordinator->id)->exists())->toBeTrue();
+});
+
+test('an optional note is kept when a rule is broken by hand', function () {
+    $unavailable = $this->scenario->volunteer(slots: [[2, Period::Evening]]);
+
+    $this->actingAs($this->coordinator)->post(route('coord.assignments.store'), [
+        'position_id' => $this->scenario->position->id,
+        'volunteer_id' => $unavailable->id,
+        'override_note' => 'Confirmou por telefone que pode vir.',
+    ]);
+
+    expect(Assignment::query()->firstOrFail()->override_note)->toBe('Confirmou por telefone que pode vir.');
+});
+
+test('the same person can not take two places at one event', function () {
+    $volunteer = $this->scenario->volunteer();
+    $data = ['position_id' => $this->scenario->position->id, 'volunteer_id' => $volunteer->id];
+
+    $this->actingAs($this->coordinator)->post(route('coord.assignments.store'), $data)->assertSessionHasNoErrors();
+    $this->actingAs($this->coordinator)->post(route('coord.assignments.store'), $data)->assertSessionHasErrors('volunteer_id');
+
+    expect(Assignment::query()->count())->toBe(1);
 });
 
 test('going over a volunteer\'s frequency is only a warning: no note needed', function () {
@@ -122,6 +154,17 @@ test('going over a volunteer\'s frequency is only a warning: no note needed', fu
 
     expect(Assignment::query()->where('volunteer_id', $monthly->id)->count())->toBe(2)
         ->and(Assignment::query()->whereNotNull('override_note')->exists())->toBeFalse();
+});
+
+test('placing someone below the minimum level is only a warning: no note needed', function () {
+    $this->scenario->position->update(['min_level' => Level::Advanced]);
+    $beginner = $this->scenario->volunteer(level: Level::Beginner);
+
+    $this->actingAs($this->coordinator)
+        ->post(route('coord.assignments.store'), ['position_id' => $this->scenario->position->id, 'volunteer_id' => $beginner->id])
+        ->assertSessionHasNoErrors();
+
+    expect(Assignment::query()->where('volunteer_id', $beginner->id)->whereNull('override_note')->exists())->toBeTrue();
 });
 
 test('a stale edit is refused with the name of who changed it', function () {
@@ -252,4 +295,26 @@ test('coordinators get ranked candidates with the rules each would break', funct
     expect($response->json('data.0.volunteerId'))->toBe($fits->id)
         ->and($response->json('data.0.eligible'))->toBeTrue()
         ->and(collect($response->json('data'))->firstWhere('volunteerId', $unavailable->id)['violations'])->toBe(['availability']);
+});
+
+test('people already on the event, and the one being replaced, are not offered', function () {
+    $placed = $this->scenario->volunteer();
+    $free = $this->scenario->volunteer();
+
+    $this->actingAs($this->coordinator)->post(route('coord.assignments.store'), [
+        'position_id' => $this->scenario->position->id,
+        'volunteer_id' => $placed->id,
+    ]);
+    $assignment = Assignment::query()->firstOrFail();
+
+    $filling = collect($this->actingAs($this->coordinator)
+        ->getJson(route('app-api.positions.candidates', $this->scenario->position))
+        ->json('data'))->pluck('volunteerId');
+
+    $replacing = collect($this->actingAs($this->coordinator)
+        ->getJson(route('app-api.positions.candidates', ['position' => $this->scenario->position, 'substituir' => $assignment->id]))
+        ->json('data'))->pluck('volunteerId');
+
+    expect($filling)->toContain($free->id)->not->toContain($placed->id)
+        ->and($replacing)->toContain($free->id)->not->toContain($placed->id);
 });

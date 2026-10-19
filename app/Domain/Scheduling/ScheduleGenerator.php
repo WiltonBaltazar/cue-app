@@ -6,9 +6,10 @@ namespace App\Domain\Scheduling;
  * Proposes assignments for a period (US3, FR-010–FR-012).
  *
  * Slots are filled scarcest-first (fewest eligible people), each by the best-ranked
- * candidate that breaks no hard rule. People within their declared frequency come first;
- * only when none is left does it go over someone's frequency, "Ocasionalmente" last, so
- * positions are filled whenever anyone can come. Bookings already in the context (locked
+ * candidate that breaks no hard rule. Soft rules are broken only when nobody else is
+ * left, least serious first: over someone's frequency ("Ocasionalmente" after the rest),
+ * then below the minimum level, then a clash with another event. So a position is filled
+ * whenever anyone with the role is available that day. Bookings already in the context (locked
  * or manual assignments, other schedules) are respected. Same input → same output.
  */
 final class ScheduleGenerator
@@ -52,14 +53,14 @@ final class ScheduleGenerator
     }
 
     /**
-     * Candidates breaking no hard rule, from the most preferred group that has anyone:
-     * within their frequency, then over it, then "Ocasionalmente".
+     * Candidates breaking no hard rule, from the group breaking the least serious soft
+     * rules (see Violation::softCost; "Ocasionalmente" counts as going further over).
      *
      * @return list<VolunteerProfile>
      */
     private function eligibleFor(Slot $slot, SchedulingContext $context): array
     {
-        $tiers = [[], [], []];
+        $tiers = [];
 
         foreach ($context->volunteers() as $volunteer) {
             $violations = $this->checker->check($volunteer, $slot, $context);
@@ -68,21 +69,21 @@ final class ScheduleGenerator
                 continue;
             }
 
-            $tier = match (true) {
-                $violations === [] => 0,
-                $volunteer->frequency->allowsAutomaticAssignment() => 1,
-                default => 2,
-            };
-            $tiers[$tier][] = $volunteer;
-        }
-
-        foreach ($tiers as $tier) {
-            if ($tier !== []) {
-                return $tier;
+            $cost = array_sum(array_map(fn (Violation $violation): int => $violation->softCost(), $violations));
+            if (in_array(Violation::FrequencyCap, $violations, true) && ! $volunteer->frequency->allowsAutomaticAssignment()) {
+                $cost += 1;
             }
+
+            $tiers[$cost][] = $volunteer;
         }
 
-        return [];
+        if ($tiers === []) {
+            return [];
+        }
+
+        ksort($tiers);
+
+        return reset($tiers);
     }
 
     /**

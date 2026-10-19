@@ -1,28 +1,28 @@
-import { Head, Link, router, useForm } from "@inertiajs/react";
-import { Trash2 } from "lucide-react";
-import { useState } from "react";
-import type { FormEvent } from "react";
-import { ConfirmDialog } from "@/components/app/confirm-dialog";
-import Heading from "@/components/heading";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Spinner } from "@/components/ui/spinner";
-import { TextField } from "@/components/volunteer-form/fields";
-import { formatDate } from "@/lib/format";
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { ConfirmDialog } from '@/components/app/confirm-dialog';
+import Heading from '@/components/heading';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Spinner } from '@/components/ui/spinner';
+import { CheckboxField, TextField } from '@/components/volunteer-form/fields';
+import { formatDate } from '@/lib/format';
 import {
     destroy,
     destroyMany,
     edit,
     index,
     store,
-} from "@/routes/coord/schedules";
+} from '@/routes/coord/schedules';
 
 type ScheduleRow = {
     id: number;
     startsOn: string;
     endsOn: string;
-    status: "draft" | "published";
+    status: 'draft' | 'published';
     statusLabel: string;
     assignments: number;
     /** Only non-zero for published schedules: who is told, and history that goes. */
@@ -43,11 +43,11 @@ function deleteDescription(rows: ScheduleRow[]): string {
 
     const parts = [
         assignments === 1
-            ? "A atribuição é apagada."
+            ? 'A atribuição é apagada.'
             : `As ${assignments} atribuições são apagadas.`,
         people > 0
             ? `${people} voluntários com turnos futuros serão avisados.`
-            : "Ninguém é notificado.",
+            : 'Ninguém é notificado.',
     ];
 
     if (past > 0) {
@@ -56,7 +56,7 @@ function deleteDescription(rows: ScheduleRow[]): string {
         );
     }
 
-    return `${parts.join(" ")} Não é possível desfazer.`;
+    return `${parts.join(' ')} Não é possível desfazer.`;
 }
 
 type Props = {
@@ -70,7 +70,11 @@ export default function SchedulesIndex({
     suggestedStart,
     suggestedEnd,
 }: Props) {
-    const form = useForm({ starts_on: suggestedStart, ends_on: suggestedEnd });
+    const form = useForm({
+        starts_on: suggestedStart,
+        ends_on: suggestedEnd,
+        generate: true,
+    });
     const [selected, setSelected] = useState<number[]>([]);
     const [deleting, setDeleting] = useState(false);
     const selectedRows = schedules.filter((schedule) =>
@@ -110,7 +114,7 @@ export default function SchedulesIndex({
                     <Heading
                         variant="small"
                         title="Nova escala"
-                        description="O sistema propõe as atribuições respeitando disponibilidade, ausências, níveis e frequência. Depois pode ajustar e publicar."
+                        description="O sistema pode propor as atribuições respeitando funções, disponibilidade e ausências, ou pode começar vazia e preencher à mão. Depois ajusta e publica."
                     />
                     <div className="grid gap-4 sm:grid-cols-2">
                         <TextField
@@ -118,7 +122,7 @@ export default function SchedulesIndex({
                             type="date"
                             value={form.data.starts_on}
                             onChange={(e) =>
-                                form.setData("starts_on", e.target.value)
+                                form.setData('starts_on', e.target.value)
                             }
                             error={form.errors.starts_on}
                         />
@@ -127,18 +131,28 @@ export default function SchedulesIndex({
                             type="date"
                             value={form.data.ends_on}
                             onChange={(e) =>
-                                form.setData("ends_on", e.target.value)
+                                form.setData('ends_on', e.target.value)
                             }
                             error={form.errors.ends_on}
                         />
                     </div>
+                    <CheckboxField
+                        label="Gerar proposta automaticamente"
+                        hint="Desmarque para criar a escala vazia e escolher cada pessoa à mão."
+                        checked={form.data.generate}
+                        onChange={(checked) =>
+                            form.setData('generate', checked)
+                        }
+                    />
                     <Button
                         type="submit"
                         className="min-h-11"
                         disabled={form.processing}
                     >
                         {form.processing && <Spinner />}
-                        Gerar proposta
+                        {form.data.generate
+                            ? 'Gerar proposta'
+                            : 'Criar escala vazia'}
                     </Button>
                 </form>
 
@@ -155,7 +169,7 @@ export default function SchedulesIndex({
                                     selected.length === schedules.length
                                         ? true
                                         : selected.length > 0
-                                          ? "indeterminate"
+                                          ? 'indeterminate'
                                           : false
                                 }
                                 onCheckedChange={(checked) =>
@@ -174,7 +188,7 @@ export default function SchedulesIndex({
                             <ConfirmDialog
                                 title={
                                     selected.length === 1
-                                        ? "Apagar 1 escala?"
+                                        ? 'Apagar 1 escala?'
                                         : `Apagar ${selected.length} escalas?`
                                 }
                                 description={deleteDescription(selectedRows)}
@@ -194,10 +208,10 @@ export default function SchedulesIndex({
                                     disabled={deleting}
                                 >
                                     <Trash2 aria-hidden="true" />
-                                    Apagar {selected.length}{" "}
+                                    Apagar {selected.length}{' '}
                                     {selected.length === 1
-                                        ? "seleccionada"
-                                        : "seleccionadas"}
+                                        ? 'seleccionada'
+                                        : 'seleccionadas'}
                                 </Button>
                             </ConfirmDialog>
                         )}
@@ -237,9 +251,9 @@ export default function SchedulesIndex({
                                 </span>
                                 <Badge
                                     variant={
-                                        schedule.status === "published"
-                                            ? "default"
-                                            : "secondary"
+                                        schedule.status === 'published'
+                                            ? 'default'
+                                            : 'secondary'
                                     }
                                 >
                                     {schedule.statusLabel}
@@ -277,5 +291,5 @@ export default function SchedulesIndex({
 }
 
 SchedulesIndex.layout = {
-    breadcrumbs: [{ title: "Escalas", href: index() }],
+    breadcrumbs: [{ title: 'Escalas', href: index() }],
 };

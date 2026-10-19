@@ -55,6 +55,7 @@ class ScheduleController extends Controller
         $validated = $request->validate([
             'starts_on' => ['required', 'date_format:Y-m-d'],
             'ends_on' => ['required', 'date_format:Y-m-d', 'after_or_equal:starts_on', 'before_or_equal:'.$request->date('starts_on')?->addDays(62)->toDateString()],
+            'generate' => ['sometimes', 'boolean'],
         ], [
             'ends_on.before_or_equal' => 'Uma escala cobre no máximo dois meses.',
         ], [
@@ -71,10 +72,18 @@ class ScheduleController extends Controller
             return back()->withErrors(['starts_on' => 'Já existe uma escala que cobre parte destas datas.'])->withInput();
         }
 
-        $schedule = Schedule::query()->create([...$validated, 'created_by' => $coordinator->id]);
-        $result = $generate->handle($schedule);
+        $schedule = Schedule::query()->create([
+            'starts_on' => $validated['starts_on'],
+            'ends_on' => $validated['ends_on'],
+            'created_by' => $coordinator->id,
+        ]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => $this->generationMessage($result)]);
+        // An empty schedule is filled by hand; "Gerar de novo" can still propose later.
+        $message = $request->boolean('generate', true)
+            ? $this->generationMessage($generate->handle($schedule))
+            : 'Escala criada vazia. Escolha as pessoas em cada posição.';
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $message]);
 
         return to_route('coord.schedules.edit', $schedule);
     }

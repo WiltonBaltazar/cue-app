@@ -50,14 +50,12 @@ class AssignVolunteer
         }
 
         $schedule = $this->scheduleFor($position);
-        // Going over someone's declared frequency is only a warning; hard rules need a reason.
-        $violations = Violation::hard($this->violations($position, $volunteer, $replacing));
+        // The coordinator decides: broken rules are only warnings and a note is optional; the
+        // volunteer says if they can not go. Only a second place at the same event is refused.
+        $violations = $this->violations($position, $volunteer, $replacing);
 
-        if ($violations !== [] && blank($overrideNote)) {
-            throw ValidationException::withMessages([
-                'override_note' => 'Esta escolha quebra regras da escala. Indique o motivo para avançar.',
-                'violations' => array_map(fn (Violation $violation): string => $violation->message(), $violations),
-            ]);
+        if (in_array(Violation::SameEvent, $violations, true)) {
+            throw ValidationException::withMessages(['volunteer_id' => Violation::SameEvent->message().'.']);
         }
 
         if ($replacing === null && $position->assignments()->active()->count() >= $position->quantity) {
@@ -77,7 +75,7 @@ class AssignVolunteer
                 'volunteer_id' => $volunteer->id,
                 'source' => Assignment::SOURCE_MANUAL,
                 'is_locked' => true,
-                'override_note' => $violations === [] ? null : $overrideNote,
+                'override_note' => $violations === [] || blank($overrideNote) ? null : $overrideNote,
             ]);
             $assignment->conflict_flagged_at = null;
             $assignment->updated_by = $coordinator->id;

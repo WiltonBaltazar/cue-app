@@ -1,10 +1,12 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 1.0.1 → 1.1.0
-Bump rationale: MINOR — Principle IV: declared maximum frequency moved from the hard
-constraints to a preference, so generation fills positions rather than leave gaps
-(owner decision 2026-10-19).
+Version change: 1.1.0 → 1.2.0
+Bump rationale: MINOR — Principle IV: minimum level and overlapping times join declared
+frequency as preferences rather than hard constraints (owner decision 2026-10-19).
+
+Previous: 1.0.1 → 1.1.0 — Principle IV: declared maximum frequency moved from the hard
+constraints to a preference (owner decision 2026-10-19).
 
 Previous: 1.0.0 → 1.0.1 — Principle III example list updated ("confirm/decline" →
 "decline a shift"). (template, unversioned) → 1.0.0 — initial ratification.
@@ -107,11 +109,11 @@ the system fails, however correct it is. Spec success criteria SC-001 and SC-002
 
 ### IV. Schedule Integrity & Transparency
 
-- Hard constraints (availability, absences, minimum level, one position per event, no
-  overlapping times including setup) MUST never be violated by automatic generation;
-  unfilled positions are reported as gaps instead. A volunteer's declared maximum
-  frequency is a preference: it MAY be exceeded, fairly and only when no one within their
-  frequency can fill the position.
+- Hard constraints (role, availability, absences, one position per event) MUST never be
+  violated by automatic generation; unfilled positions are reported as gaps instead.
+  Declared maximum frequency, minimum level and overlapping times are preferences: they
+  MAY be broken, fairly and only when no one else can fill the position; the person
+  affected asks for a substitute.
 - Manual coordinator edits MAY override constraints only after an explicit warning naming the
   violated rule, and the override MUST be audited.
 - The system MUST never silently remove or change a published assignment; conflicts are
@@ -179,4 +181,4 @@ keeps the app maintainable by a small team.
 - Compliance is reviewed at each plan's Constitution Check and at every review of
   security-sensitive changes.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-18 | **Last Amended**: 2026-10-19
+**Version**: 1.2.0 | **Ratified**: 2026-10-18 | **Last Amended**: 2026-10-19

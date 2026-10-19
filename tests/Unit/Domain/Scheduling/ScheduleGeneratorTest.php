@@ -157,6 +157,46 @@ test('"Ocasionalmente" volunteers are used only when nobody else can come', func
     expect(array_column($result['assignments'], 'volunteerId'))->toBe([1, 1, 2]);
 });
 
+test('someone below the minimum level fills a place nobody qualified can take', function () {
+    $volunteers = [S::volunteer(1, levels: [S::CAMERA => Level::Beginner])];
+
+    $result = generate(new SchedulingContext($volunteers), [S::slot(10, 1, minLevel: Level::Advanced)]);
+
+    expect(array_column($result['assignments'], 'volunteerId'))->toBe([1])
+        ->and($result['gaps']->isEmpty())->toBeTrue();
+});
+
+test('qualified people come before anyone below the minimum level', function () {
+    $volunteers = [S::volunteer(1, levels: [S::CAMERA => Level::Beginner]), S::volunteer(2, levels: [S::CAMERA => Level::Advanced])];
+
+    $result = generate(new SchedulingContext($volunteers), [S::slot(10, 1, minLevel: Level::Advanced)]);
+
+    expect($result['assignments'][0]['volunteerId'])->toBe(2);
+});
+
+test('a clash with another event is the last resort', function () {
+    $volunteers = [S::volunteer(1), S::volunteer(2, levels: [S::CAMERA => Level::Beginner])];
+    $elsewhere = S::booking(1, S::slot(90, 90));
+
+    $result = generate(new SchedulingContext($volunteers, [], [$elsewhere]), [S::slot(10, 1, minLevel: Level::Advanced)]);
+
+    // Below the level beats being in two places at once.
+    expect($result['assignments'][0]['volunteerId'])->toBe(2);
+
+    $alone = generate(new SchedulingContext([S::volunteer(1)], [], [$elsewhere]), [S::slot(10, 1)]);
+
+    expect(array_column($alone['assignments'], 'volunteerId'))->toBe([1]);
+});
+
+test('role and availability still block: those places stay empty', function () {
+    $volunteers = [S::volunteer(1, availability: ['2|evening']), S::volunteer(2, levels: [S::AUDIO => Level::Advanced])];
+
+    $result = generate(new SchedulingContext($volunteers), [S::slot(10, 1)]);
+
+    expect($result['assignments'])->toBe([])
+        ->and($result['gaps']->isEmpty())->toBeFalse();
+});
+
 test('existing bookings (locked or manual) are respected', function () {
     $volunteers = [S::volunteer(1), S::volunteer(2)];
     $locked = S::booking(1, S::slot(10, 1));
