@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AppApi\NotificationController;
+use App\Http\Controllers\AppApi\OverviewController;
 use App\Http\Controllers\AppApi\PositionCandidateController;
 use App\Http\Controllers\AppApi\SwapCandidateController;
 use Illuminate\Support\Facades\Route;
@@ -28,4 +29,8 @@ Route::get('assignments/{assignment}/swap-candidates', SwapCandidateController::
 Route::middleware('role:coordinator')->group(function () {
     Route::get('positions/{position}/candidates', [PositionCandidateController::class, 'index'])->name('positions.candidates');
     Route::post('assignments/check', [PositionCandidateController::class, 'check'])->name('assignments.check');
+
+    // Overview (US5): availability matrix and event coverage.
+    Route::get('availability-matrix', [OverviewController::class, 'availability'])->name('availability-matrix');
+    Route::get('coverage', [OverviewController::class, 'coverage'])->name('coverage');
 });

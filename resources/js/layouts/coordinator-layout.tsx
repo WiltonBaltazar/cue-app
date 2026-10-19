@@ -3,8 +3,10 @@ import {
     BriefcaseBusiness,
     CalendarDays,
     CalendarRange,
+    ChartColumn,
     ClipboardList,
     FileText,
+    Grid3x3,
     LayoutGrid,
     Repeat,
     Settings,
@@ -15,7 +17,7 @@ import { AppContent } from '@/components/app-content';
 import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
-import { dashboard } from '@/routes/coord';
+import { availability, coverage, dashboard } from '@/routes/coord';
 import { edit as consent } from '@/routes/coord/consent';
 import { index as events } from '@/routes/coord/events';
 import { index as registrations } from '@/routes/coord/registrations';
@@ -35,6 +37,8 @@ const navItems: NavItem[] = [
     { title: 'Painel', href: dashboard(), icon: LayoutGrid },
     { title: 'Escalas', href: schedules(), icon: CalendarRange },
     { title: 'Trocas', href: swaps(), icon: ArrowLeftRight },
+    { title: 'Cobertura', href: coverage(), icon: ChartColumn },
+    { title: 'Disponibilidade', href: availability(), icon: Grid3x3 },
     { title: 'Eventos', href: events(), icon: CalendarDays },
     { title: 'Actividades', href: templates(), icon: Repeat },
     { title: 'Cadastros', href: registrations(), icon: ClipboardList },

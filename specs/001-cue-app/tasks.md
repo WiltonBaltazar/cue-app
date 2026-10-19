@@ -258,12 +258,12 @@ shortages without manual calculation.
 
 ### Implementation for User Story 5
 
-- [ ] T106 [P] [US5] Implement `AvailabilityMatrix` and `CoverageReport` query services (shortage = demand > supply per role) in `app/Domain/Overview/AvailabilityMatrix.php` and `app/Domain/Overview/CoverageReport.php`
-- [ ] T107 [US5] Create `/app-api/availability-matrix` and `/app-api/coverage` endpoints in `app/Http/Controllers/AppApi/OverviewController.php` and `routes/app-api.php`
-- [ ] T108 [US5] Build availability matrix page with role/level filters and shortage badges in `resources/js/pages/coord/availability.tsx`
-- [ ] T109 [US5] Build coverage page (next 30 days, filled/required, gaps) in `resources/js/pages/coord/coverage.tsx`
-- [ ] T110 [US5] Build participation history page (shifts done, declines, swaps, real vs declared frequency) in `app/Http/Controllers/Coordinator/VolunteerHistoryController.php` and `resources/js/pages/coord/volunteers/history.tsx`
-- [ ] T111 [US5] Build coordinator dashboard (pending approvals, urgent swaps, gaps next 30 days) in `app/Http/Controllers/Coordinator/DashboardController.php` and `resources/js/pages/coord/dashboard.tsx`
+- [X] T106 [P] [US5] Implement `AvailabilityMatrix` and `CoverageReport` query services (shortage = demand > supply per role) in `app/Domain/Overview/AvailabilityMatrix.php` and `app/Domain/Overview/CoverageReport.php`
+- [X] T107 [US5] Create `/app-api/availability-matrix` and `/app-api/coverage` endpoints in `app/Http/Controllers/AppApi/OverviewController.php` and `routes/app-api.php`
+- [X] T108 [US5] Build availability matrix page with role/level filters and shortage badges in `resources/js/pages/coord/availability.tsx`
+- [X] T109 [US5] Build coverage page (next 30 days, filled/required, gaps) in `resources/js/pages/coord/coverage.tsx`
+- [X] T110 [US5] Build participation history page (shifts done, declines, swaps, real vs declared frequency) in `app/Http/Controllers/Coordinator/VolunteerHistoryController.php` and `resources/js/pages/coord/volunteers/history.tsx`
+- [X] T111 [US5] Build coordinator dashboard (pending approvals, urgent swaps, gaps next 30 days) in `app/Http/Controllers/Coordinator/DashboardController.php` and `resources/js/pages/coord/dashboard.tsx`
 
 **Checkpoint**: US5 independently usable with seeded data.
 

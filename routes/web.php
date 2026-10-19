@@ -4,7 +4,9 @@ use App\Http\Controllers\Auth\PasswordSetupController;
 use App\Http\Controllers\Coordinator\ActivityTemplateController;
 use App\Http\Controllers\Coordinator\AssignmentController;
 use App\Http\Controllers\Coordinator\ConsentController as CoordinatorConsentController;
+use App\Http\Controllers\Coordinator\DashboardController;
 use App\Http\Controllers\Coordinator\EventController;
+use App\Http\Controllers\Coordinator\OverviewController;
 use App\Http\Controllers\Coordinator\RegistrationController as CoordinatorRegistrationController;
 use App\Http\Controllers\Coordinator\ScheduleController;
 use App\Http\Controllers\Coordinator\SchedulePdfController;
@@ -12,6 +14,7 @@ use App\Http\Controllers\Coordinator\SettingsController;
 use App\Http\Controllers\Coordinator\SwapController as CoordinatorSwapController;
 use App\Http\Controllers\Coordinator\TeamRoleController;
 use App\Http\Controllers\Coordinator\VolunteerController;
+use App\Http\Controllers\Coordinator\VolunteerHistoryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Public\RegistrationController;
 use App\Http\Controllers\Volunteer\AbsenceController;
@@ -73,7 +76,7 @@ Route::middleware(['auth', 'role:coordinator'])
     ->prefix('gestao')
     ->name('coord.')
     ->group(function () {
-        Route::inertia('/', 'coord/dashboard')->name('dashboard');
+        Route::get('/', DashboardController::class)->name('dashboard');
 
         Route::get('cadastros', [CoordinatorRegistrationController::class, 'index'])->name('registrations.index');
         Route::get('cadastros/{volunteer}', [CoordinatorRegistrationController::class, 'show'])->name('registrations.show');
@@ -85,6 +88,7 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::get('voluntarios', [VolunteerController::class, 'index'])->name('volunteers.index');
         Route::get('voluntarios/{volunteer}', [VolunteerController::class, 'edit'])->name('volunteers.edit');
         Route::put('voluntarios/{volunteer}', [VolunteerController::class, 'update'])->name('volunteers.update');
+        Route::get('voluntarios/{volunteer}/historico', VolunteerHistoryController::class)->name('volunteers.history');
         Route::post('voluntarios/{volunteer}/link-redefinicao', [VolunteerController::class, 'issueResetLink'])->name('reset-links.store');
         Route::post('voluntarios/{volunteer}/pausa', [VolunteerController::class, 'pause'])->name('volunteers.pause');
         Route::post('voluntarios/{volunteer}/retomar', [VolunteerController::class, 'resume'])->name('volunteers.resume');
@@ -120,6 +124,9 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::post('atribuicoes', [AssignmentController::class, 'store'])->name('assignments.store');
         Route::put('atribuicoes/{assignment}', [AssignmentController::class, 'update'])->name('assignments.update');
         Route::delete('atribuicoes/{assignment}', [AssignmentController::class, 'destroy'])->name('assignments.destroy');
+
+        Route::get('disponibilidade', [OverviewController::class, 'availability'])->name('availability');
+        Route::get('cobertura', [OverviewController::class, 'coverage'])->name('coverage');
 
         Route::get('definicoes', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::put('definicoes', [SettingsController::class, 'update'])->name('settings.update');

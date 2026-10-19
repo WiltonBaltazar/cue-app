@@ -1,4 +1,4 @@
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Check, Copy } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { ConfirmDialog } from '@/components/app/confirm-dialog';
@@ -21,6 +21,7 @@ import type { Option } from '@/components/volunteer-form/types';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { store as issueResetLink } from '@/routes/coord/reset-links';
 import {
+    history,
     index,
     update,
     pause as pauseVolunteer,
@@ -62,7 +63,15 @@ export default function VolunteerEdit({
                     <h1 className="text-2xl font-semibold">
                         {volunteer.fullName}
                     </h1>
-                    <Badge>{volunteer.statusLabel}</Badge>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Badge>{volunteer.statusLabel}</Badge>
+                        <Link
+                            href={history(volunteer.id)}
+                            className="text-sm underline-offset-4 hover:underline"
+                        >
+                            Ver histórico de participação
+                        </Link>
+                    </div>
                 </header>
 
                 <form

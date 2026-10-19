@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { DataTable, dataTableColumns } from '@/components/app/data-table';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { edit, index } from '@/routes/coord/volunteers';
+import { edit, history, index } from '@/routes/coord/volunteers';
 import type { VolunteerSummary } from '@/types';
 
 const helper = dataTableColumns<VolunteerSummary>();
@@ -35,6 +35,18 @@ const columns = helper.columns([
             >
                 {info.getValue()}
             </Badge>
+        ),
+    }),
+    helper.display({
+        id: 'history',
+        header: () => <span className="sr-only">Histórico</span>,
+        cell: (info) => (
+            <Link
+                href={history(info.row.original.id)}
+                className="text-sm underline-offset-4 hover:underline"
+            >
+                Histórico
+            </Link>
         ),
     }),
 ]);
