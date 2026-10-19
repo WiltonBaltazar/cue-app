@@ -1,9 +1,19 @@
-import { BellRing, Share, X } from 'lucide-react';
+import { BellPlus, BellRing, Share, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { usePushSubscription } from '@/hooks/use-push-subscription';
 import { cn } from '@/lib/utils';
+
+async function enablePush(subscribe: () => Promise<boolean>): Promise<void> {
+    if (await subscribe()) {
+        toast.success('Notificações activadas neste dispositivo.');
+    } else {
+        toast.error(
+            'Não foi possível activar as notificações. Verifique as permissões do navegador.',
+        );
+    }
+}
 
 const DISMISS_KEY = 'cue.push-prompt.dismissed-until';
 const DISMISS_DAYS = 30;
@@ -42,15 +52,7 @@ export function PushPrompt({ className }: { className?: string }) {
         setHidden(true);
     };
 
-    const enable = async () => {
-        if (await subscribe()) {
-            toast.success('Notificações ativadas neste dispositivo.');
-        } else {
-            toast.error(
-                'Não foi possível ativar as notificações. Verifique as permissões do navegador.',
-            );
-        }
-    };
+    const enable = () => void enablePush(subscribe);
 
     return (
         <section
@@ -77,7 +79,7 @@ export function PushPrompt({ className }: { className?: string }) {
                             aria-label="Partilhar"
                         />{' '}
                         e depois em <strong>Adicionar ao ecrã principal</strong>
-                        . Abra a app a partir do ícone e ative aqui as
+                        . Abra a app a partir do ícone e active aqui as
                         notificações.
                     </p>
                 ) : (
@@ -89,9 +91,9 @@ export function PushPrompt({ className }: { className?: string }) {
                         <Button
                             className="min-h-11"
                             disabled={busy}
-                            onClick={() => void enable()}
+                            onClick={enable}
                         >
-                            Ativar notificações
+                            Activar notificações
                         </Button>
                     </>
                 )}
@@ -106,5 +108,31 @@ export function PushPrompt({ className }: { className?: string }) {
                 <X aria-hidden="true" />
             </Button>
         </section>
+    );
+}
+
+/**
+ * Header button that turns on push on this device, still there after the
+ * prompt was dismissed. Shown only while push can be turned on.
+ */
+export function PushButton({ className }: { className?: string }) {
+    const { state, busy, subscribe } = usePushSubscription();
+
+    if (state !== 'available') {
+        return null;
+    }
+
+    return (
+        <Button
+            variant="ghost"
+            size="icon"
+            className={cn('size-11', className)}
+            disabled={busy}
+            onClick={() => void enablePush(subscribe)}
+            aria-label="Activar notificações"
+            title="Activar notificações"
+        >
+            <BellPlus aria-hidden="true" />
+        </Button>
     );
 }

@@ -1,4 +1,5 @@
 import { NotificationBell } from '@/components/app/notification-bell';
+import { PushButton } from '@/components/app/push-prompt';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
@@ -14,7 +15,10 @@ export function AppSidebarHeader({
                 <SidebarTrigger className="-ml-1" />
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
-            <NotificationBell className="ml-auto" />
+            <div className="ml-auto flex items-center gap-1">
+                <PushButton />
+                <NotificationBell />
+            </div>
         </header>
     );
 }

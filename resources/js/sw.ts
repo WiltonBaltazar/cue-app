@@ -44,7 +44,16 @@ type NotificationData = {
     actions: Record<string, string>;
 };
 
-precacheAndRoute(self.__WB_MANIFEST);
+// The PWA plugin lists the web manifest relative to the worker ("/"), but it is
+// served from /build/. Left as is, it 404s and the worker never installs, which
+// means no push and no offline page.
+precacheAndRoute(
+    self.__WB_MANIFEST.map((entry) =>
+        typeof entry !== 'string' && entry.url === 'manifest.webmanifest'
+            ? { ...entry, url: '/build/manifest.webmanifest' }
+            : entry,
+    ),
+);
 cleanupOutdatedCaches();
 
 self.addEventListener('install', () => {

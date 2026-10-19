@@ -3,7 +3,8 @@ import { ArrowLeftRight, CalendarDays, House, UserRound } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import AppLogo from '@/components/app-logo';
 import { NotificationBell } from '@/components/app/notification-bell';
-import { PushPrompt } from '@/components/app/push-prompt';
+import { InstallAppPrompt } from '@/components/app/install-app';
+import { PushButton, PushPrompt } from '@/components/app/push-prompt';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
@@ -52,7 +53,7 @@ export default function VolunteerLayout({ children }: PropsWithChildren) {
                     <Link
                         href={home()}
                         className="flex items-center gap-2"
-                        aria-label="Cue App, início"
+                        aria-label="Cue App RTVAO, início"
                     >
                         <AppLogo />
                     </Link>
@@ -85,11 +86,15 @@ export default function VolunteerLayout({ children }: PropsWithChildren) {
                         ))}
                     </nav>
 
-                    <NotificationBell className="ml-auto" />
+                    <div className="ml-auto flex items-center gap-1">
+                        <PushButton />
+                        <NotificationBell />
+                    </div>
                 </div>
             </header>
 
             <main className="mx-auto w-full max-w-3xl flex-1 px-4 pt-4 pb-24 md:pb-8">
+                <InstallAppPrompt className="mb-4" />
                 <PushPrompt className="mb-4" />
                 {children}
             </main>

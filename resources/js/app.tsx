@@ -3,6 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
+import { listenForInstallPrompt } from '@/hooks/use-install-prompt';
 import { registerServiceWorker } from '@/hooks/use-push-subscription';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
@@ -53,3 +54,4 @@ initializeTheme();
 
 // Installable app, offline page and push (R11).
 registerServiceWorker();
+listenForInstallPrompt();

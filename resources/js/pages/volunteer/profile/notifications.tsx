@@ -1,6 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { toast } from 'sonner';
+import { InstallAppInstructions } from '@/components/app/install-app';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -56,12 +57,12 @@ export default function NotificationPreferences({
     const toggleDevice = async () => {
         if (push.state === 'subscribed') {
             await push.unsubscribe();
-            toast.success('Notificações desativadas neste dispositivo.');
+            toast.success('Notificações desactivadas neste dispositivo.');
         } else if (await push.subscribe()) {
-            toast.success('Notificações ativadas neste dispositivo.');
+            toast.success('Notificações activadas neste dispositivo.');
         } else {
             toast.error(
-                'Não foi possível ativar as notificações. Verifique as permissões do navegador.',
+                'Não foi possível activar as notificações. Verifique as permissões do navegador.',
             );
         }
     };
@@ -76,8 +77,17 @@ export default function NotificationPreferences({
                 <section className="space-y-4">
                     <Heading
                         variant="small"
+                        title="Instalar a app"
+                        description="Com a Cue App no ecrã principal, abre como as outras apps e recebe os avisos mesmo fechada."
+                    />
+                    <InstallAppInstructions />
+                </section>
+
+                <section className="space-y-4">
+                    <Heading
+                        variant="small"
                         title="Este dispositivo"
-                        description="As notificações chegam a cada telemóvel ou computador onde as ativar."
+                        description="As notificações chegam a cada telemóvel ou computador onde as activar."
                     />
                     <output className="block text-sm">
                         {deviceStatus[push.state]}
@@ -96,8 +106,8 @@ export default function NotificationPreferences({
                         >
                             {push.busy && <Spinner />}
                             {push.state === 'subscribed'
-                                ? 'Desativar neste dispositivo'
-                                : 'Ativar notificações'}
+                                ? 'Desactivar neste dispositivo'
+                                : 'Activar notificações'}
                         </Button>
                     )}
                     {devices.length > 0 && (
