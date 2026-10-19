@@ -159,6 +159,8 @@ export default defineConfig({
         singleAttributePerLine: false,
         htmlWhitespaceSensitivity: 'css',
         ignorePatterns: [
+            // Built output is committed for deployment; never reformat it.
+            'public/**',
             '.github/**',
             '.specify/**',
             '.claude/**',

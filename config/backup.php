@@ -234,10 +234,12 @@ return [
         'notifiable' => Notifiable::class,
 
         'mail' => [
-            'to' => env('BACKUP_MAIL_TO', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+            // `?:` so an empty BACKUP_MAIL_TO= (as in .env.example) falls back too;
+            // the package rejects an empty address when the app boots.
+            'to' => env('BACKUP_MAIL_TO') ?: (env('MAIL_FROM_ADDRESS') ?: 'hello@example.com'),
 
             'from' => [
-                'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+                'address' => env('MAIL_FROM_ADDRESS') ?: 'hello@example.com',
                 'name' => env('MAIL_FROM_NAME', 'Example'),
             ],
         ],

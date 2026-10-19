@@ -58,3 +58,10 @@ jobs:
 
       - name: Run CI Checks
         run: composer ci:check
+
+      # Phone-viewport smoke flows (tests/Browser); they use the build from setup.
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser tests
+        run: php artisan test --testsuite=Browser

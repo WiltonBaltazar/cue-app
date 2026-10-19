@@ -125,7 +125,7 @@ once with `php artisan webpush:vapid`.
 ### Checks
 
 ```bash
-composer test                        # Pint, Larastan and the Pest suites
+composer test                        # Pint, Larastan and the Pest unit + feature suites
 npm run check && npm run types       # lint/format (Vite+) and TypeScript
 npm run test                         # Vitest + vitest-axe
 ```
