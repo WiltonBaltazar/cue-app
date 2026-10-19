@@ -11,8 +11,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Coordinator settings. Registration open/close now (FR-001); swap and reminder
- * settings join with User Story 4 (T104).
+ * Coordinator settings (FR-001, FR-018, US2-1, US4-4, US6-2).
  */
 class SettingsController extends Controller
 {
@@ -23,6 +22,11 @@ class SettingsController extends Controller
             'registrationClosesAt' => $settings->registrationClosesAt()?->setTimezone(config('app.display_timezone'))->format('Y-m-d\TH:i'),
             'registrationIsOpen' => $settings->registrationIsOpen(),
             'registrationUrl' => route('registration.create'),
+            'swapAutoApprove' => $settings->swapAutoApprove(),
+            'urgentThresholdHours' => $settings->urgentThresholdHours(),
+            'eventHorizonMonths' => $settings->eventHorizonMonths(),
+            'checkReminderHoursBefore' => $settings->checkReminderHoursBefore(),
+            'reminderHoursBefore' => $settings->reminderHoursBefore(),
         ]);
     }
 
@@ -32,6 +36,11 @@ class SettingsController extends Controller
             'registration_open' => ['required', 'boolean'],
             // Entered in Maputo time; stored in UTC.
             'registration_closes_at' => ['nullable', 'date_format:Y-m-d\TH:i', 'after:now'],
+            'swap_auto_approve' => ['required', 'boolean'],
+            'urgent_threshold_hours' => ['required', 'integer', 'between:1,336'],
+            'event_horizon_months' => ['required', 'integer', 'between:1,12'],
+            'check_reminder_hours_before' => ['required', 'integer', 'between:1,336'],
+            'reminder_hours_before' => ['required', 'integer', 'between:1,168'],
         ], [
             'registration_closes_at.after' => 'A data de encerramento tem de ser no futuro.',
         ]);
@@ -40,11 +49,23 @@ class SettingsController extends Controller
             ? CarbonImmutable::createFromFormat('Y-m-d\TH:i', $validated['registration_closes_at'], config('app.display_timezone'))?->utc()->toIso8601String()
             : null;
 
-        $settings->set('registration_open', (bool) $validated['registration_open']);
-        $settings->set('registration_closes_at', $closesAt);
+        $values = [
+            'registration_open' => (bool) $validated['registration_open'],
+            'registration_closes_at' => $closesAt,
+            'swap_auto_approve' => (bool) $validated['swap_auto_approve'],
+            'urgent_threshold_hours' => (int) $validated['urgent_threshold_hours'],
+            'event_horizon_months' => (int) $validated['event_horizon_months'],
+            'check_reminder_hours_before' => (int) $validated['check_reminder_hours_before'],
+            'reminder_hours_before' => (int) $validated['reminder_hours_before'],
+        ];
 
+        foreach ($values as $key => $value) {
+            $settings->set($key, $value);
+        }
+
+        // Settings changes are audited (FR-035); none of these values are personal.
         activity('audit')->causedBy($request->user())->event('settings_updated')
-            ->withProperties(['attributes' => ['registration_open' => (bool) $validated['registration_open'], 'registration_closes_at' => $closesAt]])
+            ->withProperties(['attributes' => $values])
             ->log('settings_updated');
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Definições guardadas.']);

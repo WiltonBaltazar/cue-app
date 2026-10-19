@@ -2,11 +2,14 @@
 
 namespace App\Support;
 
+use App\Enums\AssignmentStatus;
 use App\Models\Assignment;
+use App\Models\SwapRequest;
 use App\Models\Volunteer;
 
 /**
- * A volunteer's own upcoming shifts in published schedules.
+ * A volunteer's own upcoming shifts in published schedules: confirmed ones and those
+ * waiting for a substitute. Declined/handed-over shifts are not listed.
  */
 class VolunteerShifts
 {
@@ -16,6 +19,7 @@ class VolunteerShifts
     public static function upcoming(Volunteer $volunteer, ?int $limit = null): array
     {
         $shifts = $volunteer->assignments()
+            ->whereIn('status', [AssignmentStatus::Confirmed, AssignmentStatus::NeedsReplacement])
             ->whereHas('schedule', fn ($query) => $query->published())
             ->whereHas('event', fn ($query) => $query->where('date', '>=', LocalTime::today()->toDateString()))
             ->with(['event', 'position.teamRole'])
@@ -25,6 +29,13 @@ class VolunteerShifts
         if ($limit !== null) {
             $shifts = $shifts->take($limit);
         }
+
+        $withSwap = SwapRequest::query()
+            ->active()
+            ->whereIn('assignment_id', $shifts->modelKeys())
+            ->pluck('assignment_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
 
         return array_values($shifts->map(fn (Assignment $assignment) => [
             'id' => $assignment->id,
@@ -39,7 +50,12 @@ class VolunteerShifts
             'status' => $assignment->status->value,
             'statusLabel' => $assignment->status->label(),
             'eventCancelled' => $assignment->event->isCancelled(),
-        ])
-            ->all());
+            // Decline or ask for a swap (US4): own, confirmed, upcoming, no request yet.
+            'canAct' => $assignment->status === AssignmentStatus::Confirmed
+                && ! $assignment->event->isCancelled()
+                && $assignment->event->starts_at->isFuture()
+                && ! in_array($assignment->id, $withSwap, true),
+            'hasActiveSwap' => in_array($assignment->id, $withSwap, true),
+        ])->all());
     }
 }

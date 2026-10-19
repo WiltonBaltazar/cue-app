@@ -1,14 +1,25 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, CalendarOff } from 'lucide-react';
+import { PauseCard } from '@/components/app/pause-card';
 import { ShiftCard } from '@/components/app/shift-card';
 import type { Shift } from '@/components/app/shift-card';
+import { index as absences } from '@/routes/absences';
+import { pause, resume } from '@/routes/profile';
 import { index as myShifts } from '@/routes/volunteer/shifts';
 
 /**
- * Volunteer home: the next shifts first (constitution III, ≤ 3 taps). Declining a shift
- * and open swaps arrive with User Story 4.
+ * Volunteer home: the next shifts first (constitution III, ≤ 3 taps), with "Não posso
+ * ir" and "Pedir troca" right on each shift (US4).
  */
-export default function VolunteerHome({ nextShifts }: { nextShifts: Shift[] }) {
+export default function VolunteerHome({
+    nextShifts,
+    paused,
+    pausedUntil,
+}: {
+    nextShifts: Shift[];
+    paused: boolean;
+    pausedUntil: string | null;
+}) {
     const { auth } = usePage().props;
     const firstName = auth.user?.name.split(' ')[0] ?? '';
 
@@ -17,6 +28,17 @@ export default function VolunteerHome({ nextShifts }: { nextShifts: Shift[] }) {
             <Head title="Início" />
 
             <h1 className="text-2xl font-semibold">Olá, {firstName}</h1>
+
+            {paused && (
+                <div className="mt-4">
+                    <PauseCard
+                        paused
+                        pausedUntil={pausedUntil}
+                        pauseUrl={pause().url}
+                        resumeUrl={resume().url}
+                    />
+                </div>
+            )}
 
             <section aria-labelledby="next-shifts" className="mt-6 space-y-3">
                 <h2 id="next-shifts" className="font-medium">
@@ -38,7 +60,7 @@ export default function VolunteerHome({ nextShifts }: { nextShifts: Shift[] }) {
                 ) : (
                     <>
                         {nextShifts.map((shift) => (
-                            <ShiftCard key={shift.id} shift={shift} />
+                            <ShiftCard key={shift.id} shift={shift} actions />
                         ))}
                         <Link
                             href={myShifts()}
@@ -49,6 +71,17 @@ export default function VolunteerHome({ nextShifts }: { nextShifts: Shift[] }) {
                     </>
                 )}
             </section>
+
+            <Link
+                href={absences()}
+                className="mt-6 flex min-h-14 items-center gap-3 rounded-xl border px-4 font-medium hover:bg-muted"
+            >
+                <CalendarOff
+                    className="size-5 text-muted-foreground"
+                    aria-hidden="true"
+                />
+                Vou estar ausente
+            </Link>
         </>
     );
 }

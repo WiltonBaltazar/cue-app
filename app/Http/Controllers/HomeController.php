@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\VolunteerStatus;
 use App\Models\User;
 use App\Support\VolunteerShifts;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -22,6 +23,8 @@ class HomeController extends Controller
 
         return Inertia::render('volunteer/home', [
             'nextShifts' => $user->volunteer === null ? [] : VolunteerShifts::upcoming($user->volunteer, 3),
+            'paused' => $user->volunteer?->status === VolunteerStatus::Inactive,
+            'pausedUntil' => $user->volunteer?->inactive_until?->toDateString(),
         ]);
     }
 }

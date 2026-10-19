@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { DataTable, dataTableColumns } from '@/components/app/data-table';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { edit, index } from '@/routes/coord/volunteers';
 import type { VolunteerSummary } from '@/types';
 
@@ -38,10 +39,18 @@ const columns = helper.columns([
     }),
 ]);
 
+const filterLinkClass = (active: boolean) =>
+    cn(
+        'inline-flex min-h-11 items-center rounded-md border px-3 text-sm font-medium',
+        active ? 'border-primary bg-muted' : 'text-muted-foreground',
+    );
+
 export default function VolunteersIndex({
     volunteers,
+    filter,
 }: {
     volunteers: VolunteerSummary[];
+    filter: 'sem-turnos' | null;
 }) {
     return (
         <>
@@ -51,9 +60,30 @@ export default function VolunteersIndex({
                 <div>
                     <h1 className="text-2xl font-semibold">Voluntários</h1>
                     <p className="text-muted-foreground">
-                        {volunteers.length} voluntários aprovados.
+                        {filter === 'sem-turnos'
+                            ? `${volunteers.length} voluntários activos sem turnos há 3 meses. É só uma sugestão: ninguém é desactivado automaticamente.`
+                            : `${volunteers.length} voluntários aprovados.`}
                     </p>
                 </div>
+
+                <nav aria-label="Filtros" className="flex flex-wrap gap-2">
+                    <Link
+                        href={index()}
+                        className={filterLinkClass(filter === null)}
+                        aria-current={filter === null ? 'page' : undefined}
+                    >
+                        Todos
+                    </Link>
+                    <Link
+                        href={index({ query: { filtro: 'sem-turnos' } })}
+                        className={filterLinkClass(filter === 'sem-turnos')}
+                        aria-current={
+                            filter === 'sem-turnos' ? 'page' : undefined
+                        }
+                    >
+                        Sem turnos há 3 meses
+                    </Link>
+                </nav>
 
                 <DataTable
                     label="Voluntários"

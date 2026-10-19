@@ -1,5 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
+import { PauseCard } from '@/components/app/pause-card';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -16,6 +17,7 @@ import type {
     TeamRoleOption,
     VolunteerFormFields,
 } from '@/components/volunteer-form/types';
+import { pause, resume } from '@/routes/profile';
 import { edit, update } from '@/routes/volunteer/profile';
 import type { VolunteerFull } from '@/types';
 
@@ -281,6 +283,18 @@ export default function VolunteerProfileEdit({
                     Guardar
                 </Button>
             </form>
+
+            {(volunteer.status === 'active' ||
+                volunteer.status === 'inactive') && (
+                <div className="mt-10">
+                    <PauseCard
+                        paused={volunteer.status === 'inactive'}
+                        pausedUntil={volunteer.inactiveUntil}
+                        pauseUrl={pause().url}
+                        resumeUrl={resume().url}
+                    />
+                </div>
+            )}
         </>
     );
 }

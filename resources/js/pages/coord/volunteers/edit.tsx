@@ -2,6 +2,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { Check, Copy } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { ConfirmDialog } from '@/components/app/confirm-dialog';
+import { PauseCard } from '@/components/app/pause-card';
 import { VolunteerProfileDetails } from '@/components/app/volunteer-profile-details';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +20,12 @@ import { Spinner } from '@/components/ui/spinner';
 import type { Option } from '@/components/volunteer-form/types';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { store as issueResetLink } from '@/routes/coord/reset-links';
-import { index, update } from '@/routes/coord/volunteers';
+import {
+    index,
+    update,
+    pause as pauseVolunteer,
+    resume as resumeVolunteer,
+} from '@/routes/coord/volunteers';
 import type { VolunteerFull } from '@/types';
 
 type Props = {
@@ -168,6 +174,17 @@ export default function VolunteerEdit({
                         </ConfirmDialog>
                     )}
                 </section>
+
+                {(volunteer.status === 'active' ||
+                    volunteer.status === 'inactive') && (
+                    <PauseCard
+                        paused={volunteer.status === 'inactive'}
+                        pausedUntil={volunteer.inactiveUntil}
+                        pauseUrl={pauseVolunteer(volunteer.id).url}
+                        resumeUrl={resumeVolunteer(volunteer.id).url}
+                        subject={volunteer.fullName}
+                    />
+                )}
 
                 <VolunteerProfileDetails volunteer={volunteer} />
             </div>

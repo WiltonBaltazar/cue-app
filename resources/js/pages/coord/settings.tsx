@@ -16,6 +16,11 @@ type Props = {
     registrationClosesAt: string | null;
     registrationIsOpen: boolean;
     registrationUrl: string;
+    swapAutoApprove: boolean;
+    urgentThresholdHours: number;
+    eventHorizonMonths: number;
+    checkReminderHoursBefore: number;
+    reminderHoursBefore: number;
 };
 
 export default function CoordinatorSettings({
@@ -23,12 +28,43 @@ export default function CoordinatorSettings({
     registrationClosesAt,
     registrationIsOpen,
     registrationUrl,
+    swapAutoApprove,
+    urgentThresholdHours,
+    eventHorizonMonths,
+    checkReminderHoursBefore,
+    reminderHoursBefore,
 }: Props) {
     const [copiedText, copy] = useClipboard();
     const form = useForm({
         registration_open: registrationOpen,
         registration_closes_at: registrationClosesAt ?? '',
+        swap_auto_approve: swapAutoApprove,
+        urgent_threshold_hours: String(urgentThresholdHours),
+        event_horizon_months: String(eventHorizonMonths),
+        check_reminder_hours_before: String(checkReminderHoursBefore),
+        reminder_hours_before: String(reminderHoursBefore),
     });
+
+    const numberField = (
+        key:
+            | 'urgent_threshold_hours'
+            | 'event_horizon_months'
+            | 'check_reminder_hours_before'
+            | 'reminder_hours_before',
+        label: string,
+        hint: string,
+    ) => (
+        <TextField
+            label={label}
+            type="number"
+            inputMode="numeric"
+            min={1}
+            value={form.data[key]}
+            onChange={(event) => form.setData(key, event.target.value)}
+            hint={hint}
+            error={form.errors[key]}
+        />
+    );
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
@@ -114,6 +150,47 @@ export default function CoordinatorSettings({
                         hint="Hora de Maputo. Deixe vazio para não fechar automaticamente."
                         error={form.errors.registration_closes_at}
                     />
+
+                    <Heading
+                        variant="small"
+                        title="Trocas"
+                        description="Como os pedidos de troca são tratados."
+                    />
+                    <CheckboxField
+                        label="Aprovar trocas automaticamente quando o substituto tem nível igual ou superior"
+                        checked={form.data.swap_auto_approve}
+                        onChange={(checked) =>
+                            form.setData('swap_auto_approve', checked)
+                        }
+                        error={form.errors.swap_auto_approve}
+                    />
+                    {numberField(
+                        'urgent_threshold_hours',
+                        'Troca urgente quando faltam menos de (horas)',
+                        'Pedidos mais próximos do evento aparecem como urgentes.',
+                    )}
+
+                    <Heading
+                        variant="small"
+                        title="Eventos e lembretes"
+                        description="Planeamento automático e avisos aos voluntários."
+                    />
+                    {numberField(
+                        'event_horizon_months',
+                        'Gerar eventos para os próximos (meses)',
+                        'Eventos das actividades recorrentes são criados até este horizonte.',
+                    )}
+                    {numberField(
+                        'check_reminder_hours_before',
+                        'Pedir confirmação de presença (horas antes)',
+                        'Pedido aos voluntários para confirmarem que vão.',
+                    )}
+                    {numberField(
+                        'reminder_hours_before',
+                        'Lembrete do turno (horas antes)',
+                        'Lembrete final com a hora de chegada.',
+                    )}
+
                     <Button
                         type="submit"
                         className="min-h-11"

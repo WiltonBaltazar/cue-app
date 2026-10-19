@@ -25,6 +25,7 @@ class VolunteerPresenter
             'fullName' => $volunteer->full_name,
             'status' => $volunteer->status->value,
             'statusLabel' => $volunteer->status->label(),
+            'inactiveUntil' => $volunteer->inactive_until?->toDateString(),
             'isMinor' => $volunteer->is_minor,
             'previouslyRejectedAt' => $volunteer->previously_rejected_at?->toIso8601String(),
             'submittedAt' => $volunteer->created_at?->toIso8601String(),

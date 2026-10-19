@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { CalendarDays, House, UserRound } from 'lucide-react';
+import { ArrowLeftRight, CalendarDays, House, UserRound } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import AppLogo from '@/components/app-logo';
 import { NotificationBell } from '@/components/app/notification-bell';
@@ -7,11 +7,12 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
+import { index as swaps } from '@/routes/swaps';
 import { index as myShifts } from '@/routes/volunteer/shifts';
 import type { NavItem } from '@/types';
 
 /**
- * Volunteer navigation. "Trocas" joins with User Story 4.
+ * Volunteer navigation.
  */
 const navItems: (NavItem & { matchPrefix?: string })[] = [
     { title: 'Início', href: home(), icon: House },
@@ -21,6 +22,7 @@ const navItems: (NavItem & { matchPrefix?: string })[] = [
         icon: CalendarDays,
         matchPrefix: '/escala',
     },
+    { title: 'Trocas', href: swaps(), icon: ArrowLeftRight },
     {
         title: 'Perfil',
         href: editProfile(),

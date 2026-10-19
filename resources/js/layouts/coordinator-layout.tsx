@@ -1,4 +1,5 @@
 import {
+    ArrowLeftRight,
     BriefcaseBusiness,
     CalendarDays,
     CalendarRange,
@@ -20,6 +21,7 @@ import { index as events } from '@/routes/coord/events';
 import { index as registrations } from '@/routes/coord/registrations';
 import { index as schedules } from '@/routes/coord/schedules';
 import { edit as settings } from '@/routes/coord/settings';
+import { index as swaps } from '@/routes/coord/swaps';
 import { index as teamRoles } from '@/routes/coord/team-roles';
 import { index as templates } from '@/routes/coord/templates';
 import { index as volunteers } from '@/routes/coord/volunteers';
@@ -32,6 +34,7 @@ import type { BreadcrumbItem, NavItem } from '@/types';
 const navItems: NavItem[] = [
     { title: 'Painel', href: dashboard(), icon: LayoutGrid },
     { title: 'Escalas', href: schedules(), icon: CalendarRange },
+    { title: 'Trocas', href: swaps(), icon: ArrowLeftRight },
     { title: 'Eventos', href: events(), icon: CalendarDays },
     { title: 'Actividades', href: templates(), icon: Repeat },
     { title: 'Cadastros', href: registrations(), icon: ClipboardList },

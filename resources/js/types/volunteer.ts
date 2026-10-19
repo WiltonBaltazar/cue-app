@@ -6,6 +6,7 @@ export type VolunteerSummary = {
     fullName: string;
     status: string;
     statusLabel: string;
+    inactiveUntil: string | null;
     isMinor: boolean;
     previouslyRejectedAt: string | null;
     submittedAt: string | null;

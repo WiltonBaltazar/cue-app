@@ -225,24 +225,24 @@ open swap accepted by eligible colleague and approved, decline opens a swap.
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T091 [P] [US4] Feature test: absence/decline/pause move overlapping published assignments to `needs_replacement` and notify coordinators; absence reason hidden from colleagues in `tests/Feature/Swaps/AbsenceAndDeclineTest.php`
-- [ ] T092 [P] [US4] Feature test: swap state machine (open → accepted → approved/rejected, cancelled, expired), only eligible volunteers can see/accept, urgency flag under threshold, auto-approve when enabled and level ≥ requirement in `tests/Feature/Swaps/SwapRequestTest.php`
-- [ ] T093 [P] [US4] Feature test: pause with return date auto-resumes; no automatic inactivation in `tests/Feature/Volunteers/PauseResumeTest.php`
+- [X] T091 [P] [US4] Feature test: absence/decline/pause move overlapping published assignments to `needs_replacement` and notify coordinators; absence reason hidden from colleagues in `tests/Feature/Swaps/AbsenceAndDeclineTest.php`
+- [X] T092 [P] [US4] Feature test: swap state machine (open → accepted → approved/rejected, cancelled, expired), only eligible volunteers can see/accept, urgency flag under threshold, auto-approve when enabled and level ≥ requirement in `tests/Feature/Swaps/SwapRequestTest.php`
+- [X] T093 [P] [US4] Feature test: pause with return date auto-resumes; no automatic inactivation in `tests/Feature/Volunteers/PauseResumeTest.php`
 
 ### Implementation for User Story 4
 
-- [ ] T094 [P] [US4] Create `swap_requests` migration + `SwapRequest` model and `SwapRequestPolicy` in `database/migrations/`, `app/Models/SwapRequest.php`, `app/Policies/SwapRequestPolicy.php`
-- [ ] T095 [US4] Implement `RegisterAbsence`, `DeclineAssignment`, `PauseVolunteer`, `ResumeVolunteer` actions (mark `needs_replacement`, notify `ReplacementNeeded`) in `app/Actions/Swaps/` and `app/Actions/Volunteers/`
-- [ ] T096 [US4] Implement `CreateSwap`, `AcceptSwap` (re-check eligibility via ConstraintChecker), `DecideSwap` (auto-approve rule), `CancelSwap` actions in `app/Actions/Swaps/`
-- [ ] T097 [P] [US4] Create `SwapRequested`, `SwapAccepted`, `SwapDecided`, `ReplacementNeeded` notifications in `app/Notifications/`
-- [ ] T098 [US4] Create scheduled commands `ExpireSwaps` and `ResumePausedVolunteers` in `app/Console/Commands/` and register in `routes/console.php`
-- [ ] T099 [US4] Create volunteer absences pages (list, add date range with optional reason, delete) in `app/Http/Controllers/Volunteer/AbsenceController.php` and `resources/js/pages/volunteer/absences/`
-- [ ] T100 [US4] Add one-tap "Não posso ir" decline with ConfirmDialog on home and shifts pages in `resources/js/components/app/decline-shift-button.tsx`
-- [ ] T101 [US4] Create volunteer swaps pages (mine, open-to-me, create to colleague or open, accept, cancel) and `/app-api/swaps/{swap}/eligible` endpoint in `app/Http/Controllers/Volunteer/SwapController.php`, `app/Http/Controllers/AppApi/SwapController.php`, `resources/js/pages/volunteer/swaps/`
-- [ ] T102 [US4] Add pause/resume (optional return date, affected shifts listed in confirmation) to profile in `app/Http/Controllers/Volunteer/PauseController.php` and `resources/js/pages/volunteer/profile/edit.tsx`
-- [ ] T103 [US4] Create coordinator swaps page (urgent first, approve/reject) and substitutes picker for `needs_replacement` shifts in `app/Http/Controllers/Coordinator/SwapController.php` and `resources/js/pages/coord/swaps/index.tsx`
-- [ ] T104 [US4] Add auto-approve, urgent-threshold, event horizon months and 72 h / 24 h reminder-hours settings to `resources/js/pages/coord/settings.tsx` and `app/Http/Controllers/Coordinator/SettingsController.php`
-- [ ] T105 [US4] Add coordinator "sem turnos há 3 meses" filter and pause/resume actions to `resources/js/pages/coord/volunteers/index.tsx`
+- [X] T094 [P] [US4] Create `swap_requests` migration + `SwapRequest` model and `SwapRequestPolicy` in `database/migrations/`, `app/Models/SwapRequest.php`, `app/Policies/SwapRequestPolicy.php`
+- [X] T095 [US4] Implement `RegisterAbsence`, `DeclineAssignment`, `PauseVolunteer`, `ResumeVolunteer` actions (mark `needs_replacement`, notify `ReplacementNeeded`) in `app/Actions/Swaps/` and `app/Actions/Volunteers/`
+- [X] T096 [US4] Implement `CreateSwap`, `AcceptSwap` (re-check eligibility via ConstraintChecker), `DecideSwap` (auto-approve rule), `CancelSwap` actions in `app/Actions/Swaps/`
+- [X] T097 [P] [US4] Create `SwapRequested`, `SwapAccepted`, `SwapDecided`, `ReplacementNeeded` notifications in `app/Notifications/`
+- [X] T098 [US4] Create scheduled commands `ExpireSwaps` and `ResumePausedVolunteers` in `app/Console/Commands/` and register in `routes/console.php`
+- [X] T099 [US4] Create volunteer absences pages (list, add date range with optional reason, delete) in `app/Http/Controllers/Volunteer/AbsenceController.php` and `resources/js/pages/volunteer/absences/`
+- [X] T100 [US4] Add one-tap "Não posso ir" decline with ConfirmDialog on home and shifts pages in `resources/js/components/app/decline-shift-button.tsx`
+- [X] T101 [US4] Create volunteer swaps pages (mine, open-to-me, create to colleague or open, accept, cancel) and `/app-api/swaps/{swap}/eligible` endpoint in `app/Http/Controllers/Volunteer/SwapController.php`, `app/Http/Controllers/AppApi/SwapController.php`, `resources/js/pages/volunteer/swaps/`
+- [X] T102 [US4] Add pause/resume (optional return date, affected shifts listed in confirmation) to profile in `app/Http/Controllers/Volunteer/PauseController.php` and `resources/js/pages/volunteer/profile/edit.tsx`
+- [X] T103 [US4] Create coordinator swaps page (urgent first, approve/reject) and substitutes picker for `needs_replacement` shifts in `app/Http/Controllers/Coordinator/SwapController.php` and `resources/js/pages/coord/swaps/index.tsx`
+- [X] T104 [US4] Add auto-approve, urgent-threshold, event horizon months and 72 h / 24 h reminder-hours settings to `resources/js/pages/coord/settings.tsx` and `app/Http/Controllers/Coordinator/SettingsController.php`
+- [X] T105 [US4] Add coordinator "sem turnos há 3 meses" filter and pause/resume actions to `resources/js/pages/coord/volunteers/index.tsx`
 
 **Checkpoint**: US4 works on top of a published schedule.
 

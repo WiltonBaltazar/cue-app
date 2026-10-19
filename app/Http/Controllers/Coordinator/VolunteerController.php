@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Coordinator;
 
 use App\Actions\Auth\IssueResetLink;
+use App\Actions\Volunteers\PauseVolunteer;
+use App\Actions\Volunteers\ResumeVolunteer;
 use App\Enums\Level;
 use App\Enums\VolunteerStatus;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Volunteer;
+use App\Support\LocalTime;
 use App\Support\VolunteerPresenter;
+use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,24 +23,61 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Approved volunteers: list, levels per role (FR-004) and reset links (FR-006).
- * Pause/resume arrives with absences and swaps (User Story 4).
+ * Approved volunteers: list (with the "sem turnos há 3 meses" suggestion filter), levels
+ * per role (FR-004), pause/resume (FR-005a) and reset links (FR-006).
  */
 class VolunteerController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         Gate::authorize('viewAny', Volunteer::class);
 
+        $filter = $request->string('filtro')->toString() === 'sem-turnos' ? 'sem-turnos' : null;
+        $since = LocalTime::today()->subMonths(3);
+
         $volunteers = Volunteer::query()
             ->whereIn('status', [VolunteerStatus::Active, VolunteerStatus::Inactive])
+            // Suggestions only, never automatic inactivation (FR-005a): active for 3+ months
+            // without any shift in that time.
+            ->when($filter === 'sem-turnos', fn ($query) => $query
+                ->where('status', VolunteerStatus::Active)
+                ->where('created_at', '<', $since)
+                ->whereDoesntHave('assignments', fn ($assignments) => $assignments
+                    ->whereHas('event', fn ($events) => $events->where('date', '>=', $since->toDateString()))))
             ->with('skills.teamRole')
             ->orderBy('full_name')
             ->get();
 
         return Inertia::render('coord/volunteers/index', [
             'volunteers' => $volunteers->map(fn (Volunteer $volunteer) => VolunteerPresenter::summary($volunteer))->values(),
+            'filter' => $filter,
         ]);
+    }
+
+    public function pause(Request $request, #[CurrentUser] User $coordinator, Volunteer $volunteer, PauseVolunteer $pause): RedirectResponse
+    {
+        Gate::authorize('pause', $volunteer);
+
+        $validated = $request->validate([
+            'until' => ['nullable', 'date_format:Y-m-d', 'after:'.LocalTime::today()->toDateString()],
+        ]);
+
+        $flagged = $pause->handle($volunteer, $coordinator, isset($validated['until']) ? CarbonImmutable::parse($validated['until']) : null);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Voluntário em pausa. {$flagged} turnos marcados para substituição."]);
+
+        return back();
+    }
+
+    public function resume(Volunteer $volunteer, ResumeVolunteer $resume): RedirectResponse
+    {
+        Gate::authorize('pause', $volunteer);
+
+        $resume->handle($volunteer);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Voluntário activo de novo.']);
+
+        return back();
     }
 
     public function edit(#[CurrentUser] User $coordinator, Volunteer $volunteer): Response

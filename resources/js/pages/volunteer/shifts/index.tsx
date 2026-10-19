@@ -26,7 +26,7 @@ export default function MyShifts({ shifts }: { shifts: Shift[] }) {
                 <ol className="mt-4 space-y-3">
                     {shifts.map((shift) => (
                         <li key={shift.id}>
-                            <ShiftCard shift={shift} />
+                            <ShiftCard shift={shift} actions />
                         </li>
                     ))}
                 </ol>

@@ -9,14 +9,18 @@ use App\Http\Controllers\Coordinator\RegistrationController as CoordinatorRegist
 use App\Http\Controllers\Coordinator\ScheduleController;
 use App\Http\Controllers\Coordinator\SchedulePdfController;
 use App\Http\Controllers\Coordinator\SettingsController;
+use App\Http\Controllers\Coordinator\SwapController as CoordinatorSwapController;
 use App\Http\Controllers\Coordinator\TeamRoleController;
 use App\Http\Controllers\Coordinator\VolunteerController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Public\RegistrationController;
+use App\Http\Controllers\Volunteer\AbsenceController;
 use App\Http\Controllers\Volunteer\ConsentController;
+use App\Http\Controllers\Volunteer\PauseController;
 use App\Http\Controllers\Volunteer\ProfileController as VolunteerProfileController;
 use App\Http\Controllers\Volunteer\ShiftController;
 use App\Http\Controllers\Volunteer\StatusController;
+use App\Http\Controllers\Volunteer\SwapController;
 use Illuminate\Support\Facades\Route;
 use Spatie\Honeypot\ProtectAgainstSpam;
 
@@ -37,6 +41,16 @@ Route::middleware(['auth', 'volunteer.active'])->group(function () {
     Route::get('/', HomeController::class)->name('home');
     Route::get('minha-escala', [ShiftController::class, 'index'])->name('volunteer.shifts.index');
     Route::get('escala/{schedule}', [ShiftController::class, 'team'])->name('schedules.show');
+    Route::post('minha-escala/{assignment}/recusar', [ShiftController::class, 'decline'])->name('volunteer.shifts.decline');
+
+    Route::get('ausencias', [AbsenceController::class, 'index'])->name('absences.index');
+    Route::post('ausencias', [AbsenceController::class, 'store'])->name('absences.store');
+    Route::delete('ausencias/{absence}', [AbsenceController::class, 'destroy'])->name('absences.destroy');
+
+    Route::get('trocas', [SwapController::class, 'index'])->name('swaps.index');
+    Route::post('trocas', [SwapController::class, 'store'])->name('swaps.store');
+    Route::post('trocas/{swap}/aceitar', [SwapController::class, 'accept'])->name('swaps.accept');
+    Route::post('trocas/{swap}/cancelar', [SwapController::class, 'cancel'])->name('swaps.cancel');
 });
 
 Route::middleware('auth')->group(function () {
@@ -49,6 +63,10 @@ Route::middleware('auth')->group(function () {
     // Reachable while a registration needs correction, so the volunteer can fix it.
     Route::get('perfil/dados', [VolunteerProfileController::class, 'edit'])->name('volunteer.profile.edit');
     Route::put('perfil/dados', [VolunteerProfileController::class, 'update'])->name('volunteer.profile.update');
+
+    // Paused volunteers keep access so they can resume (FR-005a).
+    Route::post('perfil/pausa', [PauseController::class, 'pause'])->name('profile.pause');
+    Route::post('perfil/retomar', [PauseController::class, 'resume'])->name('profile.resume');
 });
 
 Route::middleware(['auth', 'role:coordinator'])
@@ -68,6 +86,11 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::get('voluntarios/{volunteer}', [VolunteerController::class, 'edit'])->name('volunteers.edit');
         Route::put('voluntarios/{volunteer}', [VolunteerController::class, 'update'])->name('volunteers.update');
         Route::post('voluntarios/{volunteer}/link-redefinicao', [VolunteerController::class, 'issueResetLink'])->name('reset-links.store');
+        Route::post('voluntarios/{volunteer}/pausa', [VolunteerController::class, 'pause'])->name('volunteers.pause');
+        Route::post('voluntarios/{volunteer}/retomar', [VolunteerController::class, 'resume'])->name('volunteers.resume');
+
+        Route::get('trocas', [CoordinatorSwapController::class, 'index'])->name('swaps.index');
+        Route::post('trocas/{swap}/decidir', [CoordinatorSwapController::class, 'decide'])->name('swaps.decide');
 
         Route::get('funcoes', [TeamRoleController::class, 'index'])->name('team-roles.index');
         Route::post('funcoes', [TeamRoleController::class, 'store'])->name('team-roles.store');

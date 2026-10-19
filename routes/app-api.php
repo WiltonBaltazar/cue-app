@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AppApi\NotificationController;
 use App\Http\Controllers\AppApi\PositionCandidateController;
+use App\Http\Controllers\AppApi\SwapCandidateController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,6 +20,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
 Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
 Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+
+// Colleagues who could take one of my shifts (directed swap).
+Route::get('assignments/{assignment}/swap-candidates', SwapCandidateController::class)->name('assignments.swap-candidates');
 
 // Coordinator-only: schedule editor helpers.
 Route::middleware('role:coordinator')->group(function () {
