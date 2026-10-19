@@ -15,7 +15,9 @@ sudo apt install nginx mysql-server supervisor certbot python3-certbot-nginx unz
 
 - `gmp` and `bcmath` make signing Web Push messages much faster (optional but recommended).
 - `zip` is needed by the nightly backup.
-- Node 22 is needed only where the frontend is built (the server or CI).
+- Node is not needed on the server: the built frontend (`public/build`, `public/sw.js`)
+  is committed to the repository. Rebuild it with `npm run build` and commit it whenever
+  the frontend changes.
 - In `php.ini` for FPM, keep `zend.exception_ignore_args = On` (the production default) so
   stack traces never carry argument values such as passwords.
 
@@ -25,7 +27,6 @@ sudo apt install nginx mysql-server supervisor certbot python3-certbot-nginx unz
 cd /var/www/cue-app
 git clone <repo> . && git checkout main
 composer install --no-dev --optimize-autoloader
-npm ci && npm run build          # writes public/build, public/sw.js and the manifest
 cp .env.example .env && php artisan key:generate
 php artisan migrate --force
 php artisan db:seed --force          # outside "local" only team roles and the declaration
@@ -208,7 +209,6 @@ Do one each month, on staging, never on production (research R21). Log each dril
 php artisan down
 git pull
 composer install --no-dev --optimize-autoloader
-npm ci && npm run build
 php artisan migrate --force
 php artisan optimize
 sudo supervisorctl restart cue-worker:*
