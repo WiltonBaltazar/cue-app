@@ -10,6 +10,12 @@ import { bunny } from 'laravel-vite-plugin/fonts';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig, lazyPlugins } from 'vite-plus';
 
+// Vitest starts a Vite server to run the tests; laravel-vite-plugin refuses any dev
+// server when CI is set. Lift that check for test runs only, so `vp dev` stays refused.
+if (process.env.VITEST) {
+    process.env.LARAVEL_BYPASS_ENV_CHECK ??= '1';
+}
+
 /**
  * Files outside the Vite build that the service worker precaches, versioned by content.
  */
