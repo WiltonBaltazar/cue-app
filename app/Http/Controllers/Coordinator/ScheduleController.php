@@ -122,6 +122,7 @@ class ScheduleController extends Controller
                         'name' => $assignment->volunteer->full_name,
                         'lockVersion' => $assignment->lock_version,
                         'source' => $assignment->source,
+                        'locked' => $assignment->is_locked,
                         'overrideNote' => $assignment->override_note,
                         'conflict' => $assignment->conflict_flagged_at !== null,
                     ])->values(),

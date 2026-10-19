@@ -1,22 +1,33 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router } from "@inertiajs/react";
 import {
     FileDown,
+    Lock,
+    LockOpen,
     RefreshCw,
+    Shuffle,
     TriangleAlert,
     UserMinus,
     UserPlus,
     UserRoundPen,
-} from 'lucide-react';
-import { useState } from 'react';
-import { AssignDialog } from '@/components/app/assign-dialog';
-import type { AssignTarget } from '@/components/app/assign-dialog';
-import { ConfirmDialog } from '@/components/app/confirm-dialog';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { formatDate, formatShortDate } from '@/lib/format';
-import { cn } from '@/lib/utils';
-import { destroy as removeAssignment } from '@/routes/coord/assignments';
-import { generate, index, pdf, publish } from '@/routes/coord/schedules';
+    X,
+} from "lucide-react";
+import { useState } from "react";
+import { AssignDialog } from "@/components/app/assign-dialog";
+import type { AssignTarget } from "@/components/app/assign-dialog";
+import { ConfirmDialog } from "@/components/app/confirm-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { formatDate, formatShortDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { destroy as removeAssignment } from "@/routes/coord/assignments";
+import {
+    bulkAssignments,
+    generate,
+    index,
+    pdf,
+    publish,
+} from "@/routes/coord/schedules";
 
 type AssignmentCell = {
     id: number;
@@ -24,6 +35,7 @@ type AssignmentCell = {
     name: string;
     lockVersion: number;
     source: string;
+    locked: boolean;
     overrideNote: string | null;
     conflict: boolean;
 };
@@ -46,6 +58,8 @@ type EventRow = {
     positions: PositionRow[];
 };
 
+type BulkAction = "remove" | "replace" | "lock" | "unlock";
+
 type Gap = {
     positionId: number;
     label: string;
@@ -58,7 +72,7 @@ type Props = {
         id: number;
         startsOn: string;
         endsOn: string;
-        status: 'draft' | 'published';
+        status: "draft" | "published";
         statusLabel: string;
         publishedAt: string | null;
     };
@@ -68,12 +82,13 @@ type Props = {
 };
 
 function eventLabel(event: EventRow, position: PositionRow): string {
-    return `${formatShortDate(`${event.date}T12:00:00Z`)} · ${event.name} ${event.startTime} · ${position.role}${position.minLevel ? ` (mín. ${position.minLevel.toLowerCase()})` : ''}`;
+    return `${formatShortDate(`${event.date}T12:00:00Z`)} · ${event.name} ${event.startTime} · ${position.role}${position.minLevel ? ` (mín. ${position.minLevel.toLowerCase()})` : ""}`;
 }
 
 /**
  * Schedule editor (US3, FR-013, FR-030): table per event on wide screens, stacked cards
  * per event on phones. Gaps are highlighted; manual edits go through the assign dialog.
+ * Assignments can be selected to remove, auto-replace or pin several at once.
  */
 export default function ScheduleEdit({
     schedule,
@@ -82,7 +97,7 @@ export default function ScheduleEdit({
     volunteersToNotify,
 }: Props) {
     const [target, setTarget] = useState<AssignTarget | null>(null);
-    const published = schedule.status === 'published';
+    const published = schedule.status === "published";
     const gapCount = gaps.reduce((sum, gap) => sum + gap.missing, 0);
 
     const required = events
@@ -96,6 +111,66 @@ export default function ScheduleEdit({
             (sum, position) =>
                 sum + Math.min(position.quantity, position.assignments.length),
             0,
+        );
+
+    // Selected assignment id → the lock version the editor last saw.
+    const [selected, setSelected] = useState<Record<number, number>>({});
+    const [bulkError, setBulkError] = useState<string | undefined>();
+    const [bulkProcessing, setBulkProcessing] = useState(false);
+    const selectedIds = Object.keys(selected).map(Number);
+    const selectedAssignments = events
+        .flatMap((event) => event.positions)
+        .flatMap((position) => position.assignments)
+        .filter((assignment) => assignment.id in selected);
+    const selectedPeople = new Set(
+        selectedAssignments.map((assignment) => assignment.volunteerId),
+    ).size;
+
+    const toggle = (assignments: AssignmentCell[], on: boolean) =>
+        setSelected((current) => {
+            const next = { ...current };
+
+            for (const assignment of assignments) {
+                if (on) {
+                    next[assignment.id] = assignment.lockVersion;
+                } else {
+                    delete next[assignment.id];
+                }
+            }
+
+            return next;
+        });
+
+    const eventAssignments = (event: EventRow) =>
+        event.positions.flatMap((position) => position.assignments);
+
+    const bulk = (action: BulkAction) =>
+        router.post(
+            bulkAssignments(schedule.id).url,
+            {
+                action,
+                assignments: Object.entries(selected).map(
+                    ([id, lockVersion]) => ({
+                        id: Number(id),
+                        lock_version: lockVersion,
+                    }),
+                ),
+            },
+            {
+                preserveScroll: true,
+                onStart: () => setBulkProcessing(true),
+                onFinish: () => setBulkProcessing(false),
+                onSuccess: () => {
+                    setSelected({});
+                    setBulkError(undefined);
+                },
+                onError: (errors) =>
+                    setBulkError(
+                        errors.lock_version ??
+                            errors.assignments ??
+                            Object.values(errors)[0],
+                    ),
+            },
         );
 
     const remove = (assignment: AssignmentCell) =>
@@ -114,11 +189,21 @@ export default function ScheduleEdit({
                         key={assignment.id}
                         className="flex flex-wrap items-center gap-1"
                     >
+                        {!event.cancelled && (
+                            <Checkbox
+                                className="mr-1 size-5"
+                                checked={assignment.id in selected}
+                                onCheckedChange={(checked) =>
+                                    toggle([assignment], checked === true)
+                                }
+                                aria-label={`Seleccionar ${assignment.name}`}
+                            />
+                        )}
                         <span
                             className={cn(
-                                'text-sm',
+                                "text-sm",
                                 assignment.conflict &&
-                                    'text-amber-700 dark:text-amber-400',
+                                    "text-amber-700 dark:text-amber-400",
                             )}
                         >
                             {assignment.name}
@@ -131,6 +216,12 @@ export default function ScheduleEdit({
                                 <TriangleAlert aria-hidden="true" /> conflito de
                                 disponibilidade
                             </Badge>
+                        )}
+                        {assignment.locked && (
+                            <Lock
+                                className="size-3.5 text-muted-foreground"
+                                aria-label="fixada"
+                            />
                         )}
                         {assignment.overrideNote && (
                             <Badge
@@ -170,7 +261,7 @@ export default function ScheduleEdit({
                                     description={
                                         published
                                             ? `${assignment.name} será notificado.`
-                                            : 'A escala ainda não foi publicada; ninguém é notificado.'
+                                            : "A escala ainda não foi publicada; ninguém é notificado."
                                     }
                                     confirmLabel="Retirar"
                                     destructive
@@ -206,7 +297,7 @@ export default function ScheduleEdit({
                     >
                         <UserPlus aria-hidden="true" />
                         {missing === 1
-                            ? '1 por preencher'
+                            ? "1 por preencher"
                             : `${missing} por preencher`}
                     </Button>
                 )}
@@ -222,16 +313,16 @@ export default function ScheduleEdit({
                 <header className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-semibold">
-                            Escala{' '}
-                            {formatDate(`${schedule.startsOn}T12:00:00Z`)} –{' '}
+                            Escala{" "}
+                            {formatDate(`${schedule.startsOn}T12:00:00Z`)} –{" "}
                             {formatDate(`${schedule.endsOn}T12:00:00Z`)}
                         </h1>
                         <p className="text-muted-foreground">
                             <Badge
-                                variant={published ? 'default' : 'secondary'}
+                                variant={published ? "default" : "secondary"}
                             >
                                 {schedule.statusLabel}
-                            </Badge>{' '}
+                            </Badge>{" "}
                             · {filled} de {required} posições preenchidas
                         </p>
                     </div>
@@ -266,7 +357,7 @@ export default function ScheduleEdit({
                                 </ConfirmDialog>
                                 <ConfirmDialog
                                     title="Publicar a escala?"
-                                    description={`${volunteersToNotify} voluntários serão notificados e passam a ver os seus turnos.${filled < required ? ` Ainda há ${required - filled} posições por preencher.` : ''}`}
+                                    description={`${volunteersToNotify} voluntários serão notificados e passam a ver os seus turnos.${filled < required ? ` Ainda há ${required - filled} posições por preencher.` : ""}`}
                                     confirmLabel="Publicar"
                                     onConfirm={() =>
                                         router.post(publish(schedule.id).url)
@@ -285,8 +376,8 @@ export default function ScheduleEdit({
                     <details className="rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/40">
                         <summary className="min-h-11 cursor-pointer content-center font-semibold">
                             {gapCount === 1
-                                ? '1 posição por preencher'
-                                : `${gapCount} posições por preencher`}{' '}
+                                ? "1 posição por preencher"
+                                : `${gapCount} posições por preencher`}{" "}
                             <span className="font-normal text-muted-foreground">
                                 — ver os voluntários mais próximos
                             </span>
@@ -296,18 +387,18 @@ export default function ScheduleEdit({
                                 <li key={gap.positionId}>
                                     <span className="font-medium">
                                         {gap.label}
-                                    </span>{' '}
+                                    </span>{" "}
                                     — faltam {gap.missing}.
                                     {gap.suggestions.length > 0 && (
                                         <span className="text-muted-foreground">
-                                            {' '}
-                                            Mais próximos:{' '}
+                                            {" "}
+                                            Mais próximos:{" "}
                                             {gap.suggestions
                                                 .map(
                                                     (suggestion) =>
-                                                        `${suggestion.name} (${suggestion.reasons.join(', ').toLowerCase()})`,
+                                                        `${suggestion.name} (${suggestion.reasons.join(", ").toLowerCase()})`,
                                                 )
-                                                .join('; ')}
+                                                .join("; ")}
                                         </span>
                                     )}
                                 </li>
@@ -328,17 +419,47 @@ export default function ScheduleEdit({
                         <li
                             key={event.id}
                             className={cn(
-                                'rounded-lg border',
-                                event.cancelled && 'opacity-60',
+                                "rounded-lg border",
+                                event.cancelled && "opacity-60",
                             )}
                         >
                             <h2 className="flex flex-wrap items-center gap-2 border-b bg-muted/40 p-3 font-medium">
+                                {!event.cancelled &&
+                                    eventAssignments(event).length > 0 && (
+                                        <Checkbox
+                                            className="size-5"
+                                            checked={
+                                                eventAssignments(event).every(
+                                                    (assignment) =>
+                                                        assignment.id in
+                                                        selected,
+                                                )
+                                                    ? true
+                                                    : eventAssignments(
+                                                            event,
+                                                        ).some(
+                                                            (assignment) =>
+                                                                assignment.id in
+                                                                selected,
+                                                        )
+                                                      ? "indeterminate"
+                                                      : false
+                                            }
+                                            onCheckedChange={(checked) =>
+                                                toggle(
+                                                    eventAssignments(event),
+                                                    checked === true,
+                                                )
+                                            }
+                                            aria-label={`Seleccionar todos em ${event.name}`}
+                                        />
+                                    )}
                                 <span className="first-letter:uppercase">
                                     {formatShortDate(`${event.date}T12:00:00Z`)}
                                 </span>
                                 · {event.name}
                                 <span className="text-sm font-normal text-muted-foreground">
-                                    chegada {event.arrivalTime}, início{' '}
+                                    chegada {event.arrivalTime}, início{" "}
                                     {event.startTime}
                                 </span>
                                 {event.cancelled && (
@@ -357,8 +478,8 @@ export default function ScheduleEdit({
                                             {position.role}
                                             {position.minLevel && (
                                                 <span className="text-muted-foreground">
-                                                    {' '}
-                                                    · mín.{' '}
+                                                    {" "}
+                                                    · mín.{" "}
                                                     {position.minLevel.toLowerCase()}
                                                 </span>
                                             )}
@@ -409,11 +530,102 @@ export default function ScheduleEdit({
                 </ol>
             </div>
 
+            {selectedIds.length > 0 && (
+                <section
+                    aria-label="Acções sobre as atribuições seleccionadas"
+                    className="sticky bottom-0 z-10 space-y-2 border-t bg-background/95 p-3 shadow-lg backdrop-blur"
+                >
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="mr-auto font-medium">
+                            {selectedIds.length === 1
+                                ? "1 seleccionada"
+                                : `${selectedIds.length} seleccionadas`}
+                        </span>
+                        <ConfirmDialog
+                            title="Substituir automaticamente?"
+                            description={`A escala escolhe outra pessoa para ${selectedIds.length === 1 ? "este lugar" : `estes ${selectedIds.length} lugares`}; quem sai não volta ao mesmo evento.${published ? ` ${selectedPeople} voluntários que saem e os que entram serão notificados.` : ""}`}
+                            confirmLabel="Substituir"
+                            processing={bulkProcessing}
+                            onConfirm={() => bulk("replace")}
+                        >
+                            <Button
+                                variant="outline"
+                                className="min-h-11"
+                                disabled={bulkProcessing}
+                            >
+                                <Shuffle aria-hidden="true" />
+                                Substituir automaticamente
+                            </Button>
+                        </ConfirmDialog>
+                        <Button
+                            variant="outline"
+                            className="min-h-11"
+                            disabled={bulkProcessing}
+                            onClick={() => bulk("lock")}
+                        >
+                            <Lock aria-hidden="true" />
+                            Fixar
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="min-h-11"
+                            disabled={bulkProcessing}
+                            onClick={() => bulk("unlock")}
+                        >
+                            <LockOpen aria-hidden="true" />
+                            Desafixar
+                        </Button>
+                        <ConfirmDialog
+                            title={
+                                selectedIds.length === 1
+                                    ? "Retirar 1 atribuição?"
+                                    : `Retirar ${selectedIds.length} atribuições?`
+                            }
+                            description={
+                                published
+                                    ? `${selectedPeople} voluntários serão notificados de que perderam o turno.`
+                                    : "A escala ainda não foi publicada; ninguém é notificado."
+                            }
+                            confirmLabel="Retirar"
+                            destructive
+                            processing={bulkProcessing}
+                            onConfirm={() => bulk("remove")}
+                        >
+                            <Button
+                                variant="destructive"
+                                className="min-h-11"
+                                disabled={bulkProcessing}
+                            >
+                                <UserMinus aria-hidden="true" />
+                                Retirar
+                            </Button>
+                        </ConfirmDialog>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-11"
+                            aria-label="Limpar selecção"
+                            onClick={() => {
+                                setSelected({});
+                                setBulkError(undefined);
+                            }}
+                        >
+                            <X aria-hidden="true" />
+                        </Button>
+                    </div>
+                    {bulkError && (
+                        <p role="alert" className="text-sm text-destructive">
+                            {bulkError}
+                        </p>
+                    )}
+                </section>
+            )}
+
             <AssignDialog target={target} onClose={() => setTarget(null)} />
         </>
     );
 }
 
 ScheduleEdit.layout = {
-    breadcrumbs: [{ title: 'Escalas', href: index() }],
+    breadcrumbs: [{ title: "Escalas", href: index() }],
 };

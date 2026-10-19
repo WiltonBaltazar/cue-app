@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\PasswordSetupController;
 use App\Http\Controllers\Coordinator\ActivityTemplateController;
 use App\Http\Controllers\Coordinator\AssignmentController;
 use App\Http\Controllers\Coordinator\AuditController;
+use App\Http\Controllers\Coordinator\BulkAssignmentController;
 use App\Http\Controllers\Coordinator\ConsentController as CoordinatorConsentController;
 use App\Http\Controllers\Coordinator\DashboardController;
 use App\Http\Controllers\Coordinator\EventController;
@@ -133,6 +134,7 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::post('escalas/{schedule}/gerar', [ScheduleController::class, 'generate'])->name('schedules.generate');
         Route::post('escalas/{schedule}/publicar', [ScheduleController::class, 'publish'])->name('schedules.publish');
         Route::get('escalas/{schedule}/pdf', SchedulePdfController::class)->name('schedules.pdf');
+        Route::post('escalas/{schedule}/atribuicoes', BulkAssignmentController::class)->name('schedules.bulk-assignments');
 
         Route::post('atribuicoes', [AssignmentController::class, 'store'])->name('assignments.store');
         Route::put('atribuicoes/{assignment}', [AssignmentController::class, 'update'])->name('assignments.update');
