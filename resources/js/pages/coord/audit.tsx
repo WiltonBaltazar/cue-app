@@ -48,11 +48,9 @@ export default function CoordinatorAudit({
     filters,
 }: Props) {
     const changeFilter = (value: string) =>
-        router.get(
-            audit().url,
-            value === ALL ? {} : { tipo: value },
-            { preserveScroll: true },
-        );
+        router.get(audit().url, value === ALL ? {} : { tipo: value }, {
+            preserveScroll: true,
+        });
 
     return (
         <>

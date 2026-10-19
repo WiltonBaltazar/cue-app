@@ -51,7 +51,9 @@ export function DataRemovalCard({
                 type="password"
                 autoComplete="current-password"
                 value={form.data.password}
-                onChange={(event) => form.setData('password', event.target.value)}
+                onChange={(event) =>
+                    form.setData('password', event.target.value)
+                }
                 hint="Para confirmar que é você."
                 error={errors.password ?? errors.removal}
             />
