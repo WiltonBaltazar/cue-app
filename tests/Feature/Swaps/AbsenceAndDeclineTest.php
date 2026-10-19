@@ -184,3 +184,25 @@ test('the team schedule shows a place as "Por substituir" without naming who ste
 
     expect($response->getContent())->not->toContain('Ana M.');
 });
+
+test('the absences tab lists upcoming shift days and whether the volunteer is paused', function () {
+    $this->actingAs($this->volunteer->user)
+        ->get(route('absences.index'))
+        ->assertInertia(fn ($page) => $page
+            ->component('volunteer/absences/index')
+            ->where('shifts', [[
+                'date' => $this->scenario->event->date->toDateString(),
+                'eventName' => 'Culto de Domingo',
+                'role' => $this->scenario->camera->name,
+            ]])
+            ->where('paused', false)
+            ->where('canPause', true));
+
+    $this->actingAs($this->volunteer->user)->post(route('profile.pause'), ['until' => LocalTime::today()->addMonth()->toDateString()]);
+
+    $this->actingAs($this->volunteer->user)
+        ->get(route('absences.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('paused', true)
+            ->where('pausedUntil', LocalTime::today()->addMonth()->toDateString()));
+});

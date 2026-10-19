@@ -13,6 +13,17 @@
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
+    --font-display:
+        'Saira Semi Condensed', 'Instrument Sans', ui-sans-serif, system-ui,
+        sans-serif;
+
+    --color-slate: var(--slate);
+    --color-slate-foreground: var(--slate-foreground);
+    --color-slate-muted: var(--slate-muted);
+    --color-slate-line: var(--slate-line);
+    --color-tally: var(--tally);
+    --color-studio: var(--studio);
+
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
@@ -105,6 +116,18 @@
     --sidebar-accent-foreground: oklch(1 0 0);
     --sidebar-border: oklch(1 0 0 / 12%);
     --sidebar-ring: var(--brand-gold);
+
+    /*
+     * Volunteer side. The "slate" is the navy call sheet for the next shift; the tally
+     * light is the gold "on" lamp, only ever drawn on the slate. "Studio" is the cool
+     * page tone behind the volunteer screens.
+     */
+    --slate: var(--brand-navy);
+    --slate-foreground: oklch(0.98 0.005 255);
+    --slate-muted: oklch(0.8 0.035 258);
+    --slate-line: oklch(1 0 0 / 14%);
+    --tally: var(--brand-gold);
+    --studio: oklch(0.975 0.008 255);
 }
 
 .dark {
@@ -140,6 +163,13 @@
     --sidebar-accent-foreground: oklch(1 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: var(--brand-gold);
+
+    --slate: oklch(0.24 0.06 262);
+    --slate-foreground: oklch(0.98 0.005 255);
+    --slate-muted: oklch(0.78 0.035 258);
+    --slate-line: oklch(1 0 0 / 12%);
+    --tally: var(--brand-gold);
+    --studio: oklch(0.155 0.028 262);
 }
 
 @layer base {
@@ -163,5 +193,26 @@
 
     [data-sidebar='menu-button'][data-active='true'] > svg {
         color: var(--sidebar-primary);
+    }
+
+    /* The tally light on the day of a shift: a slow glow, still when motion is reduced. */
+    .tally-live {
+        box-shadow: 0 0 0 0 color-mix(in oklch, var(--tally) 60%, transparent);
+        animation: tally-glow 2.4s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .tally-live {
+            animation: none;
+            box-shadow: 0 0 0 4px
+                color-mix(in oklch, var(--tally) 30%, transparent);
+        }
+    }
+
+    @keyframes tally-glow {
+        50% {
+            box-shadow: 0 0 0 5px
+                color-mix(in oklch, var(--tally) 25%, transparent);
+        }
     }
 }

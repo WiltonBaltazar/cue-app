@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Assignment;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Support\Facades\Notification;
@@ -68,6 +69,35 @@ test('the volunteer home shows the next shifts', function () {
     $this->actingAs($this->me->user)
         ->get(route('home'))
         ->assertInertia(fn ($page) => $page->component('volunteer/home')->has('nextShifts', 1));
+});
+
+test('the home shows who else serves at the next event, by short name only', function () {
+    $this->actingAs($this->coordinator)->post(route('coord.schedules.publish', $this->scenario->schedule));
+
+    $response = $this->actingAs($this->me->user)->get(route('home'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('nextTeam.needsReplacement', 0)
+        ->where('nextTeam.people', [
+            ['name' => 'Ana M.', 'role' => $this->scenario->camera->name, 'isMe' => true],
+            ['name' => 'João S.', 'role' => $this->scenario->camera->name, 'isMe' => false],
+        ])
+        ->where('openSwaps', 0));
+
+    expect($response->getContent())->not->toContain('Sitoe')
+        ->not->toContain($this->colleague->user->phone);
+});
+
+test('the home counts colleagues\' open requests the volunteer could take', function () {
+    $this->actingAs($this->coordinator)->post(route('coord.schedules.publish', $this->scenario->schedule));
+    $other = $this->scenario->volunteer(attributes: ['full_name' => 'Rita Chongo']);
+    $assignment = Assignment::query()->where('volunteer_id', $this->colleague->id)->sole();
+
+    $this->actingAs($this->colleague->user)->post(route('swaps.store'), ['assignment_id' => $assignment->id]);
+
+    $this->actingAs($other->user)
+        ->get(route('home'))
+        ->assertInertia(fn ($page) => $page->where('openSwaps', 1));
 });
 
 test('the PDF contains short names only', function () {

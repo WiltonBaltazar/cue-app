@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Volunteer;
 
 use App\Actions\Swaps\RegisterAbsence;
 use App\Actions\Swaps\RemoveAbsence;
+use App\Enums\VolunteerStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
 use App\Models\User;
 use App\Support\LocalTime;
+use App\Support\VolunteerShifts;
 use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
@@ -37,6 +39,15 @@ class AbsenceController extends Controller
                     'reason' => $absence->reason,
                 ])->values(),
             'today' => LocalTime::today()->toDateString(),
+            // Upcoming shift days: quick picks, and a warning when a chosen period covers one.
+            'shifts' => array_map(fn (array $shift) => [
+                'date' => $shift['date'],
+                'eventName' => $shift['eventName'],
+                'role' => $shift['role'],
+            ], VolunteerShifts::upcoming($volunteer, 8)),
+            'paused' => $volunteer->status === VolunteerStatus::Inactive,
+            'pausedUntil' => $volunteer->inactive_until?->toDateString(),
+            'canPause' => in_array($volunteer->status, [VolunteerStatus::Active, VolunteerStatus::Inactive], true),
         ]);
     }
 

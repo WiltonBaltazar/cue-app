@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Volunteer;
 
 use App\Actions\Swaps\AcceptSwap;
 use App\Actions\Swaps\CreateSwap;
-use App\Domain\Scheduling\SwapEligibility;
 use App\Enums\SwapStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Assignment;
@@ -12,6 +11,7 @@ use App\Models\SwapRequest;
 use App\Models\User;
 use App\Models\Volunteer;
 use App\Support\LocalTime;
+use App\Support\OpenSwaps;
 use App\Support\ShiftDescription;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
@@ -27,7 +27,7 @@ use Inertia\Response;
  */
 class SwapController extends Controller
 {
-    public function index(#[CurrentUser] User $user, SwapEligibility $eligibility): Response
+    public function index(#[CurrentUser] User $user, OpenSwaps $openSwaps): Response
     {
         $me = $user->volunteer;
         abort_if($me === null, 404);
@@ -39,15 +39,7 @@ class SwapController extends Controller
             ->latest()
             ->get();
 
-        $openToMe = SwapRequest::query()
-            ->where('status', SwapStatus::Open)
-            ->where('requester_id', '!=', $me->id)
-            ->where(fn ($query) => $query->whereNull('target_volunteer_id')->orWhere('target_volunteer_id', $me->id))
-            ->whereHas('assignment.event', fn ($query) => $query->where('starts_at', '>', now()))
-            ->with(['assignment.event', 'assignment.position.teamRole', 'requester'])
-            ->get()
-            ->filter(fn (SwapRequest $swap) => $eligibility->isEligible($swap->assignment, $me))
-            ->values();
+        $openToMe = $openSwaps->for($me);
 
         return Inertia::render('volunteer/swaps/index', [
             'mine' => $mine->map(fn (SwapRequest $swap) => [
@@ -137,7 +129,10 @@ class SwapController extends Controller
             'statusLabel' => $swap->status->label(),
             'isUrgent' => $swap->is_urgent,
             'shift' => ShiftDescription::of($swap->assignment),
+            'eventName' => $event->name,
+            'role' => $swap->assignment->position->teamRole->name,
             'date' => $event->date->toDateString(),
+            'arrivalTime' => LocalTime::timeOf($event->arrival_at),
             'startTime' => LocalTime::timeOf($event->starts_at),
         ];
     }

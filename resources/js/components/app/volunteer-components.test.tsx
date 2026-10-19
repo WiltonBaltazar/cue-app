@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import { NextShift } from '@/components/app/next-shift';
 import { PushPrompt } from '@/components/app/push-prompt';
 import { ShiftCard } from '@/components/app/shift-card';
 import type { Shift } from '@/components/app/shift-card';
@@ -76,6 +77,16 @@ describe('ShiftCard decline button', () => {
         const { container } = renderShift();
 
         expect(screen.getByText('07:30')).toBeInTheDocument();
+        expect(
+            screen.queryByRole('button', { name: 'Não posso ir' }),
+        ).not.toBeInTheDocument();
+        expect(await axe(container)).toHaveNoViolations();
+
+        // The row opens to show the details and actions.
+        await user.click(
+            screen.getByRole('button', { name: /Culto de domingo/ }),
+        );
+        expect(screen.getByText('Templo central')).toBeInTheDocument();
         expect(await axe(container)).toHaveNoViolations();
 
         await user.click(screen.getByRole('button', { name: 'Não posso ir' }));
@@ -113,6 +124,54 @@ describe('ShiftCard decline button', () => {
 
         expect(
             screen.queryByRole('button', { name: 'Não posso ir' }),
+        ).not.toBeInTheDocument();
+    });
+});
+
+describe('NextShift', () => {
+    const team = {
+        people: [
+            { name: 'Ana M.', role: 'Câmara', isMe: true },
+            { name: 'João S.', role: 'Câmara', isMe: false },
+            { name: 'Rita C.', role: 'Câmara', isMe: false },
+            { name: 'Paulo N.', role: 'Áudio', isMe: false },
+        ],
+        needsReplacement: 1,
+    };
+
+    function renderNext(props: Partial<Parameters<typeof NextShift>[0]> = {}) {
+        return render(
+            <QueryClientProvider client={new QueryClient()}>
+                <NextShift shift={shift} team={team} {...props} />
+            </QueryClientProvider>,
+        );
+    }
+
+    it('leads with the arrival time and lists the rest of the team by role', async () => {
+        const { container } = renderNext();
+
+        expect(screen.getByText('07:30')).toBeInTheDocument();
+        expect(
+            screen.getByRole('heading', { name: 'Culto de domingo' }),
+        ).toBeInTheDocument();
+        expect(screen.getByText('João S., Rita C.')).toBeInTheDocument();
+        expect(screen.getByText('Paulo N.')).toBeInTheDocument();
+        expect(screen.queryByText(/Ana M\./)).not.toBeInTheDocument();
+        expect(screen.getByText('1 lugar por substituir')).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Não posso ir' }),
+        ).toBeInTheDocument();
+        expect(await axe(container)).toHaveNoViolations();
+    });
+
+    it('says when a substitute is being looked for, without the actions', () => {
+        renderNext({
+            shift: { ...shift, status: 'needs_replacement', canAct: false },
+        });
+
+        expect(screen.getByText('À procura de substituto')).toBeInTheDocument();
+        expect(
+            screen.queryByRole('button', { name: 'Pedir troca' }),
         ).not.toBeInTheDocument();
     });
 });

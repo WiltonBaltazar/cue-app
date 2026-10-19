@@ -1,5 +1,11 @@
 import { Link } from '@inertiajs/react';
-import { ArrowLeftRight, CalendarDays, House, UserRound } from 'lucide-react';
+import {
+    ArrowLeftRight,
+    CalendarDays,
+    CalendarOff,
+    House,
+    UserRound,
+} from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import AppLogo from '@/components/app-logo';
 import { NotificationBell } from '@/components/app/notification-bell';
@@ -8,6 +14,7 @@ import { PushButton, PushPrompt } from '@/components/app/push-prompt';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
+import { index as absences } from '@/routes/absences';
 import { edit as editProfile } from '@/routes/profile';
 import { index as swaps } from '@/routes/swaps';
 import { index as myShifts } from '@/routes/volunteer/shifts';
@@ -25,6 +32,7 @@ const navItems: (NavItem & { matchPrefix?: string })[] = [
         matchPrefix: '/escala',
     },
     { title: 'Trocas', href: swaps(), icon: ArrowLeftRight },
+    { title: 'Ausências', href: absences(), icon: CalendarOff },
     {
         title: 'Perfil',
         href: editProfile(),
@@ -47,8 +55,8 @@ export default function VolunteerLayout({ children }: PropsWithChildren) {
             isCurrentUrl(item.matchPrefix, undefined, true));
 
     return (
-        <div className="flex min-h-svh flex-col bg-background">
-            <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
+        <div className="flex min-h-svh flex-col bg-studio">
+            <header className="sticky top-0 z-20 border-b bg-studio/95 backdrop-blur">
                 <div className="mx-auto flex h-14 max-w-3xl items-center gap-2 px-4">
                     <Link
                         href={home()}
@@ -101,7 +109,7 @@ export default function VolunteerLayout({ children }: PropsWithChildren) {
 
             <nav
                 aria-label="Navegação principal"
-                className="fixed inset-x-0 bottom-0 z-20 border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+                className="fixed inset-x-0 bottom-0 z-20 border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
             >
                 <ul className="mx-auto flex max-w-3xl">
                     {navItems.map((item) => (
@@ -112,8 +120,10 @@ export default function VolunteerLayout({ children }: PropsWithChildren) {
                                     isActive(item) ? 'page' : undefined
                                 }
                                 className={cn(
-                                    'flex min-h-14 flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground',
-                                    isActive(item) && 'text-primary',
+                                    // The current tab gets a short bar along the top edge, like the tally marker in the coordinator sidebar.
+                                    'relative flex min-h-14 flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground',
+                                    isActive(item) &&
+                                        'text-primary before:absolute before:inset-x-6 before:top-0 before:h-0.5 before:rounded-full before:bg-primary',
                                 )}
                             >
                                 {item.icon && (

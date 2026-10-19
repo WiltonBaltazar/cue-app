@@ -87,6 +87,7 @@ test('a volunteer declines a shift on a phone', function () {
 
     visit('/minha-escala')->on()->mobile()
         ->assertSee('Culto de Domingo')
+        ->click('Culto de Domingo')
         ->press('Não posso ir')
         ->assertSee('Não pode ir?')
         ->click(dialogButton('Não posso ir'))

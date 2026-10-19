@@ -59,4 +59,32 @@ class VolunteerShifts
             'hasActiveSwap' => in_array($assignment->id, $withSwap, true),
         ])->all());
     }
+
+    /**
+     * Who serves with the volunteer at that event, in short names only (FR-027). Places
+     * waiting for a substitute are counted without saying who stepped out.
+     *
+     * @return array{people: list<array{name: string, role: string, isMe: bool}>, needsReplacement: int}
+     */
+    public static function team(int $scheduleId, int $eventId, int $volunteerId): array
+    {
+        $assignments = Assignment::query()
+            ->where('schedule_id', $scheduleId)
+            ->where('event_id', $eventId)
+            ->whereIn('status', [AssignmentStatus::Confirmed, AssignmentStatus::NeedsReplacement])
+            ->with(['volunteer', 'position.teamRole'])
+            ->get()
+            ->sortBy(fn (Assignment $assignment) => [$assignment->volunteer_id !== $volunteerId, $assignment->position->teamRole->name]);
+
+        return [
+            'people' => array_values($assignments
+                ->where('status', AssignmentStatus::Confirmed)
+                ->map(fn (Assignment $assignment) => [
+                    'name' => $assignment->volunteer->shortName(),
+                    'role' => $assignment->position->teamRole->name,
+                    'isMe' => $assignment->volunteer_id === $volunteerId,
+                ])->all()),
+            'needsReplacement' => $assignments->where('status', AssignmentStatus::NeedsReplacement)->count(),
+        ];
+    }
 }

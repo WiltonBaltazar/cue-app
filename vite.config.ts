@@ -33,6 +33,11 @@ export default defineConfig({
                 bunny('Instrument Sans', {
                     weights: [400, 500, 600],
                 }),
+                // Call times and headings on the volunteer side: a condensed,
+                // broadcast-graphics face with tabular figures.
+                bunny('Saira Semi Condensed', {
+                    weights: [600, 700],
+                }),
             ],
         }),
         inertia(),

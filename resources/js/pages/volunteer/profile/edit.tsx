@@ -1,7 +1,6 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { DataRemovalCard } from '@/components/app/data-removal-card';
-import { PauseCard } from '@/components/app/pause-card';
 import Heading from '@/components/heading';
 import { localPhone } from '@/components/phone-input';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,7 @@ import type {
     TeamRoleOption,
     VolunteerFormFields,
 } from '@/components/volunteer-form/types';
-import { pause, resume } from '@/routes/profile';
+import { index as absences } from '@/routes/absences';
 import { edit, update } from '@/routes/volunteer/profile';
 import type { VolunteerFull } from '@/types';
 
@@ -304,7 +303,10 @@ export default function VolunteerProfileEdit({
                     />
                 </section>
 
-                <section className="space-y-4">
+                <section
+                    id="disponibilidade"
+                    className="scroll-mt-20 space-y-4"
+                >
                     <Heading
                         variant="small"
                         title="Disponibilidade"
@@ -436,14 +438,16 @@ export default function VolunteerProfileEdit({
 
             {(volunteer.status === 'active' ||
                 volunteer.status === 'inactive') && (
-                <div className="mt-10">
-                    <PauseCard
-                        paused={volunteer.status === 'inactive'}
-                        pausedUntil={volunteer.inactiveUntil}
-                        pauseUrl={pause().url}
-                        resumeUrl={resume().url}
-                    />
-                </div>
+                <p className="mt-10 text-sm text-muted-foreground">
+                    Para bloquear datas ou fazer uma pausa, use o separador{' '}
+                    <Link
+                        href={absences()}
+                        className="font-medium text-primary underline underline-offset-4"
+                    >
+                        Ausências
+                    </Link>
+                    .
+                </p>
             )}
 
             <div className="mt-10">

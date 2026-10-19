@@ -1,13 +1,16 @@
-import { Link, router } from '@inertiajs/react';
-import { Clock, MapPin } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
-import { ConfirmDialog } from '@/components/app/confirm-dialog';
-import { SwapRequestDialog } from '@/components/app/swap-request-dialog';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { DateBlock } from '@/components/app/date-block';
+import { ShiftActions } from '@/components/app/shift-actions';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { formatLongDate } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { show as teamSchedule } from '@/routes/schedules';
-import { decline } from '@/routes/volunteer/shifts';
 
 export type Shift = {
     id: number;
@@ -28,8 +31,28 @@ export type Shift = {
 };
 
 /**
- * One of the volunteer's own shifts: date, role and, most importantly, arrival time.
- * With `actions`, also "Não posso ir" and "Pedir troca" (US4).
+ * What is unusual about a shift, if anything; a confirmed shift says nothing.
+ */
+export function shiftNote(shift: Shift): string | null {
+    if (shift.eventCancelled) {
+        return 'Evento cancelado';
+    }
+
+    if (shift.status === 'needs_replacement') {
+        return 'À procura de substituto';
+    }
+
+    if (shift.hasActiveSwap) {
+        return 'Troca pedida';
+    }
+
+    return shift.status === 'confirmed' ? null : shift.statusLabel;
+}
+
+/**
+ * One of the volunteer's shifts as a row of the rundown: date, event and role, and the
+ * arrival time on the right, since that is what people look for. Tapping the row
+ * shows the event times, place, team link and, with `actions`, what they can do (US4).
  */
 export function ShiftCard({
     shift,
@@ -41,98 +64,79 @@ export function ShiftCard({
     /** Open the "Não posso ir" confirmation straight away (72 h check push). */
     declineOpen?: boolean;
 }) {
-    const [swapOpen, setSwapOpen] = useState(false);
-    const label = `${shift.eventName} · ${shift.role} · ${formatLongDate(`${shift.date}T12:00:00Z`)}`;
+    const [open, setOpen] = useState(declineOpen);
+    const note = shiftNote(shift);
+    const longDate = formatLongDate(`${shift.date}T12:00:00Z`);
 
     return (
-        <article className="rounded-xl border p-4">
-            <div className="flex items-start justify-between gap-2">
-                <div>
-                    <p className="text-sm text-muted-foreground first-letter:uppercase">
-                        {formatLongDate(`${shift.date}T12:00:00Z`)}
-                    </p>
-                    <h3
-                        className={`text-lg font-semibold ${shift.eventCancelled ? 'line-through' : ''}`}
+        <Collapsible open={open} onOpenChange={setOpen}>
+            <CollapsibleTrigger className="group flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset">
+                <DateBlock date={shift.date} />
+                <span className="min-w-0 flex-1">
+                    <span className="sr-only">{longDate}: </span>
+                    <span
+                        className={cn(
+                            'block truncate font-medium',
+                            shift.eventCancelled && 'line-through',
+                        )}
                     >
                         {shift.eventName}
-                    </h3>
-                    <p className="font-medium">{shift.role}</p>
-                </div>
-                {shift.eventCancelled ? (
-                    <Badge variant="secondary">Cancelado</Badge>
-                ) : (
-                    <>
-                        {shift.status !== 'confirmed' && (
-                            <Badge variant="outline">{shift.statusLabel}</Badge>
-                        )}
-                        {shift.hasActiveSwap && (
-                            <Badge variant="outline">Troca pedida</Badge>
-                        )}
-                    </>
-                )}
-            </div>
-            <ul className="mt-3 space-y-1 text-sm">
-                <li className="flex items-center gap-2">
-                    <Clock
-                        className="size-4 text-muted-foreground"
-                        aria-hidden="true"
-                    />
-                    <span>
-                        Chegada <strong>{shift.arrivalTime}</strong> · evento{' '}
-                        {shift.startTime}–{shift.endTime}
                     </span>
-                </li>
-                <li className="flex items-center gap-2">
-                    <MapPin
-                        className="size-4 text-muted-foreground"
+                    <span className="block truncate text-sm text-muted-foreground">
+                        Função: {shift.role}
+                    </span>
+                    {note && (
+                        <span className="mt-0.5 block text-sm font-medium text-amber-700 dark:text-amber-400">
+                            {note}
+                        </span>
+                    )}
+                </span>
+                <span className="text-right leading-none">
+                    <span className="sr-only">Chegada às </span>
+                    <span className="font-display text-2xl font-semibold tabular-nums">
+                        {shift.arrivalTime}
+                    </span>
+                    <span
+                        className="mt-1 block text-xs text-muted-foreground"
                         aria-hidden="true"
-                    />
-                    {shift.location}
-                </li>
-            </ul>
-            <Link
-                href={teamSchedule(shift.scheduleId, {
-                    query: { evento: shift.eventId },
-                })}
-                className="mt-3 inline-flex min-h-11 items-center text-sm underline underline-offset-4"
-            >
-                Ver equipa deste evento
-            </Link>
-            {actions && shift.canAct && (
-                <div className="mt-3 flex flex-wrap gap-2 border-t pt-3">
-                    <Button
-                        variant="outline"
-                        className="min-h-11"
-                        onClick={() => setSwapOpen(true)}
                     >
-                        Pedir troca
-                    </Button>
-                    <ConfirmDialog
-                        title="Não pode ir?"
-                        description={`${label}. Os coordenadores são avisados e o turno é oferecido aos colegas que podem assumir.`}
-                        confirmLabel="Não posso ir"
-                        destructive
-                        defaultOpen={declineOpen}
-                        onConfirm={() =>
-                            router.post(
-                                decline(shift.id).url,
-                                {},
-                                { preserveScroll: true },
-                            )
-                        }
-                    >
-                        <Button variant="ghost" className="min-h-11">
-                            Não posso ir
-                        </Button>
-                    </ConfirmDialog>
-                    <SwapRequestDialog
-                        assignmentId={shift.id}
-                        shiftLabel={label}
-                        open={swapOpen}
-                        onOpenChange={setSwapOpen}
+                        chegada
+                    </span>
+                </span>
+                <ChevronDown
+                    className="size-5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+                    aria-hidden="true"
+                />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-4 pb-4">
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-lg bg-muted/60 p-3 text-sm">
+                    <div>
+                        <dt className="text-muted-foreground">Horário</dt>
+                        <dd className="font-medium tabular-nums">
+                            {shift.startTime}–{shift.endTime}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className="text-muted-foreground">Local</dt>
+                        <dd className="font-medium">{shift.location}</dd>
+                    </div>
+                </dl>
+                <Link
+                    href={teamSchedule(shift.scheduleId, {
+                        query: { evento: shift.eventId },
+                    })}
+                    className="mt-2 inline-flex min-h-11 items-center text-sm underline underline-offset-4"
+                >
+                    Ver a equipa deste evento
+                </Link>
+                {actions && shift.canAct && (
+                    <ShiftActions
+                        shift={shift}
+                        declineOpen={declineOpen}
+                        className="mt-1"
                     />
-                </div>
-            )}
-        </article>
+                )}
+            </CollapsibleContent>
+        </Collapsible>
     );
 }
