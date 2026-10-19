@@ -139,6 +139,9 @@ server {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php8.4-fpm.sock;
         fastcgi_hide_header X-Powered-By;
+        # Laravel's encrypted cookies and security headers outgrow the 4 KB default (502).
+        fastcgi_buffer_size 32k;
+        fastcgi_buffers 16 16k;
     }
 
     location ~ /\.(?!well-known) {
