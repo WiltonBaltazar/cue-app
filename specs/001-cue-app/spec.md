@@ -87,7 +87,7 @@ O coordenador escolhe um período (ex.: Novembro) e o sistema propõe uma escala
 
 1. **Dado** voluntários com disponibilidade e eventos definidos, **Quando** o coordenador gera a escala, **Então** nenhum voluntário é escalado num dia/período em que está indisponível ou ausente.
 2. **Dado** uma posição que exige nível mínimo (ex.: Realização ≥ Intermédio), **Quando** a escala é gerada, **Então** só voluntários com esse nível nessa função são atribuídos.
-3. **Dado** um voluntário com frequência "Uma vez por mês", **Quando** a escala mensal é gerada, **Então** não é escalado mais de uma vez nesse mês.
+3. **Dado** um voluntário com frequência "Uma vez por mês", **Quando** a escala mensal é gerada, **Então** só é escalado mais de uma vez nesse mês se nenhum outro voluntário elegível puder preencher a posição.
 4. **Dado** voluntários igualmente elegíveis, **Quando** a escala é gerada, **Então** é preferido quem tem menos atribuições recentes e, em seguida, quem indicou a função como área de maior interesse.
 5. **Dado** um voluntário de nível Iniciante, **Quando** é escalado, **Então** o sistema tenta escalar na mesma função/evento alguém marcado como "Posso apoiar outros membros".
 6. **Dado** posições que não puderam ser preenchidas, **Quando** a proposta é apresentada, **Então** essas lacunas aparecem destacadas com sugestões de voluntários mais próximos de elegíveis.
@@ -187,7 +187,7 @@ Voluntários e coordenadores recebem notificações push no telemóvel/computado
 **Geração de escala**
 
 - **FR-010**: O sistema DEVE gerar uma proposta de escala para um intervalo de datas escolhido.
-- **FR-011**: A geração DEVE respeitar como restrições obrigatórias: disponibilidade (dia e período), ausências registadas, nível mínimo da posição, frequência máxima declarada, uma posição por evento e ausência de sobreposição de horários.
+- **FR-011**: A geração DEVE respeitar como restrições obrigatórias: disponibilidade (dia e período), ausências registadas, nível mínimo da posição, uma posição por evento e ausência de sobreposição de horários. A frequência máxima declarada é uma preferência: a geração escolhe primeiro quem está dentro da sua frequência e só a ultrapassa quando, de outro modo, a posição ficaria vazia ("Ocasionalmente" por último). Ultrapassar a frequência numa edição manual é apenas um aviso, sem justificação obrigatória.
 - **FR-012**: A geração DEVE optimizar, por ordem: (1) preencher o máximo de posições, (2) equilibrar o número de atribuições entre voluntários, (3) privilegiar a área de maior interesse, (4) emparelhar iniciantes com mentores.
 - **FR-013**: O coordenador DEVE poder editar manualmente qualquer atribuição antes e depois da publicação, sendo avisado quando a alteração viola uma restrição. Se outro coordenador alterou a mesma atribuição desde que a página foi carregada, a gravação DEVE ser recusada com a mensagem "Alterado por <nome> — recarregar", sem perder as restantes alterações.
 - **FR-014**: O sistema DEVE manter estados de escala: Rascunho → Publicada; e de atribuição: Confirmada (estado inicial ao publicar) → Recusada / Por substituir. Não existe confirmação obrigatória por parte do voluntário.
@@ -292,7 +292,7 @@ Termos canónicos usados na interface e nesta especificação:
 - Um ou mais coordenadores com permissões iguais; não há, nesta fase, líderes por área.
 - Actividades base: Culto de Domingo e Estudo Bíblico de Terça; outras criadas como eventos.
 - Períodos: Manhã, Tarde, Noite; "Horários variáveis" é tratado como disponível em todos os dias e períodos, mas com prioridade mais baixa na geração.
-- Frequências mapeadas para limite mensal: Todas as semanas = sem limite (máx. 1 por semana), 2–3 vezes/mês = 3, 1 vez/mês = 1, Ocasionalmente = só por atribuição manual.
+- Frequências mapeadas para limite mensal preferido: Todas as semanas = sem limite (1 por semana), 2–3 vezes/mês = 3, 1 vez/mês = 1, Ocasionalmente = só quando mais ninguém pode. Os limites orientam a geração mas não deixam posições vazias (FR-011).
 - Idade mínima de cadastro: 14 anos (ver FR-002a).
 - Interface em português; fuso horário Africa/Maputo.
 - Notificações por WhatsApp/SMS ficam fora do âmbito desta fase.

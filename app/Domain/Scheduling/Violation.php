@@ -3,8 +3,9 @@
 namespace App\Domain\Scheduling;
 
 /**
- * A hard scheduling rule a candidate would break (FR-011). Automatic generation never
- * breaks one; coordinators may override with a note (FR-013).
+ * A scheduling rule a candidate would break (FR-011). Hard rules are never broken by
+ * automatic generation; coordinators may override them with a note (FR-013). The declared
+ * frequency is soft: preferred, but exceeded when nobody else can fill a position.
  */
 enum Violation: string
 {
@@ -29,6 +30,20 @@ enum Violation: string
             self::SameEvent => 'Já está escalado neste evento',
             self::TimeOverlap => 'Já está escalado noutro evento à mesma hora',
         };
+    }
+
+    public function isHard(): bool
+    {
+        return $this !== self::FrequencyCap;
+    }
+
+    /**
+     * @param  list<self>  $violations
+     * @return list<self>
+     */
+    public static function hard(array $violations): array
+    {
+        return array_values(array_filter($violations, fn (self $violation): bool => $violation->isHard()));
     }
 
     /**

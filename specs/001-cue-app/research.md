@@ -165,8 +165,10 @@ the clarification session recorded in [spec.md](spec.md#clarifications).
 
 - **Decision**: A pure PHP domain service (`App\Domain\Scheduling\ScheduleGenerator`) that:
   1. Builds the candidate set per position by applying **hard constraints** as filters
-     (availability day×period, absences, min level, monthly frequency cap, one position per
-     event, no time overlap including setup/teardown, status Active, "Occasionally" excluded).
+     (availability day×period, absences, min level, one position per event, no time
+     overlap including setup/teardown, status Active). The declared frequency is soft:
+     people within it are preferred; over-cap people (then "Occasionally") are used only
+     when nobody else is left, so frequency never causes a gap.
   2. Orders positions by scarcity (fewest candidates first).
   3. Scores candidates by the FR-012 priorities: fewest recent assignments → preferred role
      → "variable hours" penalty; tie-break by stable volunteer ID → **deterministic**.

@@ -2,10 +2,12 @@
 
 use App\Actions\Events\GenerateOccurrences;
 use App\Enums\AssignmentStatus;
+use App\Enums\Frequency;
 use App\Enums\Period;
 use App\Enums\ScheduleStatus;
 use App\Models\ActivityTemplate;
 use App\Models\Assignment;
+use App\Models\Event;
 use App\Models\Schedule;
 use App\Models\User;
 use App\Notifications\AssignmentChanged;
@@ -95,6 +97,31 @@ test('a manual edit that breaks a rule needs a note and is audited', function ()
     expect($assignment->override_note)->toBe('Confirmou por telefone que pode vir.')
         ->and($assignment->source)->toBe(Assignment::SOURCE_MANUAL)
         ->and(Activity::query()->where('subject_type', Assignment::class)->where('subject_id', $assignment->id)->where('causer_id', $this->coordinator->id)->exists())->toBeTrue();
+});
+
+test('going over a volunteer\'s frequency is only a warning: no note needed', function () {
+    $monthly = $this->scenario->volunteer(slots: [[7, Period::Morning], [7, Period::Evening]], attributes: ['max_frequency' => Frequency::Monthly]);
+    $sunday = $this->scenario->event->date;
+    $evening = Event::factory()->create([
+        'date' => $sunday->toDateString(),
+        'period' => Period::Evening,
+        'arrival_at' => LocalTime::toUtc($sunday, '16:30'),
+        'starts_at' => LocalTime::toUtc($sunday, '17:00'),
+        'ends_at' => LocalTime::toUtc($sunday, '19:00'),
+        'teardown_until' => LocalTime::toUtc($sunday, '19:30'),
+    ]);
+    $eveningPosition = $evening->positions()->create(['team_role_id' => $this->scenario->camera->id, 'quantity' => 1]);
+
+    $this->actingAs($this->coordinator)
+        ->post(route('coord.assignments.store'), ['position_id' => $eveningPosition->id, 'volunteer_id' => $monthly->id])
+        ->assertSessionHasNoErrors();
+
+    $this->actingAs($this->coordinator)
+        ->post(route('coord.assignments.store'), ['position_id' => $this->scenario->position->id, 'volunteer_id' => $monthly->id])
+        ->assertSessionHasNoErrors();
+
+    expect(Assignment::query()->where('volunteer_id', $monthly->id)->count())->toBe(2)
+        ->and(Assignment::query()->whereNotNull('override_note')->exists())->toBeFalse();
 });
 
 test('a stale edit is refused with the name of who changed it', function () {

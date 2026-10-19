@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\Notification;
 
 /**
  * Saves a volunteer's weekly availability and frequency (FR-005). Applies to schedules
- * not yet published; future published shifts that now clash are flagged, never removed,
+ * not yet published; future published shifts that now clash with their availability are
+ * flagged, never removed (frequency is only a preference, so it never clashes),
  * and coordinators are told (spec edge case).
  */
 class UpdateAvailability
@@ -58,7 +59,7 @@ class UpdateAvailability
             ->with(['event', 'position', 'schedule'])
             ->get();
 
-        $relevant = [Violation::Availability, Violation::FrequencyCap];
+        $relevant = [Violation::Availability];
         $profile = $this->loader->profileOf($volunteer);
         $flagged = $shifts->filter(function (Assignment $assignment) use ($volunteer, $profile, $relevant): bool {
             $event = $assignment->event;

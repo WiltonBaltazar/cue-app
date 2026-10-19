@@ -50,7 +50,8 @@ class AssignVolunteer
         }
 
         $schedule = $this->scheduleFor($position);
-        $violations = $this->violations($position, $volunteer, $replacing);
+        // Going over someone's declared frequency is only a warning; hard rules need a reason.
+        $violations = Violation::hard($this->violations($position, $volunteer, $replacing));
 
         if ($violations !== [] && blank($overrideNote)) {
             throw ValidationException::withMessages([

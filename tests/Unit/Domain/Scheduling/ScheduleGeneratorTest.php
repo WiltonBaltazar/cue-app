@@ -50,10 +50,11 @@ test('generated assignments never break a hard rule', function () {
         $context = new SchedulingContext($volunteers, $absences, array_map(fn ($a) => S::booking($a['volunteerId'], $a['slot']), $others));
         $volunteer = $context->volunteer($assignment['volunteerId']);
 
-        expect($checker->check($volunteer, $assignment['slot'], $context))->toBe([]);
+        expect(Violation::hard($checker->check($volunteer, $assignment['slot'], $context)))->toBe([]);
     }
 
-    expect($result['gaps']->isEmpty())->toBeFalse();
+    // Volunteer 1 (monthly) and 4 (occasional) go over their frequency rather than leave gaps.
+    expect($result['gaps']->isEmpty())->toBeTrue();
 });
 
 test('the same input always gives the same schedule', function () {
@@ -127,6 +128,33 @@ test('unfilled positions are reported with the closest candidates and why', func
         ->and($gap['missing'])->toBe(1)
         ->and($gap['suggestions'][0]['volunteerId'])->toBe(1)
         ->and($gap['suggestions'][0]['violations'])->toBe([Violation::Availability]);
+});
+
+test('people within their frequency are chosen before anyone goes over theirs', function () {
+    $volunteers = [S::volunteer(1, frequency: Frequency::Monthly), S::volunteer(2, frequency: Frequency::Monthly)];
+    $earlier = S::booking(1, S::slot(90, 90, '2026-11-01'));
+
+    $result = generate(new SchedulingContext($volunteers, [], [$earlier]), [S::slot(10, 1, '2026-11-15')]);
+
+    expect($result['assignments'][0]['volunteerId'])->toBe(2);
+});
+
+test('frequency never leaves a position empty: someone goes over theirs instead', function () {
+    $volunteers = [S::volunteer(1, frequency: Frequency::Monthly), S::volunteer(2, frequency: Frequency::Monthly)];
+
+    $result = generate(new SchedulingContext($volunteers), S::novemberSundays(S::CAMERA));
+
+    expect($result['assignments'])->toHaveCount(5)
+        ->and($result['gaps']->isEmpty())->toBeTrue()
+        ->and(max(loadPerVolunteer($result['assignments'])) - min(loadPerVolunteer($result['assignments'])))->toBeLessThanOrEqual(1);
+});
+
+test('"Ocasionalmente" volunteers are used only when nobody else can come', function () {
+    $volunteers = [S::volunteer(1, frequency: Frequency::Monthly), S::volunteer(2, frequency: Frequency::Occasional)];
+
+    $result = generate(new SchedulingContext($volunteers), [S::slot(10, 1, '2026-11-01'), S::slot(11, 2, '2026-11-08'), S::slot(12, 3, '2026-11-08', roleId: S::CAMERA)]);
+
+    expect(array_column($result['assignments'], 'volunteerId'))->toBe([1, 1, 2]);
 });
 
 test('existing bookings (locked or manual) are respected', function () {

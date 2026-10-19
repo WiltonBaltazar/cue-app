@@ -8,8 +8,8 @@ use App\Models\Volunteer;
 
 /**
  * Ranked candidates for a position, for the editor's picker and substitute suggestions
- * (FR-019): eligible people first, ordered like the generator, then the rest by how few
- * rules they would break.
+ * (FR-019): eligible people first (those within their frequency before those over it),
+ * ordered like the generator, then the rest by how few rules they would break.
  */
 class CandidateFinder
 {
@@ -44,16 +44,17 @@ class CandidateFinder
             }
 
             $violations = $this->checker->check($volunteer, $slot, $context, automatic: false);
+            $eligible = Violation::hard($violations) === [];
 
             $rows[] = [
                 'profile' => $volunteer,
-                'key' => [$violations === [] ? 0 : 1, count($violations), ...$this->scorer->key($volunteer, $slot, $context, $windowFrom, $windowTo)],
+                'key' => [$eligible ? 0 : 1, count($violations), ...$this->scorer->key($volunteer, $slot, $context, $windowFrom, $windowTo)],
                 'row' => [
                     'volunteerId' => $volunteer->id,
                     'name' => (string) ($names[$volunteer->id] ?? ''),
                     'level' => $volunteer->levelIn($slot->roleId)->label(),
                     'recentAssignments' => $context->loadOf($volunteer->id, $windowFrom, $windowTo),
-                    'eligible' => $violations === [],
+                    'eligible' => $eligible,
                     'violations' => Violation::values($violations),
                 ],
             ];

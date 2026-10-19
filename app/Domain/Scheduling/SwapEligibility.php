@@ -33,7 +33,7 @@ class SwapEligibility
 
     public function isEligible(Assignment $assignment, Volunteer $candidate): bool
     {
-        return $candidate->id !== $assignment->volunteer_id && $this->violations($assignment, $candidate) === [];
+        return $candidate->id !== $assignment->volunteer_id && Violation::hard($this->violations($assignment, $candidate)) === [];
     }
 
     /**
@@ -55,7 +55,7 @@ class SwapEligibility
             ->whereHas('skills', fn ($query) => $query->where('team_role_id', $assignment->position->team_role_id))
             ->with(['skills', 'availabilities', 'user'])
             ->get()
-            ->filter(fn (Volunteer $volunteer) => $this->checker->check($this->loader->profileOf($volunteer), $slot, $context, automatic: false) === [])
+            ->filter(fn (Volunteer $volunteer) => Violation::hard($this->checker->check($this->loader->profileOf($volunteer), $slot, $context, automatic: false)) === [])
             ->values();
     }
 }

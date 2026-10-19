@@ -6,8 +6,10 @@ namespace App\Domain\Scheduling;
  * Proposes assignments for a period (US3, FR-010–FR-012).
  *
  * Slots are filled scarcest-first (fewest eligible people), each by the best-ranked
- * candidate that breaks no hard rule. Bookings already in the context (locked or manual
- * assignments, other schedules) are respected. Same input → same output.
+ * candidate that breaks no hard rule. People within their declared frequency come first;
+ * only when none is left does it go over someone's frequency, "Ocasionalmente" last, so
+ * positions are filled whenever anyone can come. Bookings already in the context (locked
+ * or manual assignments, other schedules) are respected. Same input → same output.
  */
 final class ScheduleGenerator
 {
@@ -33,10 +35,7 @@ final class ScheduleGenerator
         $gaps = new GapReport;
 
         foreach ($units as $slot) {
-            $eligible = array_values(array_filter(
-                $context->volunteers(),
-                fn (VolunteerProfile $volunteer): bool => $this->checker->check($volunteer, $slot, $context) === [],
-            ));
+            $eligible = $this->eligibleFor($slot, $context);
 
             if ($eligible === []) {
                 $gaps->add($slot, $this->suggestionsFor($slot, $context));
@@ -50,6 +49,40 @@ final class ScheduleGenerator
         }
 
         return ['assignments' => $assignments, 'gaps' => $gaps];
+    }
+
+    /**
+     * Candidates breaking no hard rule, from the most preferred group that has anyone:
+     * within their frequency, then over it, then "Ocasionalmente".
+     *
+     * @return list<VolunteerProfile>
+     */
+    private function eligibleFor(Slot $slot, SchedulingContext $context): array
+    {
+        $tiers = [[], [], []];
+
+        foreach ($context->volunteers() as $volunteer) {
+            $violations = $this->checker->check($volunteer, $slot, $context);
+
+            if (Violation::hard($violations) !== []) {
+                continue;
+            }
+
+            $tier = match (true) {
+                $violations === [] => 0,
+                $volunteer->frequency->allowsAutomaticAssignment() => 1,
+                default => 2,
+            };
+            $tiers[$tier][] = $volunteer;
+        }
+
+        foreach ($tiers as $tier) {
+            if ($tier !== []) {
+                return $tier;
+            }
+        }
+
+        return [];
     }
 
     /**
@@ -82,7 +115,7 @@ final class ScheduleGenerator
         foreach ($units as $slot) {
             $supply[$slot->positionId] ??= count(array_filter(
                 $context->volunteers(),
-                fn (VolunteerProfile $volunteer): bool => $this->checker->check($volunteer, $slot, $context) === [],
+                fn (VolunteerProfile $volunteer): bool => Violation::hard($this->checker->check($volunteer, $slot, $context)) === [],
             ));
         }
 

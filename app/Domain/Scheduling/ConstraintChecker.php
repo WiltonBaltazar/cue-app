@@ -3,7 +3,7 @@
 namespace App\Domain\Scheduling;
 
 /**
- * The hard rules of FR-011, defined once and used by automatic generation, manual edits
+ * The rules of FR-011 (hard ones plus the soft frequency preference), defined once and used by automatic generation, manual edits
  * and swaps. Pure: reads only the given context.
  */
 final class ConstraintChecker

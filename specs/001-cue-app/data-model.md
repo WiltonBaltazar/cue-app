@@ -68,8 +68,9 @@ Laravel defaults (database session driver → revocable sessions).
 | removal_scheduled_for | timestamp null | requested_at + 7 days; scheduled job anonymises (FR-028) |
 | anonymized_at | timestamp null | |
 
-**Frequency → monthly cap** (spec assumptions): `weekly` → max 1 per ISO week;
-`two_three_monthly` → 3; `monthly` → 1; `occasional` → 0 for auto-generation (manual only).
+**Frequency → preferred monthly cap** (spec assumptions): `weekly` → 1 per ISO week;
+`two_three_monthly` → 3; `monthly` → 1; `occasional` → 0. Soft (FR-011): the generator
+exceeds a cap, `occasional` last, rather than leave a position empty.
 
 **State machine** (`status`):
 
