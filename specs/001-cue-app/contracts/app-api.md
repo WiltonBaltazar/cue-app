@@ -47,8 +47,8 @@ who have the position's role are listed.
 ```json
 {
   "data": [
-    { "volunteerId": 7, "displayName": "João S.", "level": "advanced", "recentAssignments": 1, "eligible": true, "violations": [] },
-    { "volunteerId": 9, "displayName": "Rita C.", "level": "beginner", "recentAssignments": 0, "eligible": false, "violations": ["min_level"] }
+    { "volunteerId": 7, "name": "João Pedro Sitoe", "level": "Avançado", "recentAssignments": 1, "eligible": true, "violations": [] },
+    { "volunteerId": 9, "name": "Rita Cossa", "level": "Iniciante", "recentAssignments": 0, "eligible": false, "violations": ["min_level"] }
   ]
 }
 ```
@@ -60,8 +60,10 @@ who have the position's role are listed.
 
 Dry-run for the grid editor before saving.
 
-Body: `{ "positionId": 1, "volunteerId": 7 }` →
-`{ "ok": false, "violations": ["time_overlap"], "message": "Já escalado no Ensaio (18:00–20:00)" }`
+Body: `{ "position_id": 1, "volunteer_id": 7 }` →
+`{ "ok": false, "violations": ["time_overlap"], "message": "Já está escalado noutro evento à mesma hora" }`
+
+Full names appear here because these endpoints are coordinator-only (FR-031).
 
 ### `GET /app-api/coverage?from=2026-11-01&to=2026-11-30`
 
