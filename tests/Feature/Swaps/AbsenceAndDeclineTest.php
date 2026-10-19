@@ -125,3 +125,62 @@ test('coordinators see declined shifts and open requests on the swaps page', fun
 
     $this->actingAs($this->volunteer->user)->get(route('coord.swaps.index'))->assertForbidden();
 });
+
+function registerAbsenceOnEventDay(): void
+{
+    $date = test()->scenario->event->date->toDateString();
+    test()->actingAs(test()->volunteer->user)->post(route('absences.store'), ['starts_on' => $date, 'ends_on' => $date]);
+}
+
+test('removing an absence gives back shifts nobody has taken yet', function () {
+    registerAbsenceOnEventDay();
+    expect($this->assignment->fresh()->status)->toBe(AssignmentStatus::NeedsReplacement);
+
+    $absence = $this->volunteer->absences()->firstOrFail();
+    $this->actingAs($this->volunteer->user)->delete(route('absences.destroy', $absence))->assertRedirect();
+
+    expect($this->assignment->fresh()->status)->toBe(AssignmentStatus::Confirmed);
+});
+
+test('shifts stay up for replacement when the place was filled or another absence covers the day', function () {
+    registerAbsenceOnEventDay();
+    registerAbsenceOnEventDay();
+    [$first, $second] = $this->volunteer->absences()->orderBy('id')->get()->all();
+
+    // Another absence still covers the day.
+    $this->actingAs($this->volunteer->user)->delete(route('absences.destroy', $first));
+    expect($this->assignment->fresh()->status)->toBe(AssignmentStatus::NeedsReplacement);
+
+    // The coordinator has filled both places in the meantime.
+    foreach ([$this->scenario->volunteer(), $this->scenario->volunteer()] as $substitute) {
+        $this->actingAs($this->coordinator)->post(route('coord.assignments.store'), [
+            'position_id' => $this->scenario->position->id,
+            'volunteer_id' => $substitute->id,
+        ])->assertSessionHasNoErrors();
+    }
+
+    $this->actingAs($this->volunteer->user)->delete(route('absences.destroy', $second));
+    expect($this->assignment->fresh()->status)->toBe(AssignmentStatus::NeedsReplacement);
+});
+
+test('a shift with a swap in progress is not given back', function () {
+    $this->actingAs($this->volunteer->user)->post(route('swaps.store'), ['assignment_id' => $this->assignment->id]);
+    registerAbsenceOnEventDay();
+
+    $this->actingAs($this->volunteer->user)->delete(route('absences.destroy', $this->volunteer->absences()->firstOrFail()));
+
+    expect($this->assignment->fresh()->status)->toBe(AssignmentStatus::NeedsReplacement);
+});
+
+test('the team schedule shows a place as "Por substituir" without naming who stepped out', function () {
+    registerAbsenceOnEventDay();
+    $colleague = $this->scenario->volunteer();
+
+    $response = $this->actingAs($colleague->user)
+        ->get(route('schedules.show', $this->scenario->schedule))
+        ->assertInertia(fn ($page) => $page
+            ->where('events.0.positions.0.needsReplacement', 1)
+            ->has('events.0.positions.0.people', 0));
+
+    expect($response->getContent())->not->toContain('Ana M.');
+});

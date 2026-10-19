@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Volunteer;
 
 use App\Actions\Swaps\RegisterAbsence;
+use App\Actions\Swaps\RemoveAbsence;
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
 use App\Models\User;
@@ -66,13 +67,16 @@ class AbsenceController extends Controller
         return to_route('absences.index');
     }
 
-    public function destroy(#[CurrentUser] User $user, Absence $absence): RedirectResponse
+    public function destroy(#[CurrentUser] User $user, Absence $absence, RemoveAbsence $removeAbsence): RedirectResponse
     {
-        abort_unless($absence->volunteer_id === $user->volunteer?->id, 403);
+        $volunteer = $user->volunteer;
+        abort_unless($volunteer !== null && $absence->volunteer_id === $volunteer->id, 403);
 
-        $absence->delete();
+        $restored = $removeAbsence->handle($volunteer, $absence);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Ausência removida.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => $restored > 0
+            ? "Ausência removida. {$restored} turnos voltaram a ser seus."
+            : 'Ausência removida.']);
 
         return to_route('absences.index');
     }

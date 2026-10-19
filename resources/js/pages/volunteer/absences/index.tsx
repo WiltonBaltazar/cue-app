@@ -125,7 +125,7 @@ export default function Absences({
                                 </div>
                                 <ConfirmDialog
                                     title="Remover esta ausência?"
-                                    description="Volta a poder ser escalado nestes dias. Turnos já marcados para substituição não voltam automaticamente."
+                                    description="Volta a poder ser escalado nestes dias. Os turnos destes dias voltam a ser seus, excepto os que já têm substituto ou troca em curso."
                                     confirmLabel="Remover"
                                     destructive
                                     onConfirm={() =>

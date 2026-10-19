@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Volunteer;
 
 use App\Actions\Swaps\DeclineAssignment;
+use App\Enums\AssignmentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Assignment;
 use App\Models\Event;
@@ -64,7 +65,9 @@ class ShiftController extends Controller
             ->when($eventId !== null, fn ($query) => $query->whereKey($eventId))
             ->with([
                 'positions.teamRole',
-                'positions.assignments' => fn ($query) => $query->active()->with('volunteer'),
+                'positions.assignments' => fn ($query) => $query
+                    ->whereIn('status', [AssignmentStatus::Confirmed, AssignmentStatus::NeedsReplacement])
+                    ->with('volunteer'),
             ])
             ->orderBy('date')
             ->orderBy('starts_at')
@@ -86,10 +89,14 @@ class ShiftController extends Controller
                 'cancelled' => $event->isCancelled(),
                 'positions' => $event->positions->map(fn (Position $position) => [
                     'role' => $position->teamRole->name,
-                    'people' => $position->assignments->map(fn (Assignment $assignment) => [
-                        'name' => $assignment->volunteer->shortName(),
-                        'isMe' => $assignment->volunteer_id === $myId,
-                    ])->values(),
+                    'people' => $position->assignments
+                        ->where('status', AssignmentStatus::Confirmed)
+                        ->map(fn (Assignment $assignment) => [
+                            'name' => $assignment->volunteer->shortName(),
+                            'isMe' => $assignment->volunteer_id === $myId,
+                        ])->values(),
+                    // Places waiting for a substitute; who stepped out is not shown to colleagues.
+                    'needsReplacement' => $position->assignments->where('status', AssignmentStatus::NeedsReplacement)->count(),
                 ])->values(),
             ])->values(),
         ]);

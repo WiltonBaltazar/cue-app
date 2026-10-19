@@ -18,6 +18,7 @@ type Props = {
         positions: {
             role: string;
             people: { name: string; isMe: boolean }[];
+            needsReplacement: number;
         }[];
     }[];
 };
@@ -95,26 +96,40 @@ export default function TeamSchedule({
                                         <dt className="text-muted-foreground">
                                             {position.role}
                                         </dt>
-                                        <dd>
-                                            {position.people.length === 0
-                                                ? '—'
-                                                : position.people.map(
-                                                      (person, index) => (
-                                                          <span
-                                                              key={index}
-                                                              className={cn(
-                                                                  person.isMe &&
-                                                                      'font-semibold',
-                                                              )}
-                                                          >
-                                                              {index > 0 &&
-                                                                  ', '}
-                                                              {person.isMe
-                                                                  ? `${person.name} (eu)`
-                                                                  : person.name}
-                                                          </span>
-                                                      ),
-                                                  )}
+                                        <dd className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                            {position.people.length === 0 &&
+                                                position.needsReplacement ===
+                                                    0 &&
+                                                '—'}
+                                            {position.people.length > 0 && (
+                                                <span>
+                                                    {position.people.map(
+                                                        (person, index) => (
+                                                            <span
+                                                                key={index}
+                                                                className={cn(
+                                                                    person.isMe &&
+                                                                        'font-semibold',
+                                                                )}
+                                                            >
+                                                                {index > 0 &&
+                                                                    ', '}
+                                                                {person.isMe
+                                                                    ? `${person.name} (eu)`
+                                                                    : person.name}
+                                                            </span>
+                                                        ),
+                                                    )}
+                                                </span>
+                                            )}
+                                            {position.needsReplacement > 0 && (
+                                                <Badge variant="outline">
+                                                    {position.needsReplacement ===
+                                                    1
+                                                        ? 'Por substituir'
+                                                        : `${position.needsReplacement} por substituir`}
+                                                </Badge>
+                                            )}
                                         </dd>
                                     </div>
                                 ))}
