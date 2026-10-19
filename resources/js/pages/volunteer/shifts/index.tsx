@@ -29,17 +29,20 @@ export default function MyShifts({ shifts }: { shifts: Shift[] }) {
                     </p>
                 </section>
             ) : (
-                <ol className="mt-4 space-y-3">
-                    {shifts.map((shift) => (
-                        <li key={shift.id}>
-                            <ShiftCard
-                                shift={shift}
-                                actions
-                                declineOpen={shift.id === declineId}
-                            />
-                        </li>
-                    ))}
-                </ol>
+                <>
+                    <h2 className="sr-only">Próximos turnos</h2>
+                    <ol className="mt-4 space-y-3">
+                        {shifts.map((shift) => (
+                            <li key={shift.id}>
+                                <ShiftCard
+                                    shift={shift}
+                                    actions
+                                    declineOpen={shift.id === declineId}
+                                />
+                            </li>
+                        ))}
+                    </ol>
+                </>
             )}
         </>
     );

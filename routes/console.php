@@ -28,3 +28,9 @@ Schedule::command('registrations:purge-rejected')->dailyAt('03:00')->withoutOver
 
 // Data-removal requests are carried out once their 7 days are over (FR-028).
 Schedule::command('volunteers:process-removals')->hourly()->withoutOverlapping();
+
+// Nightly encrypted off-site backup kept 30 days; a daily check mails when the newest is
+// missing or older than a day (research R21, docs/deployment.md).
+Schedule::command('backup:clean')->dailyAt('01:00')->withoutOverlapping();
+Schedule::command('backup:run')->dailyAt('01:30')->withoutOverlapping();
+Schedule::command('backup:monitor')->dailyAt('07:00');

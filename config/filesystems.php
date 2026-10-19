@@ -47,6 +47,20 @@ return [
             'report' => false,
         ],
 
+        // Off-site backups (config/backup.php): a separate bucket and key from the app's own.
+        'backups' => [
+            'driver' => 's3',
+            'key' => env('BACKUP_AWS_ACCESS_KEY_ID'),
+            'secret' => env('BACKUP_AWS_SECRET_ACCESS_KEY'),
+            'region' => env('BACKUP_AWS_DEFAULT_REGION', 'auto'),
+            'bucket' => env('BACKUP_AWS_BUCKET'),
+            'endpoint' => env('BACKUP_AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('BACKUP_AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'root' => env('BACKUP_ROOT', 'cue-app'),
+            'throw' => true,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

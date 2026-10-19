@@ -121,7 +121,7 @@ export default function VolunteerProfileEdit({
                     <Heading
                         variant="small"
                         title="Identificação"
-                        description="Só os coordenadores e você vêem estes dados."
+                        description="Só os coordenadores e o próprio voluntário vêem estes dados."
                     />
                     <TextField
                         label="Nome completo"

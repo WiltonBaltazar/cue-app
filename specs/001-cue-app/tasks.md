@@ -313,13 +313,13 @@ stories.
 
 ## Phase 10: Polish & Cross-Cutting Concerns
 
-- [ ] T128 [P] Vitest + vitest-axe tests for `ConfirmDialog`, `DataTable`, registration form steps, `DeclineShiftButton` and `PushPrompt` in `resources/js/**/*.test.tsx`
-- [ ] T129 [P] Pest browser smoke tests on a phone viewport: registration, decline shift, publish schedule in `tests/Browser/SmokeTest.php`
-- [ ] T130 [P] Configure `spatie/laravel-backup` nightly encrypted off-site backup with 30-day retention in `config/backup.php` and `routes/console.php`; perform a restore drill on a staging database and document it in `docs/deployment.md`
-- [ ] T131 [P] Add log scrubbing so passwords, tokens and 🔒 fields never reach logs in `config/logging.php` and `app/Logging/ScrubSensitiveData.php`
-- [ ] T132 Review all Portuguese copy for clarity and consistent terms (turno, função, Por substituir) across `resources/js/pages/`
-- [ ] T133 Run Lighthouse mobile on `/`, `/cadastro`, `/minha-escala` and fix issues until PWA installable and Accessibility ≥ 95
-- [ ] T134 Write deployment notes (Nginx, PHP-FPM, Supervisor queue worker, cron scheduler, TLS, VAPID/Turnstile env) in `docs/deployment.md` and update `README.md` "Getting started"
+- [X] T128 [P] Vitest + vitest-axe tests for `ConfirmDialog`, `DataTable`, registration form steps, `DeclineShiftButton` and `PushPrompt` in `resources/js/**/*.test.tsx`
+- [X] T129 [P] Pest browser smoke tests on a phone viewport: registration, decline shift, publish schedule in `tests/Browser/SmokeTest.php`
+- [X] T130 [P] Configure `spatie/laravel-backup` nightly encrypted off-site backup with 30-day retention in `config/backup.php` and `routes/console.php`; perform a restore drill on a staging database and document it in `docs/deployment.md`
+- [X] T131 [P] Add log scrubbing so passwords, tokens and 🔒 fields never reach logs in `config/logging.php` and `app/Logging/ScrubSensitiveData.php`
+- [X] T132 Review all Portuguese copy for clarity and consistent terms (turno, função, Por substituir) across `resources/js/pages/`
+- [X] T133 Run Lighthouse mobile on `/`, `/cadastro`, `/minha-escala` and fix issues until PWA installable and Accessibility ≥ 95
+- [X] T134 Write deployment notes (Nginx, PHP-FPM, Supervisor queue worker, cron scheduler, TLS, VAPID/Turnstile env) in `docs/deployment.md` and update `README.md` "Getting started"
 - [ ] T135 Run every scenario in `specs/001-cue-app/quickstart.md` and record results, including measured sign-up time (< 10 min, SC-001), month schedule generate + publish time (< 15 min, SC-002), publish-to-device push latency (< 1 min, SC-007) and tap counts for frequent volunteer actions (≤ 3, constitution III), in `specs/001-cue-app/validation-results.md`
 
 ---

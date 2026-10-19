@@ -323,7 +323,7 @@ export default function ScheduleEdit({
                             >
                                 {schedule.statusLabel}
                             </Badge>{' '}
-                            · {filled} de {required} posições preenchidas
+                            · {filled} de {required} lugares preenchidos
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -357,7 +357,7 @@ export default function ScheduleEdit({
                                 </ConfirmDialog>
                                 <ConfirmDialog
                                     title="Publicar a escala?"
-                                    description={`${volunteersToNotify} voluntários serão notificados e passam a ver os seus turnos.${filled < required ? ` Ainda há ${required - filled} posições por preencher.` : ''}`}
+                                    description={`${volunteersToNotify} voluntários serão notificados e passam a ver os seus turnos.${filled < required ? ` Ainda há ${required - filled} lugares por preencher.` : ''}`}
                                     confirmLabel="Publicar"
                                     onConfirm={() =>
                                         router.post(publish(schedule.id).url)
@@ -376,8 +376,8 @@ export default function ScheduleEdit({
                     <details className="rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/40">
                         <summary className="min-h-11 cursor-pointer content-center font-semibold">
                             {gapCount === 1
-                                ? '1 posição por preencher'
-                                : `${gapCount} posições por preencher`}{' '}
+                                ? '1 lugar por preencher'
+                                : `${gapCount} lugares por preencher`}{' '}
                             <span className="font-normal text-muted-foreground">
                                 — ver os voluntários mais próximos
                             </span>

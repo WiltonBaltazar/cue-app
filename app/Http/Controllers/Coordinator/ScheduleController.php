@@ -216,6 +216,6 @@ class ScheduleController extends Controller
     {
         return $result['missing'] === 0
             ? "Proposta gerada: {$result['created']} atribuições, sem lacunas."
-            : "Proposta gerada: {$result['created']} atribuições, {$result['missing']} posições por preencher.";
+            : "Proposta gerada: {$result['created']} atribuições, {$result['missing']} lugares por preencher.";
     }
 }

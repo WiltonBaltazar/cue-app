@@ -5,7 +5,8 @@ Alfa & Ómega). Cue App replaces paper registration forms and scattered group me
 single place to register volunteers, plan events, generate fair schedules and handle swaps and
 absences.
 
-> **Status**: specification phase. No application code yet — see [Roadmap](#roadmap).
+> **Status**: implementation complete for the first release; final validation in progress
+> (see [Roadmap](#roadmap)).
 
 ## Who it is for
 
@@ -80,11 +81,11 @@ constitution.
 - [x] Feature specification (`specs/001-cue-app/spec.md`)
 - [x] Constitution v1.0.1
 - [x] Technical plan (`specs/001-cue-app/plan.md`)
-- [ ] Confirm the defaults chosen in research for the spec's open questions (`/speckit-clarify`):
-  - login with phone + password, optional two-factor login
-  - skill level stored per role
-  - volunteers see the full published schedule (short names and roles only)
-- [ ] Task breakdown and implementation
+- [x] Clarified defaults: phone + password login with optional two-factor, skill level per
+  role, volunteers see the full published schedule (short names and roles only)
+- [x] Task breakdown and implementation (`specs/001-cue-app/tasks.md`)
+- [ ] Validation on real phones and a staging restore drill
+  (`specs/001-cue-app/validation-results.md`, `docs/deployment.md`)
 
 ## Tech stack
 
@@ -102,5 +103,39 @@ Pest + Vitest. Full rationale in
 
 ## Getting started
 
-The application code is not scaffolded yet. The planned setup and validation steps are in
-[quickstart.md](specs/001-cue-app/quickstart.md).
+Requirements: PHP 8.3+ (8.4 recommended), Composer, Node 22 and SQLite for development
+(MySQL 8.4 in production).
+
+```bash
+composer setup                       # install, .env, key, migrate, npm install, build
+php artisan db:seed                  # team roles, declaration and (local only) demo data
+composer dev                         # app, queue worker, logs and Vite together
+```
+
+Then open the URL that `composer dev` prints. `/cadastro` is the public registration form.
+The local seed adds a coordinator (`84 000 0001`) and a volunteer (`84 000 0002`), both with
+password `password`. Elsewhere, create the first coordinator with
+`php artisan coordinators:create`.
+
+Push notifications and the install button need the service worker, which only exists in a
+production build. To try them locally, run `npm run build` and open the app on
+`http://localhost` (or over HTTPS) rather than the Vite dev server. Generate the push keys
+once with `php artisan webpush:vapid`.
+
+### Checks
+
+```bash
+composer test                        # Pint, Larastan and the Pest suites
+npm run check && npm run types       # lint/format (Vite+) and TypeScript
+npm run test                         # Vitest + vitest-axe
+```
+
+The Pest browser smoke tests (`tests/Browser`) run on a phone-sized viewport and need a
+frontend build and Playwright's Chromium:
+
+```bash
+npm run build && npx playwright install chromium
+php artisan test --testsuite=Browser
+```
+
+Deployment, backups and restore are covered in [docs/deployment.md](docs/deployment.md).

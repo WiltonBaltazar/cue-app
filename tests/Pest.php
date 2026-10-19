@@ -16,7 +16,10 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature');
+    ->in('Feature', 'Browser');
+
+// Fail a browser step after 10 s instead of waiting on Playwright's default.
+pest()->browser()->timeout(10_000);
 
 /*
 |--------------------------------------------------------------------------

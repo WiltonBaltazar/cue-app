@@ -30,7 +30,7 @@ Seeded logins (local only): coordinator `+258840000001` / `password` (two-factor
 
 ```bash
 php artisan test                   # Pest unit + feature
-php artisan test --group=browser   # Pest browser smoke flows (mobile viewport)
+php artisan test --testsuite=Browser  # Pest browser smoke flows (needs npm run build)
 npm run test                       # Vitest components + a11y
 npm run types && npm run lint
 vendor/bin/pint --test && vendor/bin/phpstan analyse
@@ -50,7 +50,7 @@ All must pass before a feature is "done" (constitution: Quality Gates).
 | 5 | US2 | Create template "Culto de Domingo" with positions; activate | Occurrences for next 3 months in calendar |
 | 6 | US2 | Edit one occurrence's positions | Only that date changes; marked customised |
 | 7 | US3 | With seed (≥10 volunteers, 1 month of events) generate November | Draft with no hard-constraint violations; gaps highlighted with suggestions |
-| 8 | US3 | Manually assign an unavailable volunteer | Warning naming the rule; saving requires override note; audit entry created |
+| 8 | US3 | Manually assign an unavailable volunteer | Warning naming the rule; note optional; audit entry created |
 | 9 | US3 | Publish | Confirmation shows count; assigned volunteers receive push within 1 min |
 | 10 | US4 | Volunteer registers absence overlapping a shift | Shift → "Por substituir"; coordinator notified with substitutes |
 | 11 | US4 | Volunteer opens a swap; eligible colleague accepts; coordinator approves | Schedule updated; both notified; ineligible users never see the request |

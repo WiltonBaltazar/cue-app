@@ -54,7 +54,7 @@ export function DataRemovalCard({
                 onChange={(event) =>
                     form.setData('password', event.target.value)
                 }
-                hint="Para confirmar que é você."
+                hint="Para confirmar a sua identidade."
                 error={errors.password ?? errors.removal}
             />
             <ConfirmDialog
