@@ -64,7 +64,7 @@ plumbing used by every story.
 - [X] T014 Modify `users` migration: add `phone` (unique), nullable unique `email`, `role` enum, `last_login_at`; update `app/Models/User.php` casts and `database/factories/UserFactory.php` with `coordinator()` / `volunteer()` states
 - [X] T015 Configure Fortify to authenticate by normalised phone (`propaganistas/laravel-phone`, region MZ), enable password reset, 2FA and password confirmation in `config/fortify.php` and `app/Providers/FortifyServiceProvider.php`; override the password-reset response so known and unknown phone/e-mail get the same message ("Se existir uma conta com estes dados, receberá instruções.")
 - [X] T016 Add login rate limiter (5/min per phone+IP) and `Password::defaults()` (min 8, uncompromised) in `app/Providers/AppServiceProvider.php`
-- [X] T017 [P] Create `EnsureRole` middleware and `EnsureCoordinatorTwoFactor` middleware (redirects coordinators without confirmed 2FA to setup) in `app/Http/Middleware/` and register aliases in `bootstrap/app.php`
+- [X] T017 [P] Create `EnsureRole` middleware in `app/Http/Middleware/` (the mandatory-2FA middleware was removed on 2026-10-19: two-factor is optional) and register aliases in `bootstrap/app.php`
 - [X] T018 [P] Configure Sanctum stateful SPA mode for same-origin `/app-api/*` with 60 req/min limiter in `config/sanctum.php`, `bootstrap/app.php` and `routes/app-api.php`
 - [X] T019 Create Portuguese login, password reset and 2FA pages adapted from the starter kit (phone field, "lembrar-me" default on) in `resources/js/pages/auth/`
 - [X] T020 [P] Create session management (list + revoke database sessions; changing password ends all other sessions — FR-032) controller and page in `app/Http/Controllers/Settings/SessionController.php` and `resources/js/pages/settings/sessions.tsx` (route `/perfil/sessoes`)
@@ -93,10 +93,10 @@ plumbing used by every story.
 ### Foundational tests
 
 - [X] T033 [P] Feature test: guests are redirected from every non-public route, volunteers get 403 on every `/gestao/*` and coordinator `/app-api/*` route (route-list driven) in `tests/Feature/Authorization/RouteAccessTest.php`
-- [X] T034 [P] Feature test: login throttling, coordinator forced to 2FA setup, sessions revocable, identical reset response for known and unknown accounts in `tests/Feature/Auth/LoginSecurityTest.php`
+- [X] T034 [P] Feature test: login throttling, sessions revocable, identical reset response for known and unknown accounts in `tests/Feature/Auth/LoginSecurityTest.php`
 - [X] T035 [P] Feature test: security headers present on HTML responses in `tests/Feature/SecurityHeadersTest.php`
 
-**Checkpoint**: A seeded coordinator can log in with phone + password + 2FA; volunteers are
+**Checkpoint**: A seeded coordinator can log in with phone + password (2FA optional); volunteers are
 blocked from coordinator routes; layouts render on phone and desktop.
 
 ---

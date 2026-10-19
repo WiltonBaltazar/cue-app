@@ -34,8 +34,8 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
-     * Local-only accounts (password "password"). The coordinator has no 2FA yet,
-     * so the first login walks through the mandatory two-factor setup.
+     * Local-only accounts (password "password"). Two-factor login is optional and
+     * can be switched on in Perfil → Segurança.
      */
     private function seedLocalAccounts(): void
     {

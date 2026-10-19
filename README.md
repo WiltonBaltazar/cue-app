@@ -81,7 +81,7 @@ constitution.
 - [x] Constitution v1.0.1
 - [x] Technical plan (`specs/001-cue-app/plan.md`)
 - [ ] Confirm the defaults chosen in research for the spec's open questions (`/speckit-clarify`):
-  - login with phone + password, 2FA for coordinators
+  - login with phone + password, optional two-factor login
   - skill level stored per role
   - volunteers see the full published schedule (short names and roles only)
 - [ ] Task breakdown and implementation

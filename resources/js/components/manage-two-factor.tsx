@@ -84,7 +84,7 @@ export default function ManageTwoFactor(props: Props) {
                     <p className="text-sm text-muted-foreground">
                         Depois de activar, ao entrar é pedido também um código
                         de 6 dígitos de uma aplicação autenticadora no seu
-                        telemóvel. Obrigatório para coordenadores.
+                        telemóvel. Recomendado para coordenadores.
                     </p>
 
                     <div>

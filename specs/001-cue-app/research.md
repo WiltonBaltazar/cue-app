@@ -15,13 +15,14 @@ the clarification session recorded in [spec.md](spec.md#clarifications).
 - **Decision**: Phone number + password as the primary login (phone is already the unique
   identity used for duplicate detection). E-mail is optional on the profile and enables
   self-service password reset; volunteers without e-mail get a one-time reset link generated
-  by a coordinator and shared in person. Coordinators MUST enable TOTP two-factor
-  authentication. Sessions are long-lived ("remember me" on by default on personal devices)
+  by a coordinator and shared in person. TOTP two-factor authentication is available to
+  everyone and optional (recommended for coordinators; made optional on 2026-10-19 at the
+  project owner's request because mandatory 2FA was too demanding). Sessions are long-lived ("remember me" on by default on personal devices)
   and revocable from the profile page.
 - **Rationale**: SMS OTP needs a paid SMS gateway, and SMS is explicitly out of scope this
   phase. Phone + password needs no external provider, is familiar to volunteers, and keeps
-  friction low (Principle III) while 2FA protects the accounts that can see sensitive data
-  (Principle I/II).
+  friction low (Principle III). Coordinator accounts, which see sensitive data, rely on
+  throttled login, the audit log and optional 2FA (Principle I/II).
 - **Alternatives considered**: SMS OTP (cost, provider dependency, out of scope); e-mail +
   password only (many volunteers rely on phone, not e-mail); magic links (need e-mail);
   passkeys (good future addition via Fortify/WebAuthn, but device support across volunteers

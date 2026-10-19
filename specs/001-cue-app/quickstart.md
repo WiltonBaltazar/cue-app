@@ -24,7 +24,7 @@ php artisan migrate --seed         # seeds team roles, 1 coordinator, demo volun
 composer run dev                   # serve + queue:listen + vite + scheduler
 ```
 
-Seeded logins (local only): coordinator `+258840000001` / `password` (prompts 2FA setup).
+Seeded logins (local only): coordinator `+258840000001` / `password` (two-factor optional, in Perfil → Segurança).
 
 ## Automated checks
 

@@ -11,7 +11,7 @@
 
 ### Session 2026-10-18
 
-- Q: Método de acesso (FR-006)? → A: Telefone + palavra-passe; coordenadores com 2FA (aplicação autenticadora); e-mail opcional para recuperação da palavra-passe.
+- Q: Método de acesso (FR-006)? → A: Telefone + palavra-passe; verificação em dois passos opcional (ver sessão 2026-10-19); e-mail opcional para recuperação da palavra-passe.
 - Q: Nível global ou por função (FR-004)? → A: Nível por função; o cadastro pede um nível geral que é copiado para cada função escolhida e o coordenador ajusta por função.
 - Q: Voluntários vêem a escala completa ou só os seus turnos (FR-027)? → A: Escala completa publicada; colegas apresentados com primeiro nome + inicial do apelido e função; turnos próprios destacados.
 - Q: O que acontece a turnos sem resposta do voluntário? → A: Não há estado "Pendente": ao publicar, o turno fica Confirmado por omissão; o voluntário pode recusar se surgir um imprevisto (abre pedido de substituição); lembrete 72 h antes com opção de recusar num toque.
@@ -26,6 +26,11 @@
 - Q: O que acontece quando o texto da declaração muda? → A: No próximo acesso, o voluntário tem de aceitar a nova versão antes de usar a aplicação (versão e data registadas); turnos existentes não são afectados.
 - Q: Quem vê o motivo de uma ausência? → A: Apenas os coordenadores e o próprio voluntário; os colegas (incluindo candidatos a troca) vêem apenas que o turno precisa de substituto.
 - Q: A área do coordenador tem de funcionar no telemóvel? → A: Tarefas urgentes (aprovações, trocas, substitutos, cancelar evento, cobertura) totalmente optimizadas para telemóvel; o editor mensal da escala optimizado para tablet/computador, com editor simplificado por evento no telemóvel.
+
+
+### Session 2026-10-19
+
+- Q: A verificação em dois passos é obrigatória para coordenadores? → A: Não. É opcional para todos e recomendada para coordenadores (pedido do responsável: obrigatória era demasiado exigente).
 
 ---
 
@@ -171,7 +176,7 @@ Voluntários e coordenadores recebem notificações push no telemóvel/computado
 - **FR-004**: O sistema DEVE registar, por função, se o voluntário tem interesse, experiência e o respectivo nível (Iniciante, Intermédio, Avançado, Mentor) **por função**. No cadastro, o voluntário indica um nível geral, que é aplicado a todas as funções escolhidas; o coordenador pode ajustar o nível de cada função na aprovação ou depois.
 - **FR-005**: O sistema DEVE permitir ao voluntário editar disponibilidade (dias, períodos, frequência) e dados de contacto após aprovação.
 - **FR-005a**: O voluntário DEVE poder pausar a sua participação (estado Inactivo), com data de regresso opcional; na data indicada volta automaticamente a Activo. O coordenador DEVE poder pausar e retomar qualquer voluntário. Turnos publicados durante a pausa passam a "Por substituir" e o coordenador é notificado. O sistema NÃO inactiva ninguém automaticamente; mostra ao coordenador uma lista de sugestão de voluntários activos sem turnos nos últimos 3 meses.
-- **FR-006**: O sistema DEVE autenticar voluntários e coordenadores com número de telefone e palavra-passe. Os coordenadores DEVEM usar autenticação de dois factores (aplicação autenticadora). O e-mail é opcional e permite recuperar a palavra-passe; sem e-mail, o coordenador gera um link de redefinição de uso único, válido por 24 h, entregue pessoalmente ao voluntário. A recuperação da palavra-passe NÃO DEVE revelar se um telefone ou e-mail está registado.
+- **FR-006**: O sistema DEVE autenticar voluntários e coordenadores com número de telefone e palavra-passe. A verificação em dois passos (aplicação autenticadora) DEVE estar disponível para todos os utilizadores e é opcional, recomendada para coordenadores. O e-mail é opcional e permite recuperar a palavra-passe; sem e-mail, o coordenador gera um link de redefinição de uso único, válido por 24 h, entregue pessoalmente ao voluntário. A recuperação da palavra-passe NÃO DEVE revelar se um telefone ou e-mail está registado.
 
 **Funções e eventos**
 

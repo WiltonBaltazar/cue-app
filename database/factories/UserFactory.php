@@ -45,14 +45,11 @@ class UserFactory extends Factory
         ]);
     }
 
-    /**
-     * Coordinators must use two-factor authentication, so they get it by default.
-     */
     public function coordinator(): static
     {
         return $this->state(fn (array $attributes) => [
             'role' => UserRole::Coordinator,
-        ])->withTwoFactor();
+        ]);
     }
 
     public function withoutEmail(): static

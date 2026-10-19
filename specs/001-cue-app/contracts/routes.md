@@ -5,8 +5,8 @@ components are English. Every non-public route requires `auth` and is authorised
 **Policy** (Principle I) — UI hiding is never relied on.
 
 Legend — **Access**: `public`, `pending` (logged-in volunteer awaiting approval), `vol`
-(active volunteer), `coord` (coordinator, 2FA confirmed). Middleware `coord` = `auth`,
-`verified-2fa`, `role:coordinator`.
+(active volunteer), `coord` (coordinator; two-factor optional). Middleware `coord` = `auth`,
+`role:coordinator`.
 
 ## Shared Inertia props (every page)
 

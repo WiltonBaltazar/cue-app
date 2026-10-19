@@ -83,23 +83,21 @@ test('volunteers get 403 on every coordinator-only route', function () {
     }
 });
 
-test('coordinators without confirmed two-factor are sent to set it up', function () {
-    $coordinator = User::factory()->volunteer()->create();
-    $coordinator->forceFill(['role' => 'coordinator'])->save();
+test('coordinators reach the management area without two-factor (optional)', function () {
+    $coordinator = User::factory()->coordinator()->create();
+
+    expect($coordinator->hasConfirmedTwoFactor())->toBeFalse();
 
     $this->actingAs($coordinator)
-        ->get(route('coord.dashboard'))
-        ->assertRedirect(route('security.edit'));
-
-    $this->actingAs($coordinator)
-        ->withSession(['auth.password_confirmed_at' => time()])
-        ->get(route('security.edit'))
-        ->assertOk();
-});
-
-test('coordinators with confirmed two-factor reach the management area', function () {
-    $this->actingAs(User::factory()->coordinator()->create())
         ->get(route('coord.dashboard'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page->component('coord/dashboard'));
+});
+
+test('two-factor stays available to coordinators who want it', function () {
+    $this->actingAs(User::factory()->coordinator()->create())
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->get(route('security.edit'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('canManageTwoFactor', true));
 });

@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Middleware\EnsureConsentCurrent;
-use App\Http\Middleware\EnsureCoordinatorTwoFactor;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureVolunteerActive;
 use App\Http\Middleware\HandleAppearance;
@@ -50,7 +49,6 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
-            EnsureCoordinatorTwoFactor::class,
             EnsureConsentCurrent::class,
         ]);
     })
