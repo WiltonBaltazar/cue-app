@@ -31,7 +31,7 @@ class ChangeUserRole
         DB::transaction(function () use ($user, $role): void {
             if ($user->role === UserRole::Coordinator) {
                 // Lock the rows themselves: PostgreSQL refuses FOR UPDATE with COUNT(*).
-                $coordinators = User::query()->where('role', UserRole::Coordinator)->lockForUpdate()->pluck('id')->count();
+                $coordinators = count(User::query()->where('role', UserRole::Coordinator)->lockForUpdate()->pluck('id'));
 
                 if ($coordinators <= 1) {
                     throw ValidationException::withMessages([
