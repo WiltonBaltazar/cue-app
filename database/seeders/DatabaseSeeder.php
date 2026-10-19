@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
 
         $this->seedLocalAccounts();
         $this->seedDemoVolunteers();
+        $this->call(ActivityTemplateSeeder::class);
     }
 
     /**

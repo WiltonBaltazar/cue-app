@@ -156,21 +156,21 @@ see both in the calendar with positions; edit one occurrence only.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T059 [P] [US2] Feature test: occurrence generation for the horizon, idempotent re-run, customised occurrences untouched, template edits propagate only to non-customised future events in `tests/Feature/Events/GenerateOccurrencesTest.php`
-- [ ] T060 [P] [US2] Feature test: event time validation (arrival ≤ start < end ≤ teardown) and cancel notifies assigned volunteers in `tests/Feature/Events/EventLifecycleTest.php`
+- [X] T059 [P] [US2] Feature test: occurrence generation for the horizon, idempotent re-run, customised occurrences untouched, template edits propagate only to non-customised future events in `tests/Feature/Events/GenerateOccurrencesTest.php`
+- [X] T060 [P] [US2] Feature test: event time validation (arrival ≤ start < end ≤ teardown) and cancel (status, reason, audit; notifying assigned volunteers is tested in US3 T073) in `tests/Feature/Events/EventLifecycleTest.php`
 
 ### Implementation for User Story 2
 
-- [ ] T061 [P] [US2] Create `activity_templates` + `template_positions` migrations and models in `database/migrations/`, `app/Models/ActivityTemplate.php`, `app/Models/TemplatePosition.php`
-- [ ] T062 [P] [US2] Create `events` + `positions` migrations and models (unique template×date, `is_customized`, `teardown_until`) in `database/migrations/`, `app/Models/Event.php`, `app/Models/Position.php`
-- [ ] T063 [P] [US2] Create `TeamRolePolicy`, `ActivityTemplatePolicy`, `EventPolicy` (coordinator only) in `app/Policies/`
-- [ ] T064 [US2] Implement `GenerateOccurrences` action and scheduled daily command honoring `event_horizon_months` in `app/Actions/Events/GenerateOccurrences.php` and `app/Console/Commands/GenerateOccurrencesCommand.php`, registered in `routes/console.php`
-- [ ] T065 [US2] Implement `CancelEvent` action (status cancelled, reason, affected assignments flagged, `EventCancelled` notification) in `app/Actions/Events/CancelEvent.php` and `app/Notifications/EventCancelled.php`
-- [ ] T066 [US2] Create team roles CRUD (controller, Form Requests, page) in `app/Http/Controllers/Coordinator/TeamRoleController.php` and `resources/js/pages/coord/team-roles/index.tsx`
-- [ ] T067 [US2] Create activity templates CRUD with positions editor in `app/Http/Controllers/Coordinator/ActivityTemplateController.php` and `resources/js/pages/coord/templates/`
-- [ ] T068 [US2] Create events calendar (month view desktop, agenda list on phone), special event form with arrival/start/end/teardown and per-occurrence position editing in `app/Http/Controllers/Coordinator/EventController.php` and `resources/js/pages/coord/events/`
-- [ ] T069 [US2] Add cancel-event ConfirmDialog listing affected volunteers in `resources/js/pages/coord/events/show.tsx`
-- [ ] T070 [US2] Seed "Culto de Domingo" and "Estudo Bíblico de Terça" templates in `database/seeders/ActivityTemplateSeeder.php`
+- [X] T061 [P] [US2] Create `activity_templates` + `template_positions` migrations and models in `database/migrations/`, `app/Models/ActivityTemplate.php`, `app/Models/TemplatePosition.php`
+- [X] T062 [P] [US2] Create `events` + `positions` migrations and models (unique template×date, `is_customized`, `teardown_until`) in `database/migrations/`, `app/Models/Event.php`, `app/Models/Position.php`
+- [X] T063 [P] [US2] Create `TeamRolePolicy`, `ActivityTemplatePolicy`, `EventPolicy` (coordinator only) in `app/Policies/`
+- [X] T064 [US2] Implement `GenerateOccurrences` action and scheduled daily command honoring `event_horizon_months` in `app/Actions/Events/GenerateOccurrences.php` and `app/Console/Commands/GenerateOccurrencesCommand.php`, registered in `routes/console.php`
+- [X] T065 [US2] Implement `CancelEvent` action (status cancelled, reason, audited) in `app/Actions/Events/CancelEvent.php`; flagging assignments and the `EventCancelled` notification move to US3 T081 because assignments do not exist yet
+- [X] T066 [US2] Create team roles CRUD (controller, Form Requests, page) in `app/Http/Controllers/Coordinator/TeamRoleController.php` and `resources/js/pages/coord/team-roles/index.tsx`
+- [X] T067 [US2] Create activity templates CRUD with positions editor in `app/Http/Controllers/Coordinator/ActivityTemplateController.php` and `resources/js/pages/coord/templates/`
+- [X] T068 [US2] Create events calendar (month view desktop, agenda list on phone), special event form with arrival/start/end/teardown and per-occurrence position editing in `app/Http/Controllers/Coordinator/EventController.php` and `resources/js/pages/coord/events/`
+- [X] T069 [US2] Add cancel-event ConfirmDialog listing affected volunteers in `resources/js/pages/coord/events/show.tsx`
+- [X] T070 [US2] Seed "Culto de Domingo" and "Estudo Bíblico de Terça" templates in `database/seeders/ActivityTemplateSeeder.php`
 
 **Checkpoint**: US1 and US2 work independently.
 
@@ -199,7 +199,7 @@ events, generate, edit (with override warning), publish, and see notifications.
 - [ ] T078 [US3] Implement `ConstraintChecker` (`variable_hours` volunteers count as available in every slot) returning typed violations (`availability`, `absence`, `min_level`, `frequency_cap`, `same_event`, `time_overlap`, `inactive`) in `app/Domain/Scheduling/ConstraintChecker.php` and `app/Domain/Scheduling/Violation.php`
 - [ ] T079 [US3] Implement `CandidateScorer` (recent load, preferred role, variable-hours penalty, stable ID tie-break) in `app/Domain/Scheduling/CandidateScorer.php`
 - [ ] T080 [US3] Implement `ScheduleGenerator` (scarcity ordering, greedy assignment, beginner–mentor pairing, keeps locked assignments) and `GapReport` with closest-eligible suggestions in `app/Domain/Scheduling/ScheduleGenerator.php` and `app/Domain/Scheduling/GapReport.php`
-- [ ] T081 [US3] Implement `GenerateSchedule`, `AssignVolunteer` (constraint check, override note, optimistic lock, audit) and `PublishSchedule` (assignments → confirmed, `SchedulePublished` notification) actions in `app/Actions/Scheduling/`
+- [ ] T081 [US3] Implement `GenerateSchedule`, `AssignVolunteer` (constraint check, override note, optimistic lock, audit) and `PublishSchedule` (assignments → confirmed, `SchedulePublished` notification) actions in `app/Actions/Scheduling/`; extend `CancelEvent` to flag the event's assignments and send `EventCancelled` (from US2 T065); make `GenerateOccurrences` keep any occurrence that has assignments instead of removing it
 - [ ] T081a [US3] Extend `UpdateAvailability` to detect published assignments now violating availability/frequency, flag them and notify coordinators (database channel) via `AvailabilityConflict` notification in `app/Actions/Volunteers/UpdateAvailability.php` and `app/Notifications/AvailabilityConflict.php`
 - [ ] T082 [P] [US3] Create `SchedulePublished` and `AssignmentChanged` notifications in `app/Notifications/`
 - [ ] T083 [US3] Create coordinator schedule controller (index, create period, generate, edit, publish) in `app/Http/Controllers/Coordinator/ScheduleController.php` and `AssignmentController.php`, routes in `routes/web.php`

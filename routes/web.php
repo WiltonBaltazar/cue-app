@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Controllers\Auth\PasswordSetupController;
+use App\Http\Controllers\Coordinator\ActivityTemplateController;
 use App\Http\Controllers\Coordinator\ConsentController as CoordinatorConsentController;
+use App\Http\Controllers\Coordinator\EventController;
 use App\Http\Controllers\Coordinator\RegistrationController as CoordinatorRegistrationController;
 use App\Http\Controllers\Coordinator\SettingsController;
+use App\Http\Controllers\Coordinator\TeamRoleController;
 use App\Http\Controllers\Coordinator\VolunteerController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Public\RegistrationController;
@@ -59,6 +62,24 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::get('voluntarios/{volunteer}', [VolunteerController::class, 'edit'])->name('volunteers.edit');
         Route::put('voluntarios/{volunteer}', [VolunteerController::class, 'update'])->name('volunteers.update');
         Route::post('voluntarios/{volunteer}/link-redefinicao', [VolunteerController::class, 'issueResetLink'])->name('reset-links.store');
+
+        Route::get('funcoes', [TeamRoleController::class, 'index'])->name('team-roles.index');
+        Route::post('funcoes', [TeamRoleController::class, 'store'])->name('team-roles.store');
+        Route::put('funcoes/{teamRole}', [TeamRoleController::class, 'update'])->name('team-roles.update');
+
+        Route::get('modelos', [ActivityTemplateController::class, 'index'])->name('templates.index');
+        Route::get('modelos/novo', [ActivityTemplateController::class, 'create'])->name('templates.create');
+        Route::post('modelos', [ActivityTemplateController::class, 'store'])->name('templates.store');
+        Route::get('modelos/{template}', [ActivityTemplateController::class, 'edit'])->name('templates.edit');
+        Route::put('modelos/{template}', [ActivityTemplateController::class, 'update'])->name('templates.update');
+
+        Route::get('eventos', [EventController::class, 'index'])->name('events.index');
+        Route::get('eventos/novo', [EventController::class, 'create'])->name('events.create');
+        Route::post('eventos', [EventController::class, 'store'])->name('events.store');
+        Route::get('eventos/{event}', [EventController::class, 'show'])->name('events.show');
+        Route::get('eventos/{event}/editar', [EventController::class, 'edit'])->name('events.edit');
+        Route::put('eventos/{event}', [EventController::class, 'update'])->name('events.update');
+        Route::post('eventos/{event}/cancelar', [EventController::class, 'cancel'])->name('events.cancel');
 
         Route::get('definicoes', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::put('definicoes', [SettingsController::class, 'update'])->name('settings.update');
