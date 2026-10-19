@@ -1,20 +1,39 @@
 import { usePage } from '@inertiajs/react';
+import { cn } from '@/lib/utils';
 
-import AppLogoIcon from '@/components/app-logo-icon';
+/**
+ * RTVAO's Alfa e Ómega mark. It sits on a white tile everywhere: its navy "A" would
+ * disappear on the navy sidebar and in dark mode.
+ */
+export function RtvaoMark({ className }: { className?: string }) {
+    return (
+        <span
+            className={cn(
+                'flex aspect-square shrink-0 items-center justify-center rounded-md bg-white p-1 shadow-xs ring-1 ring-black/5',
+                className,
+            )}
+        >
+            <img
+                src="/images/rtvao-mark.webp"
+                alt=""
+                width={243}
+                height={256}
+                className="h-full w-auto"
+            />
+        </span>
+    );
+}
 
 export default function AppLogo() {
     const { name } = usePage().props;
 
     return (
         <>
-            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-                <AppLogoIcon className="size-5 fill-current text-white dark:text-black" />
-            </div>
-            <div className="ml-1 grid flex-1 text-left text-sm">
-                <span className="mb-0.5 truncate leading-tight font-semibold">
-                    {name}
-                </span>
-            </div>
+            <RtvaoMark className="size-8" />
+            <span className="ml-1 grid flex-1 text-left leading-tight">
+                <span className="truncate text-sm font-semibold">{name}</span>
+                <span className="truncate text-xs opacity-70">RTVAO</span>
+            </span>
         </>
     );
 }

@@ -37,7 +37,7 @@
         @unless (Vite::isRunningHot())
             <link rel="manifest" href="/build/manifest.webmanifest">
         @endunless
-        <meta name="theme-color" content="#171717">
+        <meta name="theme-color" content="#142f5c">
         <meta name="apple-mobile-web-app-title" content="Cue">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
