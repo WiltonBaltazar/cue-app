@@ -18,6 +18,7 @@ type TemplateData = {
     name: string;
     weekday: number;
     intervalWeeks: number;
+    monthWeek: number | null;
     startsOn: string;
     arrivalTime: string;
     startTime: string;
@@ -40,12 +41,22 @@ type Props = {
     today: string;
 };
 
-const INTERVALS: Option[] = [
-    { value: '1', label: 'Todas as semanas' },
-    { value: '2', label: 'De 2 em 2 semanas' },
-    { value: '3', label: 'De 3 em 3 semanas' },
-    { value: '4', label: 'De 4 em 4 semanas' },
-];
+/**
+ * Weekly ("w2" = every 2 weeks) or monthly ("m1" = 1st weekday of the month, "m-1" = last).
+ */
+function repetitions(weekday: string): Option[] {
+    return [
+        { value: 'w1', label: 'Todas as semanas' },
+        { value: 'w2', label: 'De 2 em 2 semanas' },
+        { value: 'w3', label: 'De 3 em 3 semanas' },
+        { value: 'w4', label: 'De 4 em 4 semanas' },
+        { value: 'm1', label: `1.º ${weekday} de cada mês` },
+        { value: 'm2', label: `2.º ${weekday} de cada mês` },
+        { value: 'm3', label: `3.º ${weekday} de cada mês` },
+        { value: 'm4', label: `4.º ${weekday} de cada mês` },
+        { value: 'm-1', label: `Último ${weekday} de cada mês` },
+    ];
+}
 
 /**
  * Recurring activity (FR-008). Saving updates future dates that were not changed by hand.
@@ -61,6 +72,7 @@ export default function TemplateForm({
         name: template?.name ?? '',
         weekday: template?.weekday ?? 7,
         interval_weeks: template?.intervalWeeks ?? 1,
+        month_week: (template?.monthWeek ?? null) as number | null,
         starts_on: template?.startsOn ?? today,
         arrival_time: template?.arrivalTime ?? '',
         start_time: template?.startTime ?? '',
@@ -91,6 +103,14 @@ export default function TemplateForm({
     };
 
     const title = template ? template.name : 'Nova actividade recorrente';
+    const weekdayLabel = (
+        weekdays.find((day) => day.value === form.data.weekday)?.label ?? ''
+    ).toLowerCase();
+    const repetition =
+        form.data.month_week !== null
+            ? `m${form.data.month_week}`
+            : `w${form.data.interval_weeks}`;
+    const monthly = form.data.month_week !== null;
 
     return (
         <>
@@ -122,13 +142,27 @@ export default function TemplateForm({
                 <div className="grid gap-4 sm:grid-cols-2">
                     <RadioGroupField
                         legend="Repetição"
-                        name="interval_weeks"
-                        options={INTERVALS}
-                        value={String(form.data.interval_weeks)}
-                        onChange={(interval) =>
-                            form.setData('interval_weeks', Number(interval))
-                        }
-                        error={errors.interval_weeks}
+                        name="repetition"
+                        options={repetitions(weekdayLabel)}
+                        value={repetition}
+                        onChange={(value) => {
+                            const amount = Number(value.slice(1));
+
+                            form.setData((data) =>
+                                value.startsWith('m')
+                                    ? {
+                                          ...data,
+                                          month_week: amount,
+                                          interval_weeks: 1,
+                                      }
+                                    : {
+                                          ...data,
+                                          month_week: null,
+                                          interval_weeks: amount,
+                                      },
+                            );
+                        }}
+                        error={errors.interval_weeks ?? errors.month_week}
                     />
                     <TextField
                         label="A partir de"
@@ -137,7 +171,11 @@ export default function TemplateForm({
                         onChange={(e) =>
                             form.setData('starts_on', e.target.value)
                         }
-                        hint="Primeira semana da repetição."
+                        hint={
+                            monthly
+                                ? 'Não há datas antes deste dia.'
+                                : 'Primeira semana da repetição.'
+                        }
                         error={errors.starts_on}
                     />
                 </div>

@@ -183,3 +183,35 @@ test('templates can be created with positions and generate occurrences straight 
     expect($template->period->value)->toBe('evening')
         ->and(Event::query()->where('activity_template_id', $template->id)->count())->toBeGreaterThan(10);
 });
+
+test('a template can repeat on the first Sunday of every month', function () {
+    $this->actingAs($this->coordinator)
+        ->post(route('coord.templates.store'), [
+            'name' => 'Santa Ceia',
+            'weekday' => 7,
+            'interval_weeks' => 1,
+            'month_week' => 1,
+            'starts_on' => LocalTime::today()->toDateString(),
+            'arrival_time' => '07:30',
+            'start_time' => '08:30',
+            'end_time' => '11:30',
+            'teardown_minutes' => 30,
+            'location' => 'Templo sede',
+            'is_active' => true,
+            'positions' => [['team_role_id' => $this->audio->id, 'quantity' => 1, 'min_level' => null]],
+        ])
+        ->assertSessionHasNoErrors();
+
+    $template = ActivityTemplate::query()->where('name', 'Santa Ceia')->firstOrFail();
+    $dates = Event::query()->where('activity_template_id', $template->id)->pluck('date');
+
+    expect($template->recurrenceLabel())->toBe('1.º domingo de cada mês')
+        ->and($dates)->not->toBeEmpty()
+        ->and($dates->every(fn ($date) => $date->dayOfWeekIso === 7 && $date->day <= 7))->toBeTrue();
+});
+
+test('the monthly week must be 1 to 4 or the last', function () {
+    $this->actingAs($this->coordinator)
+        ->post(route('coord.templates.store'), ['month_week' => 5])
+        ->assertSessionHasErrors('month_week');
+});

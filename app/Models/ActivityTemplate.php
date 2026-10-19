@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $name
  * @property int $weekday ISO 1 (Monday) – 7 (Sunday)
  * @property int $interval_weeks
+ * @property int|null $month_week 1–4 or -1 (last) for "nth weekday of the month"; overrides interval_weeks
  * @property CarbonImmutable $starts_on
  * @property Period $period
  * @property string $arrival_time H:i:s
@@ -35,7 +36,7 @@ class ActivityTemplate extends Model
     use HasFactory, LogsAuditActivity;
 
     protected $fillable = [
-        'name', 'weekday', 'interval_weeks', 'starts_on', 'period', 'arrival_time',
+        'name', 'weekday', 'interval_weeks', 'month_week', 'starts_on', 'period', 'arrival_time',
         'start_time', 'end_time', 'teardown_minutes', 'location', 'is_active',
     ];
 
@@ -47,6 +48,7 @@ class ActivityTemplate extends Model
         return [
             'weekday' => 'integer',
             'interval_weeks' => 'integer',
+            'month_week' => 'integer',
             'starts_on' => 'immutable_date:Y-m-d',
             'period' => Period::class,
             'teardown_minutes' => 'integer',
@@ -79,6 +81,21 @@ class ActivityTemplate extends Model
     }
 
     /**
+     * "Todas as semanas, domingo" / "1.º domingo de cada mês" (weekday label lowercased).
+     */
+    public function recurrenceLabel(): string
+    {
+        $weekday = mb_strtolower(Availability::WEEKDAYS[$this->weekday]);
+
+        return match (true) {
+            $this->month_week === -1 => "Último {$weekday} de cada mês",
+            $this->month_week !== null => "{$this->month_week}.º {$weekday} de cada mês",
+            $this->interval_weeks === 1 => "Todas as semanas, {$weekday}",
+            default => "De {$this->interval_weeks} em {$this->interval_weeks} semanas, {$weekday}",
+        };
+    }
+
+    /**
      * Whether this template has an occurrence on the given local date.
      */
     public function occursOn(CarbonImmutable $date): bool
@@ -90,6 +107,12 @@ class ActivityTemplate extends Model
 
         if ($day->dayOfWeekIso !== $this->weekday || $day->lt($start)) {
             return false;
+        }
+
+        if ($this->month_week !== null) {
+            return $this->month_week === -1
+                ? $day->day + 7 > $day->daysInMonth
+                : (int) ceil($day->day / 7) === $this->month_week;
         }
 
         $weeks = (int) $start->startOfWeek()->diffInWeeks($day->startOfWeek());

@@ -7,8 +7,7 @@ import { create, edit, index } from '@/routes/coord/templates';
 type TemplateRow = {
     id: number;
     name: string;
-    weekdayLabel: string;
-    intervalWeeks: number;
+    recurrenceLabel: string;
     startTime: string;
     location: string;
     isActive: boolean;
@@ -63,10 +62,8 @@ export default function TemplatesIndex({
                                         {template.name}
                                     </span>
                                     <span className="text-sm text-muted-foreground">
-                                        {template.intervalWeeks === 1
-                                            ? `Todas as semanas, ${template.weekdayLabel.toLowerCase()}`
-                                            : `De ${template.intervalWeeks} em ${template.intervalWeeks} semanas, ${template.weekdayLabel.toLowerCase()}`}{' '}
-                                        às {template.startTime} ·{' '}
+                                        {template.recurrenceLabel} às{' '}
+                                        {template.startTime} ·{' '}
                                         {template.location} ·{' '}
                                         {template.requiredPeople} pessoas
                                     </span>

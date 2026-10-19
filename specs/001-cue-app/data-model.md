@@ -164,6 +164,7 @@ On create: overlapping published assignments → `needs_replacement` + coordinat
 | name | string(120) | required |
 | weekday | tinyint 1–7 | |
 | interval_weeks | tinyint | default 1 |
+| month_week | tinyint null | 1–4 or -1 (last): "nth weekday of every month", e.g. 1.º domingo; overrides `interval_weeks` |
 | starts_on | date | reference week for `interval_weeks` > 1; no occurrences before it |
 | period | enum `morning`, `afternoon`, `evening` | |
 | arrival_time / start_time / end_time | time | arrival ≤ start < end |

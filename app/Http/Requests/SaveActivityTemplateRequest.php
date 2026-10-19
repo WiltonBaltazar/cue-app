@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Http\Requests\Concerns\ValidatesScheduleTimes;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Recurring activity template (FR-008).
@@ -27,6 +28,7 @@ class SaveActivityTemplateRequest extends FormRequest
             'name' => ['required', 'string', 'max:120'],
             'weekday' => ['required', 'integer', 'between:1,7'],
             'interval_weeks' => ['required', 'integer', 'between:1,4'],
+            'month_week' => ['nullable', 'integer', Rule::in([1, 2, 3, 4, -1])],
             'starts_on' => ['required', 'date_format:Y-m-d'],
             'is_active' => ['required', 'boolean'],
             ...$this->scheduleRules(),

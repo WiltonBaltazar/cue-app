@@ -91,6 +91,25 @@ test('every other week is supported', function () {
         ->toBe(['2026-11-15', '2026-11-29', '2026-12-13']);
 });
 
+test('the first Sunday of every month is supported', function () {
+    sundayTemplate(['month_week' => 1]);
+
+    app(GenerateOccurrences::class)->handle();
+
+    // 1 Nov is already past; the horizon ends on 4 Feb, before 7 Feb.
+    expect(Event::query()->orderBy('date')->pluck('date')->map->toDateString()->all())
+        ->toBe(['2026-12-06', '2027-01-03']);
+});
+
+test('the last Sunday of every month is supported', function () {
+    sundayTemplate(['month_week' => -1]);
+
+    app(GenerateOccurrences::class)->handle();
+
+    expect(Event::query()->orderBy('date')->pluck('date')->map->toDateString()->all())
+        ->toBe(['2026-11-29', '2026-12-27', '2027-01-31']);
+});
+
 test('template edits reach future non-customised occurrences only', function () {
     $template = sundayTemplate();
     app(GenerateOccurrences::class)->handle();
