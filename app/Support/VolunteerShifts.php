@@ -40,6 +40,7 @@ class VolunteerShifts
         return array_values($shifts->map(fn (Assignment $assignment) => [
             'id' => $assignment->id,
             'scheduleId' => $assignment->schedule_id,
+            'eventId' => $assignment->event_id,
             'date' => $assignment->event->date->toDateString(),
             'eventName' => $assignment->event->name,
             'role' => $assignment->position->teamRole->name,

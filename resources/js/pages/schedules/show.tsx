@@ -1,10 +1,13 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Badge } from '@/components/ui/badge';
 import { formatDate, formatShortDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { show } from '@/routes/schedules';
 
 type Props = {
     schedule: { id: number; startsOn: string; endsOn: string };
+    /** Set when opened from a shift: only that event is listed. */
+    focusedEventId: number | null;
     events: {
         id: number;
         name: string;
@@ -21,18 +24,38 @@ type Props = {
 
 /**
  * The published team schedule for volunteers (FR-027): colleagues as "Nome A." with their
- * role, the viewer's own shifts highlighted, no contact data.
+ * role, the viewer's own shifts highlighted, no contact data. Opened from a shift, it
+ * shows just that event's team.
  */
-export default function TeamSchedule({ schedule, events }: Props) {
+export default function TeamSchedule({
+    schedule,
+    focusedEventId,
+    events,
+}: Props) {
+    const focused = focusedEventId !== null;
+
     return (
         <>
-            <Head title="Escala da equipa" />
+            <Head title={focused ? 'Equipa do evento' : 'Escala da equipa'} />
 
-            <h1 className="text-2xl font-semibold">Escala da equipa</h1>
-            <p className="text-muted-foreground">
-                {formatDate(`${schedule.startsOn}T12:00:00Z`)} –{' '}
-                {formatDate(`${schedule.endsOn}T12:00:00Z`)}
-            </p>
+            <h1 className="text-2xl font-semibold">
+                {focused ? 'Equipa do evento' : 'Escala da equipa'}
+            </h1>
+            {focused ? (
+                <Link
+                    href={show(schedule.id)}
+                    className="inline-flex min-h-11 items-center text-sm underline underline-offset-4"
+                >
+                    Ver escala completa (
+                    {formatDate(`${schedule.startsOn}T12:00:00Z`)} –{' '}
+                    {formatDate(`${schedule.endsOn}T12:00:00Z`)})
+                </Link>
+            ) : (
+                <p className="text-muted-foreground">
+                    {formatDate(`${schedule.startsOn}T12:00:00Z`)} –{' '}
+                    {formatDate(`${schedule.endsOn}T12:00:00Z`)}
+                </p>
+            )}
 
             <ol className="mt-4 space-y-3">
                 {events.map((event) => {

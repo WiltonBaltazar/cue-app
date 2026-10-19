@@ -12,6 +12,7 @@ import { decline } from '@/routes/volunteer/shifts';
 export type Shift = {
     id: number;
     scheduleId: number;
+    eventId: number;
     date: string;
     eventName: string;
     role: string;
@@ -87,10 +88,12 @@ export function ShiftCard({
                 </li>
             </ul>
             <Link
-                href={teamSchedule(shift.scheduleId)}
+                href={teamSchedule(shift.scheduleId, {
+                    query: { evento: shift.eventId },
+                })}
                 className="mt-3 inline-flex min-h-11 items-center text-sm underline underline-offset-4"
             >
-                Ver escala da equipa
+                Ver equipa deste evento
             </Link>
             {actions && shift.canAct && (
                 <div className="mt-3 flex flex-wrap gap-2 border-t pt-3">

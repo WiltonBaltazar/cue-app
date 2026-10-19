@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Event;
 use App\Models\User;
 use Illuminate\Support\Facades\Notification;
 use Tests\Support\ScheduleScenario;
@@ -78,4 +79,25 @@ test('the PDF contains short names only', function () {
         ->assertHeader('content-type', 'application/pdf');
 
     expect(strlen((string) $response->getContent()))->toBeGreaterThan(500);
+});
+
+test('opened from a shift, the team schedule shows only that event', function () {
+    Event::factory()->create(['name' => 'Ensaio Geral', 'date' => $this->scenario->event->date->toDateString()]);
+    $this->actingAs($this->coordinator)->post(route('coord.schedules.publish', $this->scenario->schedule));
+
+    $this->actingAs($this->me->user)
+        ->get(route('schedules.show', $this->scenario->schedule))
+        ->assertInertia(fn ($page) => $page->where('focusedEventId', null)->has('events', 2));
+
+    $this->actingAs($this->me->user)
+        ->get(route('schedules.show', ['schedule' => $this->scenario->schedule, 'evento' => $this->scenario->event->id]))
+        ->assertInertia(fn ($page) => $page
+            ->where('focusedEventId', $this->scenario->event->id)
+            ->has('events', 1)
+            ->where('events.0.name', 'Culto de Domingo'));
+
+    // An event from another schedule falls back to the full schedule.
+    $this->actingAs($this->me->user)
+        ->get(route('schedules.show', ['schedule' => $this->scenario->schedule, 'evento' => 999999]))
+        ->assertInertia(fn ($page) => $page->where('focusedEventId', null)->has('events', 2));
 });

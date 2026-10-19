@@ -13,6 +13,7 @@ use App\Support\LocalTime;
 use App\Support\VolunteerShifts;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -44,14 +45,23 @@ class ShiftController extends Controller
         return back();
     }
 
-    public function team(#[CurrentUser] User $user, Schedule $schedule): Response
+    /**
+     * The whole published schedule, or one event's team with `?evento=` (from a shift card).
+     */
+    public function team(Request $request, #[CurrentUser] User $user, Schedule $schedule): Response
     {
         abort_unless($schedule->isPublished(), 404);
         Gate::authorize('view', $schedule);
 
         $myId = $user->volunteer?->id;
+        $eventId = $request->integer('evento') ?: null;
+
+        if ($eventId !== null && ! $schedule->events()->whereKey($eventId)->exists()) {
+            $eventId = null;
+        }
 
         $events = $schedule->events()
+            ->when($eventId !== null, fn ($query) => $query->whereKey($eventId))
             ->with([
                 'positions.teamRole',
                 'positions.assignments' => fn ($query) => $query->active()->with('volunteer'),
@@ -66,6 +76,7 @@ class ShiftController extends Controller
                 'startsOn' => $schedule->starts_on->toDateString(),
                 'endsOn' => $schedule->ends_on->toDateString(),
             ],
+            'focusedEventId' => $eventId,
             'events' => $events->map(fn (Event $event) => [
                 'id' => $event->id,
                 'name' => $event->name,
