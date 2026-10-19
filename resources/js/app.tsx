@@ -5,6 +5,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
+import MinimalLayout from '@/layouts/minimal-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { createQueryClient } from '@/lib/query-client';
 
@@ -17,9 +18,14 @@ void createInertiaApp({
         switch (true) {
             case name.startsWith('errors/'):
                 return null;
+            case name.startsWith('registration/'):
+            case name === 'volunteer/status':
+            case name === 'volunteer/consent':
+                return MinimalLayout;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
+            case name.startsWith('volunteer/profile/'):
                 return [AppLayout, SettingsLayout];
             default:
                 return AppLayout;

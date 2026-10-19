@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { LogOut } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import Heading from '@/components/heading';
@@ -11,6 +11,7 @@ import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import { index as sessions } from '@/routes/sessions';
+import { edit as volunteerData } from '@/routes/volunteer/profile';
 import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
@@ -22,6 +23,13 @@ const sidebarNavItems: NavItem[] = [
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const { auth } = usePage().props;
+    const items: NavItem[] = auth.user?.volunteerStatus
+        ? [
+              { title: 'Os meus dados', href: volunteerData(), icon: null },
+              ...sidebarNavItems,
+          ]
+        : sidebarNavItems;
 
     return (
         <div className="py-6 md:px-4">
@@ -36,7 +44,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                         className="flex flex-col space-y-1 space-x-0"
                         aria-label="Perfil"
                     >
-                        {sidebarNavItems.map((item, index) => (
+                        {items.map((item, index) => (
                             <Button
                                 key={`${toUrl(item.href)}-${index}`}
                                 variant="ghost"

@@ -48,7 +48,7 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'phone' => $user->phone,
                     'role' => $user->role->value,
-                    'volunteerStatus' => null, // set once volunteer profiles exist (User Story 1)
+                    'volunteerStatus' => $user->volunteer?->status->value,
                     'twoFactorEnabled' => $user->hasConfirmedTwoFactor(),
                 ],
             ],

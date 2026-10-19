@@ -56,9 +56,21 @@ trait LogsAuditActivity
     }
 
     /**
+     * Fields logged as "alterado" without values. Override to add model-specific ones.
+     *
      * @return list<string>
      */
     protected function auditPersonalFields(): array
+    {
+        return $this->defaultAuditPersonalFields();
+    }
+
+    /**
+     * Shared personal fields plus every `encrypted` cast.
+     *
+     * @return list<string>
+     */
+    protected function defaultAuditPersonalFields(): array
     {
         $encrypted = array_keys(array_filter(
             $this->getCasts(),

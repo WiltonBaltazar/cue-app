@@ -39,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
     {
         RateLimiter::for('app-api', fn (Request $request): Limit => Limit::perMinute(60)
             ->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
+
+        // Public registration form: 5 submissions per hour per origin (FR-033).
+        RateLimiter::for('registration', fn (Request $request): Limit => Limit::perHour(5)->by((string) $request->ip()));
     }
 
     /**

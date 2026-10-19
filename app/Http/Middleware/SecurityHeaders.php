@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Rules\Turnstile;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Vite;
@@ -38,15 +39,18 @@ class SecurityHeaders
     {
         $devServer = $this->viteDevServer();
         $devSocket = $devServer === null ? null : preg_replace('/^http/', 'ws', $devServer);
+        // Cloudflare Turnstile on the registration form (FR-033), only when configured.
+        $turnstile = Turnstile::isConfigured() ? 'https://challenges.cloudflare.com' : null;
 
         $directives = [
             'default-src' => ["'self'"],
-            'script-src' => ["'self'", "'nonce-{$nonce}'", $devServer],
+            'script-src' => ["'self'", "'nonce-{$nonce}'", $devServer, $turnstile],
             // Radix/React set inline style attributes; inline <style> carries no script risk.
             'style-src' => ["'self'", "'unsafe-inline'", $devServer],
             'img-src' => ["'self'", 'data:', 'blob:'],
             'font-src' => ["'self'", 'data:', $devServer],
-            'connect-src' => ["'self'", $devServer, $devSocket],
+            'connect-src' => ["'self'", $devServer, $devSocket, $turnstile],
+            'frame-src' => [$turnstile ?? "'none'"],
             'worker-src' => ["'self'"],
             'manifest-src' => ["'self'"],
             'object-src' => ["'none'"],

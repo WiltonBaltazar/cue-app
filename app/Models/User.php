@@ -5,15 +5,16 @@ namespace App\Models;
 use App\Concerns\LogsAuditActivity;
 use App\Enums\UserRole;
 use App\Support\Phone;
+use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Carbon;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
@@ -23,13 +24,14 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $email
  * @property string $password
  * @property UserRole $role
- * @property Carbon|null $last_login_at
+ * @property CarbonImmutable|null $last_login_at
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
- * @property Carbon|null $two_factor_confirmed_at
+ * @property CarbonImmutable|null $two_factor_confirmed_at
  * @property string|null $remember_token
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
+ * @property-read Volunteer|null $volunteer
  */
 #[Fillable(['name', 'phone', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -70,6 +72,16 @@ class User extends Authenticatable
     protected function auditAttributes(): array
     {
         return ['name', 'phone', 'email', 'role'];
+    }
+
+    /**
+     * Coordinators may also have a volunteer profile to be scheduled.
+     *
+     * @return HasOne<Volunteer, $this>
+     */
+    public function volunteer(): HasOne
+    {
+        return $this->hasOne(Volunteer::class);
     }
 
     /**

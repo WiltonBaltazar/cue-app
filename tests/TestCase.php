@@ -8,6 +8,11 @@ use Laravel\Fortify\Features;
 abstract class TestCase extends BaseTestCase
 {
     /**
+     * Seed reference data (team roles, consent declaration v1) for every test.
+     */
+    protected bool $seed = true;
+
+    /**
      * Feature tests assert Inertia responses; they must not depend on a frontend build.
      */
     protected function setUp(): void
