@@ -13,9 +13,12 @@ class VolunteerPolicy
     /**
      * Sensitive fields: coordinators and the volunteer themself only.
      */
+    /**
+     * An anonymised profile has nothing left to show or edit (FR-028).
+     */
     public function viewSensitive(User $user, Volunteer $volunteer): bool
     {
-        return $user->isCoordinator() || $this->owns($user, $volunteer);
+        return ! $volunteer->isAnonymized() && ($user->isCoordinator() || $this->owns($user, $volunteer));
     }
 
     public function viewAny(User $user): bool
@@ -25,7 +28,7 @@ class VolunteerPolicy
 
     public function update(User $user, Volunteer $volunteer): bool
     {
-        return $user->isCoordinator() || $this->owns($user, $volunteer);
+        return ! $volunteer->isAnonymized() && ($user->isCoordinator() || $this->owns($user, $volunteer));
     }
 
     /**

@@ -43,6 +43,7 @@ export type VolunteerFull = VolunteerSummary & {
     canSupportOthers: boolean;
     reviewNotes: string | null;
     reviewedAt: string | null;
+    removalScheduledFor: string | null;
     skills: VolunteerSkillDetail[];
     availability: { weekday: number; period: string; label: string }[];
 };

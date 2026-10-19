@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\PasswordSetupController;
 use App\Http\Controllers\Coordinator\ActivityTemplateController;
 use App\Http\Controllers\Coordinator\AssignmentController;
+use App\Http\Controllers\Coordinator\AuditController;
 use App\Http\Controllers\Coordinator\ConsentController as CoordinatorConsentController;
 use App\Http\Controllers\Coordinator\DashboardController;
 use App\Http\Controllers\Coordinator\EventController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Public\RegistrationController;
 use App\Http\Controllers\Volunteer\AbsenceController;
 use App\Http\Controllers\Volunteer\ConsentController;
+use App\Http\Controllers\Volunteer\DataRemovalController;
 use App\Http\Controllers\Volunteer\NotificationPreferenceController;
 use App\Http\Controllers\Volunteer\PauseController;
 use App\Http\Controllers\Volunteer\ProfileController as VolunteerProfileController;
@@ -75,6 +77,12 @@ Route::middleware('auth')->group(function () {
     // Paused volunteers keep access so they can resume (FR-005a).
     Route::post('perfil/pausa', [PauseController::class, 'pause'])->name('profile.pause');
     Route::post('perfil/retomar', [PauseController::class, 'resume'])->name('profile.resume');
+
+    // Data removal: anonymised 7 days after the request, cancellable until then (FR-028).
+    Route::post('perfil/remover-dados', [DataRemovalController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('data-removal.store');
+    Route::delete('perfil/remover-dados', [DataRemovalController::class, 'destroy'])->name('data-removal.destroy');
 });
 
 Route::middleware(['auth', 'role:coordinator'])
@@ -138,6 +146,8 @@ Route::middleware(['auth', 'role:coordinator'])
 
         Route::get('declaracao', [CoordinatorConsentController::class, 'edit'])->name('consent.edit');
         Route::post('declaracao', [CoordinatorConsentController::class, 'store'])->name('consent.store');
+
+        Route::get('auditoria', AuditController::class)->name('audit');
     });
 
 require __DIR__.'/settings.php';

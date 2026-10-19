@@ -45,8 +45,8 @@ class VolunteerPresenter
             ...self::summary($volunteer),
             'phone' => $volunteer->user?->phone,
             'email' => $volunteer->user?->email,
-            'birthDate' => $volunteer->birthDate()->toDateString(),
-            'age' => $volunteer->age(),
+            'birthDate' => $volunteer->birth_date === null ? null : $volunteer->birthDate()->toDateString(),
+            'age' => $volunteer->birth_date === null ? null : $volunteer->age(),
             'neighbourhood' => $volunteer->neighbourhood,
             'guardianName' => $volunteer->guardian_name,
             'guardianPhone' => $volunteer->guardian_phone,
@@ -66,6 +66,7 @@ class VolunteerPresenter
             'canSupportOthers' => $volunteer->can_support_others,
             'reviewNotes' => $volunteer->review_notes,
             'reviewedAt' => $volunteer->reviewed_at?->toIso8601String(),
+            'removalScheduledFor' => $volunteer->removal_scheduled_for?->toIso8601String(),
             'skills' => $volunteer->skills->map(fn (VolunteerSkill $skill) => [
                 'teamRoleId' => $skill->team_role_id,
                 'name' => $skill->teamRole->name,

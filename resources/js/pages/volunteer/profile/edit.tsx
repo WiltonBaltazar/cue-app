@@ -1,5 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
+import { DataRemovalCard } from '@/components/app/data-removal-card';
 import { PauseCard } from '@/components/app/pause-card';
 import Heading from '@/components/heading';
 import { localPhone } from '@/components/phone-input';
@@ -297,6 +298,10 @@ export default function VolunteerProfileEdit({
                     />
                 </div>
             )}
+
+            <div className="mt-10">
+                <DataRemovalCard scheduledFor={volunteer.removalScheduledFor} />
+            </div>
         </>
     );
 }

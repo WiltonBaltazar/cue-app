@@ -4,7 +4,6 @@ namespace App\Domain\Overview;
 
 use App\Enums\Level;
 use App\Enums\Period;
-use App\Enums\VolunteerStatus;
 use App\Models\Availability;
 use App\Models\Event;
 use App\Models\Position;
@@ -37,7 +36,7 @@ final class AvailabilityMatrix
     public function build(?TeamRole $role = null, ?Level $minLevel = null): array
     {
         $volunteers = Volunteer::query()
-            ->where('status', VolunteerStatus::Active)
+            ->schedulable()
             ->with(['availabilities', 'skills'])
             ->get();
 

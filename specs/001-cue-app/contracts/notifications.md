@@ -42,6 +42,7 @@ only same-origin paths are ever opened.
 | `swap_decided` | requester + acceptor | approved / rejected | US4 |
 | `replacement_needed` | coordinators | absence/decline creates gap | US4 |
 | `availability_conflict` | coordinators | availability change hits published shift | edge case |
+| `data_removal_requested` | coordinators | volunteer asks for data removal; upcoming shifts flagged | FR-028 |
 
 ## Delivery
 

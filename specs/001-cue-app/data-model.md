@@ -41,8 +41,8 @@ Laravel defaults (database session driver → revocable sessions).
 | user_id | FK users, unique | |
 | status | enum | see state machine below |
 | full_name | string(160) | required |
-| birth_date 🔒 | date | required; age ≥ 14 at submission (FR-002a) |
-| birth_year | smallint | derived, for filters |
+| birth_date 🔒 | date | required; age ≥ 14 at submission (FR-002a); null once anonymised |
+| birth_year | smallint null | derived, for filters; null once anonymised |
 | is_minor | bool | derived at submission and nightly |
 | guardian_name 🔒 / guardian_phone 🔒 | string null | required if `is_minor` (age 14–17) |
 | guardian_consent_confirmed_by / guardian_consent_confirmed_at | FK users / timestamp null | coordinator records guardian consent obtained offline; required to approve a minor (FR-002a) |
@@ -88,7 +88,9 @@ any ──removal request──▶ anonymized   (terminal)
   `resume` happens manually or automatically on `inactive_until`. Never automatic inactivation.
 - Minor (`is_minor`) cannot move to `active` without guardian fields filled.
 - `anonymized`: personal fields nulled/replaced, `user` deleted, `full_name` = "Voluntário
-  #<id>"; assignments retained (FR-028).
+  #<id>"; availability, skills and absences deleted; assignments retained (FR-028).
+- A pending removal request (`removal_requested_at` set) takes the volunteer out of
+  scheduling immediately, whatever their status.
 
 ### `rejected_registrations`
 

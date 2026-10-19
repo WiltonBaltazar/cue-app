@@ -33,6 +33,7 @@ class NotificationPreference extends Model
         'registration_decided' => ['label' => 'Decisão sobre a inscrição', 'description' => 'Aprovação, recusa ou pedido de correção.', 'for' => 'volunteer'],
         'registration_submitted' => ['label' => 'Novas inscrições', 'description' => 'Quando alguém se inscreve como voluntário.', 'for' => 'coordinator'],
         'replacement_needed' => ['label' => 'Turnos por substituir', 'description' => 'Quando uma ausência ou recusa deixa um lugar vazio.', 'for' => 'coordinator'],
+        'data_removal_requested' => ['label' => 'Pedidos de remoção de dados', 'description' => 'Quando um voluntário pede para sair e apagar os seus dados.', 'for' => 'coordinator'],
         'availability_conflict' => ['label' => 'Conflitos de disponibilidade', 'description' => 'Quando a nova disponibilidade de alguém choca com turnos publicados.', 'for' => 'coordinator'],
     ];
 

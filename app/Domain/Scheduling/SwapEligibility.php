@@ -2,7 +2,6 @@
 
 namespace App\Domain\Scheduling;
 
-use App\Enums\VolunteerStatus;
 use App\Models\Assignment;
 use App\Models\Volunteer;
 use Illuminate\Support\Collection;
@@ -51,7 +50,7 @@ class SwapEligibility
         $slot = $this->loader->slotFor($assignment->position, $event);
 
         return Volunteer::query()
-            ->where('status', VolunteerStatus::Active)
+            ->schedulable()
             ->whereKeyNot($assignment->volunteer_id)
             ->whereHas('skills', fn ($query) => $query->where('team_role_id', $assignment->position->team_role_id))
             ->with(['skills', 'availabilities', 'user'])

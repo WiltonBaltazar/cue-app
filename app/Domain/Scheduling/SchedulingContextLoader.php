@@ -3,7 +3,6 @@
 namespace App\Domain\Scheduling;
 
 use App\Enums\EventStatus;
-use App\Enums\VolunteerStatus;
 use App\Models\Absence;
 use App\Models\Assignment;
 use App\Models\Event;
@@ -28,7 +27,7 @@ class SchedulingContextLoader
         $windowTo = $to->endOfMonth();
 
         $volunteers = Volunteer::query()
-            ->where('status', VolunteerStatus::Active)
+            ->schedulable()
             ->with(['skills', 'availabilities'])
             ->get();
 
@@ -71,7 +70,7 @@ class SchedulingContextLoader
 
         return new VolunteerProfile(
             id: $volunteer->id,
-            isActive: $volunteer->status === VolunteerStatus::Active,
+            isActive: $volunteer->isSchedulable(),
             frequency: $volunteer->max_frequency,
             variableHours: $volunteer->variable_hours,
             canSupportOthers: $volunteer->can_support_others,

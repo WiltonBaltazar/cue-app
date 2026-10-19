@@ -6,6 +6,7 @@ import {
     ChartColumn,
     ClipboardList,
     FileText,
+    History,
     Grid3x3,
     LayoutGrid,
     Repeat,
@@ -18,7 +19,7 @@ import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { PushPrompt } from '@/components/app/push-prompt';
-import { availability, coverage, dashboard } from '@/routes/coord';
+import { audit, availability, coverage, dashboard } from '@/routes/coord';
 import { edit as consent } from '@/routes/coord/consent';
 import { index as events } from '@/routes/coord/events';
 import { index as registrations } from '@/routes/coord/registrations';
@@ -47,6 +48,7 @@ const navItems: NavItem[] = [
     { title: 'Funções', href: teamRoles(), icon: BriefcaseBusiness },
     { title: 'Declaração', href: consent(), icon: FileText },
     { title: 'Definições', href: settings(), icon: Settings },
+    { title: 'Auditoria', href: audit(), icon: History },
 ];
 
 export default function CoordinatorLayout({

@@ -23,8 +23,8 @@ use Illuminate\Support\Str;
  * @property int|null $user_id
  * @property VolunteerStatus $status
  * @property string $full_name
- * @property string $birth_date Y-m-d (encrypted)
- * @property int $birth_year
+ * @property string|null $birth_date Y-m-d (encrypted); null once anonymised
+ * @property int|null $birth_year
  * @property bool $is_minor
  * @property string|null $guardian_name
  * @property string|null $guardian_phone
@@ -131,8 +131,8 @@ class Volunteer extends Model
         // Keep the plain-text derived fields in step with the encrypted birth date.
         static::saving(function (self $volunteer): void {
             if ($volunteer->isDirty('birth_date')) {
-                $volunteer->birth_year = $volunteer->birthDate()->year;
-                $volunteer->is_minor = $volunteer->age() < self::ADULT_AGE;
+                $volunteer->birth_year = $volunteer->birth_date === null ? null : $volunteer->birthDate()->year;
+                $volunteer->is_minor = $volunteer->birth_date !== null && $volunteer->age() < self::ADULT_AGE;
             }
         });
     }
@@ -199,6 +199,35 @@ class Volunteer extends Model
     public function scopeAwaitingReview(Builder $query): void
     {
         $query->whereIn('status', [VolunteerStatus::Pending, VolunteerStatus::NeedsCorrection]);
+    }
+
+    /**
+     * Active and not leaving: a pending data-removal request takes a volunteer out of
+     * scheduling straight away (FR-028).
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeSchedulable(Builder $query): void
+    {
+        $query->where('status', VolunteerStatus::Active)->whereNull('removal_requested_at');
+    }
+
+    public function isSchedulable(): bool
+    {
+        return $this->status->isSchedulable() && $this->removal_requested_at === null;
+    }
+
+    public function isAnonymized(): bool
+    {
+        return $this->status === VolunteerStatus::Anonymized;
+    }
+
+    /**
+     * The only name shown for an anonymised volunteer, in history and the audit log (FR-029).
+     */
+    public static function anonymousName(int $id): string
+    {
+        return "Voluntário #{$id}";
     }
 
     /**

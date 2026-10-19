@@ -302,12 +302,12 @@ push and a reminder.
 **Purpose**: Retention and anonymisation rules (FR-003a, FR-028, FR-029) spanning several
 stories.
 
-- [ ] T122 [P] Feature test: rejected registrations purged after 30 days leaving only phone hash; removal request schedules anonymisation in 7 days, cancellable, future shifts → `needs_replacement`; an audit row for a profile edit contains no name, phone or e-mail values; audit rows are unchanged after anonymisation and the audit page shows "Voluntário #id" while keeping coordinator names in `tests/Feature/Privacy/DataLifecycleTest.php`
-- [ ] T123 Implement `PurgeRejectedRegistrations` scheduled command in `app/Console/Commands/PurgeRejectedRegistrations.php`
-- [ ] T124 Implement `RequestDataRemoval` and `CancelDataRemoval` actions and `AnonymizeVolunteer` action (null 🔒 fields, delete user, rename to "Voluntário #id"; audit log untouched) in `app/Actions/Registration/`
-- [ ] T125 Implement `ProcessScheduledRemovals` scheduled command in `app/Console/Commands/ProcessScheduledRemovals.php`
-- [ ] T126 Add data removal request/cancel UI with password confirmation to `resources/js/pages/volunteer/profile/edit.tsx` and `app/Http/Controllers/Volunteer/DataRemovalController.php`
-- [ ] T127 Create read-only audit log page (resolves subject names at read time; anonymised → "Voluntário #id") in `app/Http/Controllers/Coordinator/AuditController.php` and `resources/js/pages/coord/audit.tsx`
+- [X] T122 [P] Feature test: rejected registrations purged after 30 days leaving only phone hash; removal request schedules anonymisation in 7 days, cancellable, future shifts → `needs_replacement`; an audit row for a profile edit contains no name, phone or e-mail values; audit rows are unchanged after anonymisation and the audit page shows "Voluntário #id" while keeping coordinator names in `tests/Feature/Privacy/DataLifecycleTest.php`
+- [X] T123 Implement `PurgeRejectedRegistrations` scheduled command in `app/Console/Commands/PurgeRejectedRegistrations.php`
+- [X] T124 Implement `RequestDataRemoval` and `CancelDataRemoval` actions and `AnonymizeVolunteer` action (null 🔒 fields, delete user, rename to "Voluntário #id"; audit log untouched) in `app/Actions/Registration/`
+- [X] T125 Implement `ProcessScheduledRemovals` scheduled command in `app/Console/Commands/ProcessScheduledRemovals.php`
+- [X] T126 Add data removal request/cancel UI with password confirmation to `resources/js/pages/volunteer/profile/edit.tsx` and `app/Http/Controllers/Volunteer/DataRemovalController.php`
+- [X] T127 Create read-only audit log page (resolves subject names at read time; anonymised → "Voluntário #id") in `app/Http/Controllers/Coordinator/AuditController.php` and `resources/js/pages/coord/audit.tsx`
 
 ---
 
