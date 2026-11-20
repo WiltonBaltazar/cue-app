@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Coordinator;
 
 use App\Actions\Events\CancelEvent;
+use App\Actions\Events\DeleteEvent;
 use App\Actions\Events\SaveEvent;
 use App\Actions\Scheduling\CreateEventSchedule;
 use App\Enums\Level;
@@ -125,6 +126,17 @@ class EventController extends Controller
             : 'Evento actualizado.']);
 
         return to_route('coord.events.show', $event);
+    }
+
+    public function destroy(Event $event, DeleteEvent $deleteEvent): RedirectResponse
+    {
+        Gate::authorize('delete', $event);
+
+        $deleteEvent->handle($event);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Evento apagado.']);
+
+        return to_route('coord.events.index');
     }
 
     public function cancel(Request $request, Event $event, CancelEvent $cancelEvent): RedirectResponse

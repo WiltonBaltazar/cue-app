@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Pencil, UserPlus } from 'lucide-react';
+import { Pencil, Trash2, UserPlus } from 'lucide-react';
 import { ConfirmDialog } from '@/components/app/confirm-dialog';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -9,6 +9,7 @@ import { TextField } from '@/components/volunteer-form/fields';
 import { formatLongDate, formatShortDate } from '@/lib/format';
 import {
     cancel,
+    destroy,
     edit,
     index,
     schedule as eventSchedule,
@@ -34,6 +35,7 @@ export default function EventShow({
 }: Props) {
     const cancellation = useForm({ reason: '' });
     const staffing = useForm({});
+    const removal = useForm({});
     const createOwnSchedule = () => staffing.post(eventSchedule(event.id).url);
     const cancelled = event.status === 'cancelled';
     const errors = cancellation.errors as Record<string, string | undefined>;
@@ -225,6 +227,46 @@ export default function EventShow({
                         >
                             <Button variant="destructive" className="min-h-11">
                                 Cancelar evento
+                            </Button>
+                        </ConfirmDialog>
+                    </section>
+                )}
+
+                {event.type === 'special' && (
+                    <section className="space-y-3 rounded-lg border p-4">
+                        <Heading
+                            variant="small"
+                            title="Apagar evento"
+                            description="Remove o evento, as suas posições e as pessoas escaladas. Não pode ser desfeito."
+                        />
+                        <InputError
+                            message={
+                                (
+                                    removal.errors as Record<
+                                        string,
+                                        string | undefined
+                                    >
+                                ).event
+                            }
+                        />
+                        <ConfirmDialog
+                            title="Apagar este evento?"
+                            description={
+                                affectedVolunteers > 0 && !cancelled
+                                    ? `${affectedVolunteers} voluntários escalados saem do evento; quem já tinha a escala publicada é notificado.`
+                                    : 'Ainda não há voluntários escalados para este evento.'
+                            }
+                            confirmLabel="Apagar evento"
+                            cancelLabel="Voltar"
+                            destructive
+                            processing={removal.processing}
+                            onConfirm={() =>
+                                removal.delete(destroy(event.id).url)
+                            }
+                        >
+                            <Button variant="destructive" className="min-h-11">
+                                <Trash2 aria-hidden="true" />
+                                Apagar evento
                             </Button>
                         </ConfirmDialog>
                     </section>

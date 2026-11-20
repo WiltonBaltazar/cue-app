@@ -139,6 +139,7 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::get('eventos/{event}', [EventController::class, 'show'])->name('events.show');
         Route::get('eventos/{event}/editar', [EventController::class, 'edit'])->name('events.edit');
         Route::put('eventos/{event}', [EventController::class, 'update'])->name('events.update');
+        Route::delete('eventos/{event}', [EventController::class, 'destroy'])->name('events.destroy');
         Route::post('eventos/{event}/cancelar', [EventController::class, 'cancel'])->name('events.cancel');
         Route::post('eventos/{event}/escala', [EventController::class, 'schedule'])->name('events.schedule');
 
