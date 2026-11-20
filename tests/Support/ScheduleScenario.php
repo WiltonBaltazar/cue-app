@@ -33,7 +33,7 @@ final class ScheduleScenario
 
         $event = Event::factory()->create([
             'name' => 'Culto de Domingo',
-            'type' => EventType::Special,
+            'type' => EventType::Recurring,
             'date' => $sunday->toDateString(),
             'period' => Period::Morning,
             'arrival_at' => LocalTime::toUtc($sunday, '07:30'),

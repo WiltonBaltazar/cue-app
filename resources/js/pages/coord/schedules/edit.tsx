@@ -24,6 +24,7 @@ import { destroy as removeAssignment } from '@/routes/coord/assignments';
 import {
     bulkAssignments,
     generate,
+    generateEvent,
     index,
     pdf,
     publish,
@@ -55,6 +56,7 @@ type EventRow = {
     startTime: string;
     arrivalTime: string;
     cancelled: boolean;
+    upcoming: boolean;
     positions: PositionRow[];
 };
 
@@ -143,6 +145,13 @@ export default function ScheduleEdit({
 
     const eventAssignments = (event: EventRow) =>
         event.positions.flatMap((position) => position.assignments);
+    const eventMissing = (event: EventRow) =>
+        event.positions.reduce(
+            (sum, position) =>
+                sum +
+                Math.max(0, position.quantity - position.assignments.length),
+            0,
+        );
 
     const bulk = (action: BulkAction) =>
         router.post(
@@ -423,49 +432,89 @@ export default function ScheduleEdit({
                                 event.cancelled && 'opacity-60',
                             )}
                         >
-                            <h2 className="flex flex-wrap items-center gap-2 border-b bg-muted/40 p-3 font-medium">
-                                {!event.cancelled &&
-                                    eventAssignments(event).length > 0 && (
-                                        <Checkbox
-                                            className="size-5"
-                                            checked={
-                                                eventAssignments(event).every(
-                                                    (assignment) =>
-                                                        assignment.id in
-                                                        selected,
-                                                )
-                                                    ? true
-                                                    : eventAssignments(
-                                                            event,
-                                                        ).some(
-                                                            (assignment) =>
-                                                                assignment.id in
-                                                                selected,
-                                                        )
-                                                      ? 'indeterminate'
-                                                      : false
-                                            }
-                                            onCheckedChange={(checked) =>
-                                                toggle(
-                                                    eventAssignments(event),
-                                                    checked === true,
-                                                )
-                                            }
-                                            aria-label={`Seleccionar todos em ${event.name}`}
-                                        />
+                            <div className="flex flex-wrap items-center gap-2 border-b bg-muted/40 p-3">
+                                <h2 className="flex flex-1 flex-wrap items-center gap-2 font-medium">
+                                    {!event.cancelled &&
+                                        eventAssignments(event).length > 0 && (
+                                            <Checkbox
+                                                className="size-5"
+                                                checked={
+                                                    eventAssignments(
+                                                        event,
+                                                    ).every(
+                                                        (assignment) =>
+                                                            assignment.id in
+                                                            selected,
+                                                    )
+                                                        ? true
+                                                        : eventAssignments(
+                                                                event,
+                                                            ).some(
+                                                                (assignment) =>
+                                                                    assignment.id in
+                                                                    selected,
+                                                            )
+                                                          ? 'indeterminate'
+                                                          : false
+                                                }
+                                                onCheckedChange={(checked) =>
+                                                    toggle(
+                                                        eventAssignments(event),
+                                                        checked === true,
+                                                    )
+                                                }
+                                                aria-label={`Seleccionar todos em ${event.name}`}
+                                            />
+                                        )}
+                                    <span className="first-letter:uppercase">
+                                        {formatShortDate(
+                                            `${event.date}T12:00:00Z`,
+                                        )}
+                                    </span>
+                                    · {event.name}
+                                    <span className="text-sm font-normal text-muted-foreground">
+                                        chegada {event.arrivalTime}, início{' '}
+                                        {event.startTime}
+                                    </span>
+                                    {event.cancelled && (
+                                        <Badge variant="secondary">
+                                            Cancelado
+                                        </Badge>
                                     )}
-                                <span className="first-letter:uppercase">
-                                    {formatShortDate(`${event.date}T12:00:00Z`)}
-                                </span>
-                                · {event.name}
-                                <span className="text-sm font-normal text-muted-foreground">
-                                    chegada {event.arrivalTime}, início{' '}
-                                    {event.startTime}
-                                </span>
-                                {event.cancelled && (
-                                    <Badge variant="secondary">Cancelado</Badge>
-                                )}
-                            </h2>
+                                </h2>
+                                {!event.cancelled &&
+                                    event.upcoming &&
+                                    (!published || eventMissing(event) > 0) && (
+                                        <ConfirmDialog
+                                            title="Gerar este evento?"
+                                            description={
+                                                published
+                                                    ? `Os lugares vazios de ${event.name} são preenchidos e as pessoas escolhidas são notificadas. Quem já está escalado mantém-se.`
+                                                    : `As atribuições automáticas de ${event.name} são refeitas. As que alterou à mão mantêm-se. O resto da escala não muda.`
+                                            }
+                                            confirmLabel="Gerar"
+                                            onConfirm={() =>
+                                                router.post(
+                                                    generateEvent({
+                                                        schedule: schedule.id,
+                                                        event: event.id,
+                                                    }).url,
+                                                    {},
+                                                    { preserveScroll: true },
+                                                )
+                                            }
+                                        >
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="min-h-11"
+                                            >
+                                                <RefreshCw aria-hidden="true" />
+                                                Gerar este evento
+                                            </Button>
+                                        </ConfirmDialog>
+                                    )}
+                            </div>
 
                             {/* Phones: one block per position */}
                             <div className="divide-y md:hidden">

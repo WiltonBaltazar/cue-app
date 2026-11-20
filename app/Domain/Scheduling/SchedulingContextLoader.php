@@ -3,6 +3,7 @@
 namespace App\Domain\Scheduling;
 
 use App\Enums\EventStatus;
+use App\Enums\EventType;
 use App\Models\Absence;
 use App\Models\Assignment;
 use App\Models\Event;
@@ -105,18 +106,20 @@ class SchedulingContextLoader
             busyUntil: $event->teardown_until->getTimestamp(),
             quantity: $quantity ?? $position->quantity,
             label: $event->name.' · '.$event->date->format('d/m').' '.LocalTime::timeOf($event->starts_at).' · '.$position->teamRole->name,
+            checksWeeklyAvailability: $event->type !== EventType::Special,
         );
     }
 
     /**
-     * Positions of the schedule's scheduled events, with the people still needed.
+     * Positions of the schedule's scheduled events (or just one of them), with the people still needed.
      *
      * @return list<Slot>
      */
-    public function openSlots(Schedule $schedule): array
+    public function openSlots(Schedule $schedule, ?Event $only = null): array
     {
         $events = $schedule->events()
             ->scheduled()
+            ->when($only !== null, fn ($query) => $query->whereKey($only->id))
             ->with(['positions.teamRole', 'positions.assignments' => fn ($query) => $query->active()])
             ->get();
 

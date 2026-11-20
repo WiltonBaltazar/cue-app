@@ -6,7 +6,9 @@ use App\Enums\Level;
 
 /**
  * One position at one event that needs people. Times are UTC unix timestamps covering
- * team arrival to the end of teardown, which is what overlap checks use.
+ * team arrival to the end of teardown, which is what overlap checks use. Extraordinary
+ * events fall outside the weekly pattern, so they skip the weekly availability rule and
+ * only absences keep people out.
  */
 final readonly class Slot
 {
@@ -22,6 +24,7 @@ final readonly class Slot
         public int $busyUntil,
         public int $quantity = 1,
         public string $label = '',
+        public bool $checksWeeklyAvailability = true,
     ) {}
 
     public function isoWeek(): string

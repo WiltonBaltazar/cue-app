@@ -147,6 +147,7 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::get('escalas/{schedule}', [ScheduleController::class, 'edit'])->name('schedules.edit');
         Route::delete('escalas/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
         Route::post('escalas/{schedule}/gerar', [ScheduleController::class, 'generate'])->name('schedules.generate');
+        Route::post('escalas/{schedule}/eventos/{event}/gerar', [ScheduleController::class, 'generateEvent'])->name('schedules.generate-event');
         Route::post('escalas/{schedule}/publicar', [ScheduleController::class, 'publish'])->name('schedules.publish');
         Route::get('escalas/{schedule}/pdf', SchedulePdfController::class)->name('schedules.pdf');
         Route::post('escalas/{schedule}/atribuicoes', BulkAssignmentController::class)->name('schedules.bulk-assignments');

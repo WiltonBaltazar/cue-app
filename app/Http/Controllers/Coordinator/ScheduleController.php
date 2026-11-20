@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Coordinator;
 
 use App\Actions\Scheduling\DeleteSchedule;
+use App\Actions\Scheduling\GenerateEvent;
 use App\Actions\Scheduling\GenerateSchedule;
 use App\Actions\Scheduling\PublishSchedule;
 use App\Domain\Scheduling\Violation;
@@ -122,6 +123,7 @@ class ScheduleController extends Controller
                 'startTime' => LocalTime::timeOf($event->starts_at),
                 'arrivalTime' => LocalTime::timeOf($event->arrival_at),
                 'cancelled' => $event->isCancelled(),
+                'upcoming' => $event->starts_at->isFuture(),
                 'positions' => $event->positions->map(fn (Position $position) => [
                     'id' => $position->id,
                     'role' => $position->teamRole->name,
@@ -157,6 +159,23 @@ class ScheduleController extends Controller
         $result = $generate->handle($schedule);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => $this->generationMessage($result)]);
+
+        return to_route('coord.schedules.edit', $schedule);
+    }
+
+    /**
+     * Fills one event without regenerating the whole schedule, e.g. an extraordinary event.
+     */
+    public function generateEvent(Schedule $schedule, Event $event, GenerateEvent $generate): RedirectResponse
+    {
+        Gate::authorize('update', $schedule);
+        abort_unless($event->date->betweenIncluded($schedule->starts_on, $schedule->ends_on), 404);
+
+        $result = $generate->handle($schedule, $event);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $result['missing'] === 0
+            ? "{$event->name}: {$result['created']} atribuições, sem lacunas."
+            : "{$event->name}: {$result['created']} atribuições, {$result['missing']} lugares por preencher."]);
 
         return to_route('coord.schedules.edit', $schedule);
     }
