@@ -140,6 +140,7 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::get('eventos/{event}/editar', [EventController::class, 'edit'])->name('events.edit');
         Route::put('eventos/{event}', [EventController::class, 'update'])->name('events.update');
         Route::post('eventos/{event}/cancelar', [EventController::class, 'cancel'])->name('events.cancel');
+        Route::post('eventos/{event}/escala', [EventController::class, 'schedule'])->name('events.schedule');
 
         Route::get('escalas', [ScheduleController::class, 'index'])->name('schedules.index');
         Route::post('escalas', [ScheduleController::class, 'store'])->name('schedules.store');

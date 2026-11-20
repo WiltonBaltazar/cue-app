@@ -98,12 +98,7 @@ class AssignVolunteer
 
     private function scheduleFor(Position $position): Schedule
     {
-        $date = $position->event->date->toDateString();
-
-        $schedule = Schedule::query()
-            ->where('starts_on', '<=', $date)
-            ->where('ends_on', '>=', $date)
-            ->first();
+        $schedule = Schedule::forEvent($position->event);
 
         if ($schedule === null) {
             throw ValidationException::withMessages(['schedule' => 'Crie primeiro a escala que cobre esta data.']);

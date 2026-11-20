@@ -9,14 +9,17 @@ use Database\Factories\ScheduleFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * A schedule ("Escala") for a date range: draft until published (FR-014).
+ * A schedule ("Escala") for a date range, or for one event only (event_id): draft until
+ * published (FR-014). Range schedules leave out events that have their own schedule.
  *
  * @property int $id
  * @property CarbonImmutable $starts_on
  * @property CarbonImmutable $ends_on
+ * @property int|null $event_id
  * @property ScheduleStatus $status
  * @property int|null $created_by
  * @property int|null $published_by
@@ -28,7 +31,7 @@ class Schedule extends Model
     /** @use HasFactory<ScheduleFactory> */
     use HasFactory, LogsAuditActivity;
 
-    protected $fillable = ['starts_on', 'ends_on', 'created_by'];
+    protected $fillable = ['starts_on', 'ends_on', 'event_id', 'created_by'];
 
     /**
      * @var array<string, mixed>
@@ -70,13 +73,57 @@ class Schedule extends Model
     }
 
     /**
-     * Events covered by this schedule's dates.
+     * The one event of a single-event schedule.
+     *
+     * @return BelongsTo<Event, $this>
+     */
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(Event::class);
+    }
+
+    public function isForSingleEvent(): bool
+    {
+        return $this->event_id !== null;
+    }
+
+    /**
+     * Events covered: the single event, or the range's events without a schedule of their own.
      *
      * @return Builder<Event>
      */
     public function events(): Builder
     {
-        return Event::query()->betweenDates($this->starts_on, $this->ends_on);
+        if ($this->isForSingleEvent()) {
+            return Event::query()->whereKey($this->event_id);
+        }
+
+        return Event::query()
+            ->betweenDates($this->starts_on, $this->ends_on)
+            ->whereNotIn('id', self::query()->whereNotNull('event_id')->select('event_id'));
+    }
+
+    /**
+     * The schedule an event belongs to: its own one first, otherwise the range covering it.
+     */
+    public static function forEvent(Event $event): ?self
+    {
+        $date = $event->date->toDateString();
+
+        return self::query()->where('event_id', $event->id)->first()
+            ?? self::query()
+                ->whereNull('event_id')
+                ->where('starts_on', '<=', $date)
+                ->where('ends_on', '>=', $date)
+                ->first();
+    }
+
+    /**
+     * @param  Builder<self>  $query
+     */
+    public function scopeForRange(Builder $query): void
+    {
+        $query->whereNull('event_id');
     }
 
     /**

@@ -72,6 +72,7 @@ type Gap = {
 type Props = {
     schedule: {
         id: number;
+        eventName: string | null;
         startsOn: string;
         endsOn: string;
         status: 'draft' | 'published';
@@ -322,9 +323,23 @@ export default function ScheduleEdit({
                 <header className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-semibold">
-                            Escala{' '}
-                            {formatDate(`${schedule.startsOn}T12:00:00Z`)} –{' '}
-                            {formatDate(`${schedule.endsOn}T12:00:00Z`)}
+                            {schedule.eventName !== null ? (
+                                <>
+                                    Escala · {schedule.eventName},{' '}
+                                    {formatDate(
+                                        `${schedule.startsOn}T12:00:00Z`,
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    Escala{' '}
+                                    {formatDate(
+                                        `${schedule.startsOn}T12:00:00Z`,
+                                    )}{' '}
+                                    –{' '}
+                                    {formatDate(`${schedule.endsOn}T12:00:00Z`)}
+                                </>
+                            )}
                         </h1>
                         <p className="text-muted-foreground">
                             <Badge

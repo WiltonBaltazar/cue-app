@@ -4,14 +4,18 @@ namespace App\Http\Controllers\Coordinator;
 
 use App\Actions\Events\CancelEvent;
 use App\Actions\Events\SaveEvent;
+use App\Actions\Scheduling\CreateEventSchedule;
 use App\Enums\Level;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveEventRequest;
 use App\Models\Event;
+use App\Models\Schedule;
 use App\Models\TeamRole;
+use App\Models\User;
 use App\Support\EventPresenter;
 use App\Support\LocalTime;
 use Carbon\CarbonImmutable;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -51,10 +55,30 @@ class EventController extends Controller
 
         $event->load('positions.teamRole');
 
+        $schedule = Schedule::forEvent($event);
+
         return Inertia::render('coord/events/show', [
             'event' => EventPresenter::full($event),
             'affectedVolunteers' => $cancelEvent->affectedCount($event),
+            'schedule' => $schedule === null ? null : [
+                'id' => $schedule->id,
+                'singleEvent' => $schedule->isForSingleEvent(),
+                'startsOn' => $schedule->starts_on->toDateString(),
+                'endsOn' => $schedule->ends_on->toDateString(),
+            ],
         ]);
+    }
+
+    /**
+     * Opens this event's own schedule, creating it on first use, to pick its volunteers.
+     */
+    public function schedule(Event $event, #[CurrentUser] User $coordinator, CreateEventSchedule $create): RedirectResponse
+    {
+        Gate::authorize('create', Schedule::class);
+
+        $schedule = $create->handle($event, $coordinator);
+
+        return to_route('coord.schedules.edit', $schedule);
     }
 
     public function create(Request $request): Response

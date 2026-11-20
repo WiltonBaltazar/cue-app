@@ -5,6 +5,7 @@ namespace App\Actions\Events;
 use App\Enums\EventType;
 use App\Enums\Period;
 use App\Models\Event;
+use App\Models\Schedule;
 use App\Support\LocalTime;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +47,12 @@ class SaveEvent
             }
 
             $event->save();
+
+            // A schedule of its own follows the event's date.
+            Schedule::query()->where('event_id', $event->id)->update([
+                'starts_on' => $data['date'],
+                'ends_on' => $data['date'],
+            ]);
 
             $event->positions()->delete();
             foreach ($data['positions'] as $position) {

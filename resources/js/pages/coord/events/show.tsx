@@ -1,22 +1,40 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Pencil } from 'lucide-react';
+import { Pencil, UserPlus } from 'lucide-react';
 import { ConfirmDialog } from '@/components/app/confirm-dialog';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/volunteer-form/fields';
-import { formatLongDate } from '@/lib/format';
-import { cancel, edit, index } from '@/routes/coord/events';
+import { formatLongDate, formatShortDate } from '@/lib/format';
+import {
+    cancel,
+    edit,
+    index,
+    schedule as eventSchedule,
+} from '@/routes/coord/events';
+import { edit as editSchedule } from '@/routes/coord/schedules';
 import type { EventFull } from '@/types';
 
 type Props = {
     event: EventFull;
     affectedVolunteers: number;
+    schedule: {
+        id: number;
+        singleEvent: boolean;
+        startsOn: string;
+        endsOn: string;
+    } | null;
 };
 
-export default function EventShow({ event, affectedVolunteers }: Props) {
+export default function EventShow({
+    event,
+    affectedVolunteers,
+    schedule,
+}: Props) {
     const cancellation = useForm({ reason: '' });
+    const staffing = useForm({});
+    const createOwnSchedule = () => staffing.post(eventSchedule(event.id).url);
     const cancelled = event.status === 'cancelled';
     const errors = cancellation.errors as Record<string, string | undefined>;
 
@@ -116,6 +134,61 @@ export default function EventShow({ event, affectedVolunteers }: Props) {
                         ))}
                     </ul>
                 </section>
+
+                {!cancelled && (
+                    <section className="space-y-3 rounded-lg border p-4">
+                        <Heading
+                            variant="small"
+                            title="Voluntários"
+                            description={
+                                schedule === null
+                                    ? 'Este evento ainda não está em nenhuma escala. Crie a escala dele para escolher as pessoas.'
+                                    : schedule.singleEvent
+                                      ? 'Este evento tem uma escala só para ele.'
+                                      : `Este evento está na escala de ${formatShortDate(`${schedule.startsOn}T12:00:00Z`)} a ${formatShortDate(`${schedule.endsOn}T12:00:00Z`)}.`
+                            }
+                        />
+                        <div className="flex flex-wrap gap-2">
+                            {schedule === null ? (
+                                <Button
+                                    className="min-h-11"
+                                    disabled={staffing.processing}
+                                    onClick={createOwnSchedule}
+                                >
+                                    <UserPlus aria-hidden="true" />
+                                    Escolher voluntários
+                                </Button>
+                            ) : (
+                                <Button asChild className="min-h-11">
+                                    <Link href={editSchedule(schedule.id)}>
+                                        <UserPlus aria-hidden="true" />
+                                        Escolher voluntários
+                                    </Link>
+                                </Button>
+                            )}
+                            {schedule !== null && !schedule.singleEvent && (
+                                <Button
+                                    variant="outline"
+                                    className="min-h-11"
+                                    disabled={staffing.processing}
+                                    onClick={createOwnSchedule}
+                                >
+                                    Criar escala só para este evento
+                                </Button>
+                            )}
+                        </div>
+                        <InputError
+                            message={
+                                (
+                                    staffing.errors as Record<
+                                        string,
+                                        string | undefined
+                                    >
+                                ).event
+                            }
+                        />
+                    </section>
+                )}
 
                 {!cancelled && (
                     <section className="space-y-3 rounded-lg border p-4">

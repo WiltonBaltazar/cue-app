@@ -34,9 +34,10 @@ class ScheduleController extends Controller
         $nextMonth = LocalTime::today()->addMonthNoOverflow()->startOfMonth();
 
         return Inertia::render('coord/schedules/index', [
-            'schedules' => Schedule::query()->orderByDesc('starts_on')->withCount('assignments')->get()
+            'schedules' => Schedule::query()->orderByDesc('starts_on')->with('event:id,name')->withCount('assignments')->get()
                 ->map(fn (Schedule $schedule) => [
                     'id' => $schedule->id,
+                    'eventName' => $schedule->event?->name,
                     'startsOn' => $schedule->starts_on->toDateString(),
                     'endsOn' => $schedule->ends_on->toDateString(),
                     'status' => $schedule->status->value,
@@ -65,6 +66,7 @@ class ScheduleController extends Controller
         ]);
 
         $overlaps = Schedule::query()
+            ->forRange()
             ->where('starts_on', '<=', $validated['ends_on'])
             ->where('ends_on', '>=', $validated['starts_on'])
             ->exists();
@@ -110,6 +112,7 @@ class ScheduleController extends Controller
         return Inertia::render('coord/schedules/edit', [
             'schedule' => [
                 'id' => $schedule->id,
+                'eventName' => $schedule->event?->name,
                 'startsOn' => $schedule->starts_on->toDateString(),
                 'endsOn' => $schedule->ends_on->toDateString(),
                 'status' => $schedule->status->value,

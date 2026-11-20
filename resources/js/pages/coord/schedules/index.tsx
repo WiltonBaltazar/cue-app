@@ -20,6 +20,7 @@ import {
 
 type ScheduleRow = {
     id: number;
+    eventName: string | null;
     startsOn: string;
     endsOn: string;
     status: 'draft' | 'published';
@@ -30,6 +31,10 @@ type ScheduleRow = {
 };
 
 function period(schedule: ScheduleRow): string {
+    if (schedule.eventName !== null) {
+        return `${schedule.eventName} · ${formatDate(`${schedule.startsOn}T12:00:00Z`)}`;
+    }
+
     return `${formatDate(`${schedule.startsOn}T12:00:00Z`)} – ${formatDate(`${schedule.endsOn}T12:00:00Z`)}`;
 }
 
