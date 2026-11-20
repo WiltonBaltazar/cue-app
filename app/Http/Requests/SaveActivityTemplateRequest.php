@@ -29,6 +29,7 @@ class SaveActivityTemplateRequest extends FormRequest
             'weekday' => ['required', 'integer', 'between:1,7'],
             'interval_weeks' => ['required', 'integer', 'between:1,4'],
             'month_week' => ['nullable', 'integer', Rule::in([1, 2, 3, 4, -1])],
+            'except_month_week' => ['nullable', 'integer', Rule::in([1, 2, 3, 4, -1]), 'prohibits:month_week'],
             'starts_on' => ['required', 'date_format:Y-m-d'],
             'is_active' => ['required', 'boolean'],
             ...$this->scheduleRules(),

@@ -19,6 +19,7 @@ type TemplateData = {
     weekday: number;
     intervalWeeks: number;
     monthWeek: number | null;
+    exceptMonthWeek: number | null;
     startsOn: string;
     arrivalTime: string;
     startTime: string;
@@ -42,7 +43,9 @@ type Props = {
 };
 
 /**
- * Weekly ("w2" = every 2 weeks) or monthly ("m1" = 1st weekday of the month, "m-1" = last).
+ * Weekly ("w2" = every 2 weeks), weekly except one week of the month ("x1" = all but the
+ * 1st weekday, "x-1" = all but the last) or monthly ("m1" = 1st weekday of the month,
+ * "m-1" = last).
  */
 function repetitions(weekday: string): Option[] {
     return [
@@ -50,6 +53,11 @@ function repetitions(weekday: string): Option[] {
         { value: 'w2', label: 'De 2 em 2 semanas' },
         { value: 'w3', label: 'De 3 em 3 semanas' },
         { value: 'w4', label: 'De 4 em 4 semanas' },
+        { value: 'x1', label: `Todas as semanas, excepto o 1.º ${weekday}` },
+        {
+            value: 'x-1',
+            label: `Todas as semanas, excepto o último ${weekday}`,
+        },
         { value: 'm1', label: `1.º ${weekday} de cada mês` },
         { value: 'm2', label: `2.º ${weekday} de cada mês` },
         { value: 'm3', label: `3.º ${weekday} de cada mês` },
@@ -73,6 +81,7 @@ export default function TemplateForm({
         weekday: template?.weekday ?? 7,
         interval_weeks: template?.intervalWeeks ?? 1,
         month_week: (template?.monthWeek ?? null) as number | null,
+        except_month_week: (template?.exceptMonthWeek ?? null) as number | null,
         starts_on: template?.startsOn ?? today,
         arrival_time: template?.arrivalTime ?? '',
         start_time: template?.startTime ?? '',
@@ -109,7 +118,9 @@ export default function TemplateForm({
     const repetition =
         form.data.month_week !== null
             ? `m${form.data.month_week}`
-            : `w${form.data.interval_weeks}`;
+            : form.data.except_month_week !== null
+              ? `x${form.data.except_month_week}`
+              : `w${form.data.interval_weeks}`;
     const monthly = form.data.month_week !== null;
 
     return (
@@ -148,21 +159,24 @@ export default function TemplateForm({
                         onChange={(value) => {
                             const amount = Number(value.slice(1));
 
-                            form.setData((data) =>
-                                value.startsWith('m')
-                                    ? {
-                                          ...data,
-                                          month_week: amount,
-                                          interval_weeks: 1,
-                                      }
-                                    : {
-                                          ...data,
-                                          month_week: null,
-                                          interval_weeks: amount,
-                                      },
-                            );
+                            form.setData((data) => ({
+                                ...data,
+                                month_week: value.startsWith('m')
+                                    ? amount
+                                    : null,
+                                except_month_week: value.startsWith('x')
+                                    ? amount
+                                    : null,
+                                interval_weeks: value.startsWith('w')
+                                    ? amount
+                                    : 1,
+                            }));
                         }}
-                        error={errors.interval_weeks ?? errors.month_week}
+                        error={
+                            errors.interval_weeks ??
+                            errors.month_week ??
+                            errors.except_month_week
+                        }
                     />
                     <TextField
                         label="A partir de"

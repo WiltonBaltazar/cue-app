@@ -110,6 +110,30 @@ test('the last Sunday of every month is supported', function () {
         ->toBe(['2026-11-29', '2026-12-27', '2027-01-31']);
 });
 
+test('every Sunday except the first of the month is supported', function () {
+    sundayTemplate(['except_month_week' => 1]);
+
+    app(GenerateOccurrences::class)->handle();
+
+    $dates = Event::query()->orderBy('date')->pluck('date')->map->toDateString()->all();
+
+    // 6 Dec and 3 Jan are first Sundays (e.g. the communion service has its own activity).
+    expect($dates)->not->toContain('2026-12-06')
+        ->not->toContain('2027-01-03')
+        ->toContain('2026-11-08', '2026-12-13', '2027-01-10');
+});
+
+test('switching a template to skip the first Sunday removes those dates', function () {
+    $template = sundayTemplate();
+    app(GenerateOccurrences::class)->handle();
+    expect(Event::query()->whereDate('date', '2026-12-06')->exists())->toBeTrue();
+
+    $template->update(['except_month_week' => 1]);
+    app(GenerateOccurrences::class)->handle($template);
+
+    expect(Event::query()->whereDate('date', '2026-12-06')->exists())->toBeFalse();
+});
+
 test('template edits reach future non-customised occurrences only', function () {
     $template = sundayTemplate();
     app(GenerateOccurrences::class)->handle();

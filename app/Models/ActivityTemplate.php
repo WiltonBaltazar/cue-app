@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $weekday ISO 1 (Monday) – 7 (Sunday)
  * @property int $interval_weeks
  * @property int|null $month_week 1–4 or -1 (last) for "nth weekday of the month"; overrides interval_weeks
+ * @property int|null $except_month_week 1–4 or -1 (last): that weekday of the month is skipped
  * @property CarbonImmutable $starts_on
  * @property Period $period
  * @property string $arrival_time H:i:s
@@ -36,7 +37,7 @@ class ActivityTemplate extends Model
     use HasFactory, LogsAuditActivity;
 
     protected $fillable = [
-        'name', 'weekday', 'interval_weeks', 'month_week', 'starts_on', 'period', 'arrival_time',
+        'name', 'weekday', 'interval_weeks', 'month_week', 'except_month_week', 'starts_on', 'period', 'arrival_time',
         'start_time', 'end_time', 'teardown_minutes', 'location', 'is_active',
     ];
 
@@ -49,6 +50,7 @@ class ActivityTemplate extends Model
             'weekday' => 'integer',
             'interval_weeks' => 'integer',
             'month_week' => 'integer',
+            'except_month_week' => 'integer',
             'starts_on' => 'immutable_date:Y-m-d',
             'period' => Period::class,
             'teardown_minutes' => 'integer',
@@ -90,6 +92,8 @@ class ActivityTemplate extends Model
         return match (true) {
             $this->month_week === -1 => "Último {$weekday} de cada mês",
             $this->month_week !== null => "{$this->month_week}.º {$weekday} de cada mês",
+            $this->except_month_week === -1 => "Todas as semanas, {$weekday}, excepto o último do mês",
+            $this->except_month_week !== null => "Todas as semanas, {$weekday}, excepto o {$this->except_month_week}.º do mês",
             $this->interval_weeks === 1 => "Todas as semanas, {$weekday}",
             default => "De {$this->interval_weeks} em {$this->interval_weeks} semanas, {$weekday}",
         };
@@ -110,13 +114,25 @@ class ActivityTemplate extends Model
         }
 
         if ($this->month_week !== null) {
-            return $this->month_week === -1
-                ? $day->day + 7 > $day->daysInMonth
-                : (int) ceil($day->day / 7) === $this->month_week;
+            return self::isWeekOfMonth($day, $this->month_week);
+        }
+
+        if ($this->except_month_week !== null && self::isWeekOfMonth($day, $this->except_month_week)) {
+            return false;
         }
 
         $weeks = (int) $start->startOfWeek()->diffInWeeks($day->startOfWeek());
 
         return $weeks % max(1, $this->interval_weeks) === 0;
+    }
+
+    /**
+     * Whether the date is the nth (1–4) or last (-1) of its weekday in its month.
+     */
+    private static function isWeekOfMonth(CarbonImmutable $day, int $week): bool
+    {
+        return $week === -1
+            ? $day->day + 7 > $day->daysInMonth
+            : (int) ceil($day->day / 7) === $week;
     }
 }
