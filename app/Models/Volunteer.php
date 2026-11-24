@@ -308,6 +308,16 @@ class Volunteer extends Model
         return $last === null ? $first : $first.' '.Str::upper(Str::substr($last, 0, 1)).'.';
     }
 
+    /**
+     * "Ana Maria Machava" → "Ana Machava"; only for the coordinator's printable schedule (FR-036).
+     */
+    public function firstAndLastName(): string
+    {
+        $parts = preg_split('/\s+/', trim($this->full_name)) ?: [];
+
+        return count($parts) > 1 ? $parts[0].' '.end($parts) : ($parts[0] ?? '');
+    }
+
     public function hasGuardianConsent(): bool
     {
         return $this->guardian_consent_confirmed_at !== null;

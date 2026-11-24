@@ -4,6 +4,7 @@ use App\Models\Assignment;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\View;
 use Tests\Support\ScheduleScenario;
 
 beforeEach(function () {
@@ -100,15 +101,25 @@ test('the home counts colleagues\' open requests the volunteer could take', func
         ->assertInertia(fn ($page) => $page->where('openSwaps', 1));
 });
 
-test('the PDF contains short names only', function () {
+test('the PDF prints first and last names in full, without contacts', function () {
     $this->actingAs($this->coordinator)->post(route('coord.schedules.publish', $this->scenario->schedule));
+
+    $html = '';
+    View::composer('pdf.schedule', function ($view) use (&$html) {
+        $html = view()->file($view->getPath(), $view->getData())->render();
+    });
 
     $response = $this->actingAs($this->coordinator)
         ->get(route('coord.schedules.pdf', $this->scenario->schedule))
         ->assertOk()
         ->assertHeader('content-type', 'application/pdf');
 
-    expect(strlen((string) $response->getContent()))->toBeGreaterThan(500);
+    expect(substr((string) $response->getContent(), 0, 4))->toBe('%PDF')
+        ->and($html)->toContain('Ana Machava')
+        ->toContain('João Sitoe')
+        ->not->toContain('Maria')
+        ->not->toContain('Pedro')
+        ->not->toContain((string) $this->colleague->user?->phone);
 });
 
 test('opened from a shift, the team schedule shows only that event', function () {
