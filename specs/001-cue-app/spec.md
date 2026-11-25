@@ -182,13 +182,13 @@ Voluntários e coordenadores recebem notificações push no telemóvel/computado
 
 - **FR-007**: O sistema DEVE permitir gerir o catálogo de funções (pré-carregado com as áreas da ficha: Operação de câmara, Realização e mistura de vídeo, Relações com o público, Informática, Electrónica, Cablagem, Iluminação, Áudio, Transporte de equipamentos, Montagem/desmontagem, Streaming).
 - **FR-008**: O sistema DEVE permitir criar modelos de actividade recorrente e eventos extraordinários com data, horário de chegada, início, fim, local e posições (função, quantidade, nível mínimo).
-- **FR-009**: O sistema DEVE permitir editar ou cancelar ocorrências individuais sem alterar o modelo recorrente.
+- **FR-009**: O sistema DEVE permitir editar ou cancelar ocorrências individuais sem alterar o modelo recorrente. Pessoas já escaladas mantêm os lugares; se a data ou as horas mudarem, quem tem turno publicado é avisado e os novos conflitos são assinalados. Um modelo pode ser apagado: as datas futuras saem do calendário e as passadas ficam como histórico.
 
 **Geração de escala**
 
 - **FR-010**: O sistema DEVE gerar uma proposta de escala para um intervalo de datas escolhido.
 - **FR-011**: A geração DEVE respeitar como restrições obrigatórias: função, disponibilidade (dia e período), ausências registadas e uma posição por evento. A frequência máxima declarada, o nível mínimo da posição e a sobreposição de horários com outro evento são preferências: a geração só as quebra quando, de outro modo, a posição ficaria vazia, pela ordem frequência ("Ocasionalmente" por último), depois nível, depois sobreposição. Quem não puder ir pede substituição. Nas edições manuais o coordenador pode escolher qualquer pessoa com a função: as regras quebradas aparecem só como aviso, com nota opcional (excepto ocupar dois lugares no mesmo evento).
-- **FR-012**: A geração DEVE optimizar, por ordem: (1) preencher o máximo de posições, (2) equilibrar o número de atribuições entre voluntários, (3) privilegiar a área de maior interesse, (4) emparelhar iniciantes com mentores.
+- **FR-012**: A geração DEVE optimizar, por ordem: (1) preencher o máximo de posições, (2) dar a cada voluntário disponível pelo menos um turno por mês, enquanto houver lugares, (3) equilibrar o número de atribuições entre voluntários, (4) privilegiar a área de maior interesse, (5) emparelhar iniciantes com mentores.
 - **FR-013**: O coordenador DEVE poder editar manualmente qualquer atribuição antes e depois da publicação, sendo avisado quando a alteração viola uma restrição. Se outro coordenador alterou a mesma atribuição desde que a página foi carregada, a gravação DEVE ser recusada com a mensagem "Alterado por <nome> — recarregar", sem perder as restantes alterações.
 - **FR-014**: O sistema DEVE manter estados de escala: Rascunho → Publicada; e de atribuição: Confirmada (estado inicial ao publicar) → Recusada / Por substituir. Não existe confirmação obrigatória por parte do voluntário.
 - **FR-015**: O sistema DEVE permitir exportar/partilhar a escala publicada (vista para impressão e PDF).
@@ -292,7 +292,7 @@ Termos canónicos usados na interface e nesta especificação:
 - Um ou mais coordenadores com permissões iguais; não há, nesta fase, líderes por área.
 - Actividades base: Culto de Domingo e Estudo Bíblico de Terça; outras criadas como eventos.
 - Períodos: Manhã, Tarde, Noite; "Horários variáveis" é tratado como disponível em todos os dias e períodos, mas com prioridade mais baixa na geração.
-- Frequências mapeadas para limite mensal preferido: Todas as semanas = sem limite (1 por semana), 2–3 vezes/mês = 3, 1 vez/mês = 1, Ocasionalmente = só quando mais ninguém pode. Os limites orientam a geração mas não deixam posições vazias (FR-011).
+- Frequências mapeadas para limite mensal preferido: Todas as semanas = sem limite (1 por semana), 2–3 vezes/mês = 3, 1 vez/mês = 1, Ocasionalmente = 1, depois dos restantes. Os limites orientam a geração mas não deixam posições vazias (FR-011).
 - Idade mínima de cadastro: 14 anos (ver FR-002a).
 - Interface em português; fuso horário Africa/Maputo.
 - Notificações por WhatsApp/SMS ficam fora do âmbito desta fase.

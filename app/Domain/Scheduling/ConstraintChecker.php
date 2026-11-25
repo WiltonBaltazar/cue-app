@@ -2,6 +2,8 @@
 
 namespace App\Domain\Scheduling;
 
+use App\Enums\Frequency;
+
 /**
  * The rules of FR-011 (hard ones plus the soft frequency preference), defined once and used by automatic generation, manual edits
  * and swaps. Pure: reads only the given context.
@@ -9,7 +11,7 @@ namespace App\Domain\Scheduling;
 final class ConstraintChecker
 {
     /**
-     * @param  bool  $automatic  "Occasional" volunteers may only be placed by hand.
+     * @param  bool  $automatic  False for a place chosen by hand: "Ocasionalmente" then has no limit.
      * @return list<Violation>
      */
     public function check(VolunteerProfile $volunteer, Slot $slot, SchedulingContext $context, bool $automatic = true): array
@@ -53,8 +55,8 @@ final class ConstraintChecker
 
     private function exceedsFrequency(VolunteerProfile $volunteer, Slot $slot, SchedulingContext $context, bool $automatic): bool
     {
-        if (! $volunteer->frequency->allowsAutomaticAssignment()) {
-            return $automatic;
+        if ($volunteer->frequency === Frequency::Occasional && ! $automatic) {
+            return false;
         }
 
         $bookings = array_filter(

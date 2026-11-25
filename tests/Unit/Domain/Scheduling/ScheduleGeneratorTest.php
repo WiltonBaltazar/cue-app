@@ -149,12 +149,12 @@ test('frequency never leaves a position empty: someone goes over theirs instead'
         ->and(max(loadPerVolunteer($result['assignments'])) - min(loadPerVolunteer($result['assignments'])))->toBeLessThanOrEqual(1);
 });
 
-test('"Ocasionalmente" volunteers are used only when nobody else can come', function () {
+test('"Ocasionalmente" volunteers come after the rest, once a month', function () {
     $volunteers = [S::volunteer(1, frequency: Frequency::Monthly), S::volunteer(2, frequency: Frequency::Occasional)];
 
-    $result = generate(new SchedulingContext($volunteers), [S::slot(10, 1, '2026-11-01'), S::slot(11, 2, '2026-11-08'), S::slot(12, 3, '2026-11-08', roleId: S::CAMERA)]);
+    $result = generate(new SchedulingContext($volunteers), [S::slot(10, 1, '2026-11-01'), S::slot(11, 2, '2026-11-08'), S::slot(12, 3, '2026-11-15')]);
 
-    expect(array_column($result['assignments'], 'volunteerId'))->toBe([1, 1, 2]);
+    expect(array_column($result['assignments'], 'volunteerId'))->toBe([1, 2, 1]);
 });
 
 test('someone below the minimum level fills a place nobody qualified can take', function () {
@@ -223,4 +223,79 @@ test('with enough people at least 95% of positions are filled (SC-004)', functio
 
     $needed = 5 * 4;
     expect(count($result['assignments']) / $needed)->toBeGreaterThanOrEqual(0.95);
+});
+
+test('nobody is left out when schedules are short and there are more people than places', function () {
+    $volunteers = array_map(fn (int $id) => S::volunteer($id), range(1, 10));
+    $bookings = [];
+    $load = [];
+
+    // One place every Sunday, generated a week at a time. Like the loader, only the last 28
+    // days are given as bookings.
+    for ($week = 0; $week < 20; $week++) {
+        $date = date('Y-m-d', (int) strtotime("2026-11-01 +{$week} weeks"));
+        $windowFrom = date('Y-m-d', (int) strtotime("{$date} -28 days"));
+        $recent = array_values(array_filter($bookings, fn ($booking) => $booking->date >= $windowFrom));
+        $lastServed = [];
+        foreach ($bookings as $booking) {
+            if ($booking->date < $windowFrom) {
+                $lastServed[$booking->volunteerId] = $booking->date;
+            }
+        }
+
+        $slot = S::slot(100 + $week, 100 + $week, $date);
+        $result = (new ScheduleGenerator)->generate(new SchedulingContext($volunteers, [], $recent, $lastServed), [$slot], $date, $date);
+        $chosen = $result['assignments'][0]['volunteerId'];
+        $bookings[] = S::booking($chosen, $slot);
+        $load[$chosen] = ($load[$chosen] ?? 0) + 1;
+    }
+
+    expect($load)->toHaveCount(10)->and(max($load))->toBe(2);
+});
+
+test('everyone available serves at least once a month when there are places', function () {
+    $volunteers = array_map(fn (int $id) => S::volunteer($id, frequency: $id <= 6 ? Frequency::Weekly : Frequency::Monthly), range(1, 9));
+    $volunteers[] = S::volunteer(10, frequency: Frequency::Occasional);
+
+    $result = generate(new SchedulingContext($volunteers), S::novemberSundays(S::CAMERA, 2));
+
+    expect(loadPerVolunteer($result['assignments']))->toBe(array_fill_keys(range(1, 10), 1));
+});
+
+test('the only place someone can take is kept for them', function () {
+    // Two places, equally scarce. Person 1 ranks first on the Sunday but can also come on
+    // the Tuesday; person 2 can only come on the Sunday; person 3 already served this month.
+    $volunteers = [
+        S::volunteer(1, availability: ['7|morning', '2|evening']),
+        S::volunteer(2, availability: ['7|morning']),
+        S::volunteer(3, availability: ['2|evening']),
+    ];
+    $served = [S::booking(3, S::slot(90, 90, '2026-11-24', period: 'evening', from: '17:00', until: '20:00'))];
+    $slots = [S::slot(10, 1), S::slot(11, 2, '2026-11-03', period: 'evening', from: '17:00', until: '20:00')];
+
+    $result = generate(new SchedulingContext($volunteers, [], $served), $slots);
+
+    expect(loadPerVolunteer($result['assignments']))->toBe([1 => 1, 2 => 1]);
+});
+
+test('someone who already served this month waits for those who did not', function () {
+    $volunteers = [S::volunteer(1), S::volunteer(2)];
+    // Person 2 served more lately, but in October; person 1 already has a November shift.
+    $bookings = [
+        S::booking(1, S::slot(90, 90, '2026-11-01')),
+        S::booking(2, S::slot(91, 91, '2026-10-18')),
+        S::booking(2, S::slot(92, 92, '2026-10-25')),
+    ];
+
+    $result = generate(new SchedulingContext($volunteers, [], $bookings), [S::slot(10, 1, '2026-11-15')]);
+
+    expect($result['assignments'][0]['volunteerId'])->toBe(2);
+});
+
+test('absent people are not forced into their month', function () {
+    $absences = [['volunteerId' => 2, 'from' => '2026-11-01', 'to' => '2026-11-30']];
+
+    $result = generate(new SchedulingContext([S::volunteer(1), S::volunteer(2)], $absences), S::novemberSundays());
+
+    expect(array_keys(loadPerVolunteer($result['assignments'])))->toBe([1]);
 });

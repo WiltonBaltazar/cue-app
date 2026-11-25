@@ -170,8 +170,10 @@ the clarification session recorded in [spec.md](spec.md#clarifications).
      else is left, cheapest first (frequency, "Occasionally", level, overlap), so they
      never cause a gap; whoever cannot make it asks for a substitute.
   2. Orders positions by scarcity (fewest candidates first).
-  3. Scores candidates by the FR-012 priorities: fewest recent assignments → preferred role
-     → "variable hours" penalty; tie-break by stable volunteer ID → **deterministic**.
+  3. Scores candidates by the FR-012 priorities: no shift yet this month ("Occasionally"
+     after the rest) → fewest recent assignments → longest without serving → "variable
+     hours" penalty → preferred role; skips a choice that would take the only place someone
+     else could serve that month (`MonthlyCoverage`); tie-break by stable volunteer ID → **deterministic**.
   4. Pairs beginners with a "can support others" volunteer in the same role/event when
      possible.
   5. Emits gaps with "closest eligible" suggestions (which constraint failed).

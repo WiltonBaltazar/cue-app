@@ -62,7 +62,26 @@ class SchedulingContextLoader
             array_values($volunteers->map(fn (Volunteer $volunteer) => $this->profileOf($volunteer))->all()),
             array_values($absences),
             array_values($bookings),
+            $this->lastServedBefore($windowFrom),
         );
+    }
+
+    /**
+     * @return array<int, string> volunteer id => last local date served before the window
+     */
+    private function lastServedBefore(CarbonImmutable $windowFrom): array
+    {
+        return Assignment::query()
+            ->active()
+            ->join('events', 'events.id', '=', 'assignments.event_id')
+            ->where('events.status', EventStatus::Scheduled)
+            ->where('events.date', '<', $windowFrom->toDateString())
+            ->groupBy('assignments.volunteer_id')
+            ->selectRaw('assignments.volunteer_id, max(events.date) as last_date')
+            ->toBase()
+            ->get()
+            ->mapWithKeys(fn (object $row): array => [(int) $row->volunteer_id => substr((string) $row->last_date, 0, 10)])
+            ->all();
     }
 
     public function profileOf(Volunteer $volunteer): VolunteerProfile

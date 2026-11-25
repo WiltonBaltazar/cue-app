@@ -141,6 +141,6 @@ class Assignment extends Model
      */
     public function scopeActive(Builder $query): void
     {
-        $query->where('status', AssignmentStatus::Confirmed);
+        $query->where($query->qualifyColumn('status'), AssignmentStatus::Confirmed);
     }
 }

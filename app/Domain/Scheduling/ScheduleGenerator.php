@@ -2,10 +2,13 @@
 
 namespace App\Domain\Scheduling;
 
+use App\Enums\Frequency;
+
 /**
  * Proposes assignments for a period (US3, FR-010–FR-012).
  *
- * Slots are filled scarcest-first (fewest eligible people), each by the best-ranked
+ * Everyone available gets at least one shift per calendar month as long as there are places
+ * (see MonthlyCoverage). Month by month, slots are filled scarcest-first (fewest eligible people), each by the best-ranked
  * candidate that breaks no hard rule. Soft rules are broken only when nobody else is
  * left, least serious first: over someone's frequency ("Ocasionalmente" after the rest),
  * then below the minimum level, then a clash with another event. So a position is filled
@@ -30,26 +33,51 @@ final class ScheduleGenerator
     public function generate(SchedulingContext $context, array $slots, string $periodStart, string $periodEnd): array
     {
         $windowFrom = date('Y-m-d', (int) strtotime("{$periodStart} -".self::RECENT_DAYS.' days'));
-        $units = $this->orderByScarcity($this->expand($slots), $context);
+        $months = [];
+        foreach ($this->orderByScarcity($this->expand($slots), $context) as $slot) {
+            $months[$slot->month()][] = $slot;
+        }
+        ksort($months);
 
         $assignments = [];
         $gaps = new GapReport;
 
-        foreach ($units as $slot) {
-            $eligible = $this->eligibleFor($slot, $context);
+        foreach ($months as $units) {
+            $coverage = new MonthlyCoverage($units, $context, $this->checker);
 
-            if ($eligible === []) {
-                $gaps->add($slot, $this->suggestionsFor($slot, $context));
+            foreach ($units as $unit => $slot) {
+                $eligible = $this->eligibleFor($slot, $context);
 
-                continue;
+                if ($eligible === []) {
+                    $gaps->add($slot, $this->suggestionsFor($slot, $context));
+                    $coverage->skip($unit);
+
+                    continue;
+                }
+
+                $ranked = $this->scorer->rank($eligible, $slot, $context, $windowFrom, $periodEnd);
+                $chosen = $this->firstKeepingCoverage($ranked, $unit, $coverage) ?? $ranked[0];
+                $coverage->take($chosen->id, $unit);
+                $context->add(Booking::forSlot($chosen->id, $slot));
+                $assignments[] = ['slot' => $slot, 'volunteerId' => $chosen->id];
             }
-
-            $chosen = $this->scorer->rank($eligible, $slot, $context, $windowFrom, $periodEnd)[0];
-            $context->add(Booking::forSlot($chosen->id, $slot));
-            $assignments[] = ['slot' => $slot, 'volunteerId' => $chosen->id];
         }
 
         return ['assignments' => $assignments, 'gaps' => $gaps];
+    }
+
+    /**
+     * @param  list<VolunteerProfile>  $ranked
+     */
+    private function firstKeepingCoverage(array $ranked, int $unit, MonthlyCoverage $coverage): ?VolunteerProfile
+    {
+        foreach ($ranked as $volunteer) {
+            if ($coverage->allows($volunteer->id, $unit)) {
+                return $volunteer;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -70,7 +98,7 @@ final class ScheduleGenerator
             }
 
             $cost = array_sum(array_map(fn (Violation $violation): int => $violation->softCost(), $violations));
-            if (in_array(Violation::FrequencyCap, $violations, true) && ! $volunteer->frequency->allowsAutomaticAssignment()) {
+            if (in_array(Violation::FrequencyCap, $violations, true) && $volunteer->frequency === Frequency::Occasional) {
                 $cost += 1;
             }
 

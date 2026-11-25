@@ -22,8 +22,9 @@ final class SchedulingContext
      * @param  list<VolunteerProfile>  $volunteers
      * @param  list<array{volunteerId: int, from: string, to: string}>  $absences
      * @param  list<Booking>  $bookings
+     * @param  array<int, string>  $lastServed  volunteer id => last local date before those bookings
      */
-    public function __construct(array $volunteers = [], array $absences = [], array $bookings = [])
+    public function __construct(array $volunteers = [], array $absences = [], array $bookings = [], private array $lastServed = [])
     {
         foreach ($volunteers as $volunteer) {
             $this->volunteers[$volunteer->id] = $volunteer;
@@ -116,5 +117,36 @@ final class SchedulingContext
             $this->bookingsOf($volunteerId),
             fn (Booking $booking): bool => $booking->date >= $from && $booking->date <= $to,
         ));
+    }
+
+    /**
+     * @param  string  $month  "Y-m"
+     * @param  int|null  $exceptEventId  an event whose bookings do not count
+     */
+    public function servesInMonth(int $volunteerId, string $month, ?int $exceptEventId = null): bool
+    {
+        foreach ($this->bookingsOf($volunteerId) as $booking) {
+            if ($booking->month() === $month && $booking->eventId !== $exceptEventId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The last local date served before the given one, or '' for someone who never did.
+     */
+    public function lastServedBefore(int $volunteerId, string $date): string
+    {
+        $last = $this->lastServed[$volunteerId] ?? '';
+
+        foreach ($this->bookingsOf($volunteerId) as $booking) {
+            if ($booking->date < $date && $booking->date > $last) {
+                $last = $booking->date;
+            }
+        }
+
+        return $last;
     }
 }

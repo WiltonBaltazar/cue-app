@@ -30,8 +30,7 @@ enum Frequency: string
         return match ($this) {
             self::Weekly => null,
             self::TwoThreeMonthly => 3,
-            self::Monthly => 1,
-            self::Occasional => 0,
+            self::Monthly, self::Occasional => 1,
         };
     }
 
@@ -41,13 +40,5 @@ enum Frequency: string
     public function weeklyCap(): ?int
     {
         return $this === self::Weekly ? 1 : null;
-    }
-
-    /**
-     * "Occasionally" volunteers are only ever assigned manually.
-     */
-    public function allowsAutomaticAssignment(): bool
-    {
-        return $this !== self::Occasional;
     }
 }

@@ -17,7 +17,7 @@ test('frequencies map to the caps in the spec assumptions', function () {
         ->and(Frequency::Weekly->weeklyCap())->toBe(1)
         ->and(Frequency::TwoThreeMonthly->monthlyCap())->toBe(3)
         ->and(Frequency::Monthly->monthlyCap())->toBe(1)
-        ->and(Frequency::Occasional->allowsAutomaticAssignment())->toBeFalse();
+        ->and(Frequency::Occasional->monthlyCap())->toBe(1);
 });
 
 test('period is derived from local start time', function (string $time, Period $expected) {

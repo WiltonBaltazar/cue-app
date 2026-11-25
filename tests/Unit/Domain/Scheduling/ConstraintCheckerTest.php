@@ -78,11 +78,12 @@ test('monthly caps follow the declared frequency', function (Frequency $frequenc
     '2–3 per month, three already' => [Frequency::TwoThreeMonthly, 3, true],
 ]);
 
-test('occasional volunteers are excluded from automatic generation only', function () {
+test('occasional volunteers are limited to once a month in automatic generation only', function () {
     $volunteer = S::volunteer(1, frequency: Frequency::Occasional);
-    $context = new SchedulingContext([$volunteer]);
+    $context = new SchedulingContext([$volunteer], [], [S::booking(1, S::slot(90, 90, '2026-11-08'))]);
 
-    expect($this->checker->check($volunteer, S::slot(10, 1), $context))->toBe([Violation::FrequencyCap])
+    expect($this->checker->check($volunteer, S::slot(10, 1), new SchedulingContext([$volunteer])))->toBe([])
+        ->and($this->checker->check($volunteer, S::slot(10, 1), $context))->toBe([Violation::FrequencyCap])
         ->and($this->checker->check($volunteer, S::slot(10, 1), $context, automatic: false))->toBe([]);
 });
 
