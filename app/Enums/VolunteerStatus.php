@@ -8,6 +8,7 @@ enum VolunteerStatus: string
     case NeedsCorrection = 'needs_correction';
     case Active = 'active';
     case Inactive = 'inactive';
+    case Deactivated = 'deactivated';
     case Rejected = 'rejected';
     case Anonymized = 'anonymized';
 
@@ -18,6 +19,7 @@ enum VolunteerStatus: string
             self::NeedsCorrection => 'Em correcção',
             self::Active => 'Activo',
             self::Inactive => 'Em pausa',
+            self::Deactivated => 'Desactivado',
             self::Rejected => 'Não aprovado',
             self::Anonymized => 'Removido',
         };
@@ -29,5 +31,13 @@ enum VolunteerStatus: string
     public function isSchedulable(): bool
     {
         return $this === self::Active;
+    }
+
+    /**
+     * Out of the team: not even a coordinator can place them by hand.
+     */
+    public function hasLeft(): bool
+    {
+        return in_array($this, [self::Deactivated, self::Anonymized], true);
     }
 }

@@ -120,6 +120,11 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::post('voluntarios/{volunteer}/link-redefinicao', [VolunteerController::class, 'issueResetLink'])->name('reset-links.store');
         Route::post('voluntarios/{volunteer}/pausa', [VolunteerController::class, 'pause'])->name('volunteers.pause');
         Route::post('voluntarios/{volunteer}/retomar', [VolunteerController::class, 'resume'])->name('volunteers.resume');
+        Route::post('voluntarios/{volunteer}/desactivar', [VolunteerController::class, 'deactivate'])->name('volunteers.deactivate');
+        Route::post('voluntarios/{volunteer}/reactivar', [VolunteerController::class, 'reactivate'])->name('volunteers.reactivate');
+        Route::delete('voluntarios/{volunteer}', [VolunteerController::class, 'destroy'])
+            ->middleware('throttle:6,1')
+            ->name('volunteers.destroy');
         Route::post('voluntarios/{volunteer}/ausencias', [VolunteerAbsenceController::class, 'store'])->name('volunteers.absences.store');
         Route::delete('voluntarios/{volunteer}/ausencias/{absence}', [VolunteerAbsenceController::class, 'destroy'])->name('volunteers.absences.destroy');
 

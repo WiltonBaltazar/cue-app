@@ -2,8 +2,8 @@
 
 namespace App\Actions\Registration;
 
+use App\Actions\Scheduling\FreeDraftPlaces;
 use App\Actions\Swaps\ReplacementFlagger;
-use App\Enums\ScheduleStatus;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Models\Volunteer;
@@ -22,7 +22,7 @@ class RequestDataRemoval
 {
     public const GRACE_DAYS = 7;
 
-    public function __construct(private ReplacementFlagger $flagger) {}
+    public function __construct(private ReplacementFlagger $flagger, private FreeDraftPlaces $freeDraftPlaces) {}
 
     /**
      * @return int published shifts flagged for replacement
@@ -38,11 +38,7 @@ class RequestDataRemoval
             $volunteer->removal_scheduled_for = now()->addDays(self::GRACE_DAYS);
             $volunteer->save();
 
-            // Draft schedules are only plans: free those places for someone else.
-            $volunteer->assignments()
-                ->whereHas('schedule', fn ($query) => $query->where('status', ScheduleStatus::Draft))
-                ->whereHas('event', fn ($query) => $query->where('date', '>=', LocalTime::today()->toDateString()))
-                ->delete();
+            $this->freeDraftPlaces->handle($volunteer);
 
             $flagged = $this->flagger->flag($volunteer, LocalTime::today());
 

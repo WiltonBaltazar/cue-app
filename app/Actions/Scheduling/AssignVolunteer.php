@@ -51,6 +51,10 @@ class AssignVolunteer
             $this->guard->ensureCurrent($replacing, $lockVersion);
         }
 
+        if ($volunteer->status->hasLeft()) {
+            throw ValidationException::withMessages(['volunteer_id' => 'Esta pessoa já não faz parte da equipa.']);
+        }
+
         $schedule = $this->scheduleFor($position);
         // The coordinator decides: broken rules are only warnings and a note is optional; the
         // volunteer says if they can not go. Only a second place at the same event is refused.

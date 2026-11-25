@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Coordinator;
 
 use App\Actions\Auth\IssueResetLink;
+use App\Actions\Volunteers\DeactivateVolunteer;
+use App\Actions\Volunteers\DeleteVolunteer;
 use App\Actions\Volunteers\PauseVolunteer;
+use App\Actions\Volunteers\ReactivateVolunteer;
 use App\Actions\Volunteers\ResumeVolunteer;
 use App\Enums\Level;
 use App\Enums\VolunteerStatus;
@@ -24,7 +27,7 @@ use Inertia\Response;
 
 /**
  * Approved volunteers: list (with the "sem turnos há 3 meses" suggestion filter), levels
- * per role (FR-004), pause/resume (FR-005a) and reset links (FR-006).
+ * per role (FR-004), pause/resume (FR-005a), deactivate/delete (FR-005b) and reset links (FR-006).
  */
 class VolunteerController extends Controller
 {
@@ -32,11 +35,14 @@ class VolunteerController extends Controller
     {
         Gate::authorize('viewAny', Volunteer::class);
 
-        $filter = $request->string('filtro')->toString() === 'sem-turnos' ? 'sem-turnos' : null;
+        $filter = $request->string('filtro')->toString();
+        $filter = in_array($filter, ['sem-turnos', 'desactivados'], true) ? $filter : null;
         $since = LocalTime::today()->subMonths(3);
 
         $volunteers = Volunteer::query()
-            ->whereIn('status', [VolunteerStatus::Active, VolunteerStatus::Inactive])
+            ->whereIn('status', $filter === 'desactivados'
+                ? [VolunteerStatus::Deactivated]
+                : [VolunteerStatus::Active, VolunteerStatus::Inactive])
             // Suggestions only, never automatic inactivation (FR-005a): active for 3+ months
             // without any shift in that time.
             ->when($filter === 'sem-turnos', fn ($query) => $query
@@ -78,6 +84,56 @@ class VolunteerController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Voluntário activo de novo.']);
 
         return back();
+    }
+
+    public function deactivate(#[CurrentUser] User $coordinator, Volunteer $volunteer, DeactivateVolunteer $deactivate): RedirectResponse
+    {
+        Gate::authorize('deactivate', $volunteer);
+
+        $flagged = $deactivate->handle($volunteer, $coordinator);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Voluntário desactivado.'.$this->toReplace($flagged)]);
+
+        return back();
+    }
+
+    public function reactivate(Volunteer $volunteer, ReactivateVolunteer $reactivate): RedirectResponse
+    {
+        Gate::authorize('deactivate', $volunteer);
+
+        $reactivate->handle($volunteer);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Voluntário activo de novo.']);
+
+        return back();
+    }
+
+    /**
+     * There is no way back, so the coordinator confirms with their own password.
+     */
+    public function destroy(Request $request, Volunteer $volunteer, DeleteVolunteer $delete): RedirectResponse
+    {
+        Gate::authorize('delete', $volunteer);
+
+        $request->validate(
+            ['password' => ['required', 'current_password']],
+            ['password.current_password' => 'A palavra-passe não está correcta.'],
+        );
+
+        $flagged = $delete->handle($volunteer);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Voluntário eliminado.'.$this->toReplace($flagged)]);
+
+        return to_route('coord.volunteers.index');
+    }
+
+    private function toReplace(int $flagged): string
+    {
+        return match ($flagged) {
+            0 => '',
+            1 => ' 1 turno marcado para substituição.',
+            default => " {$flagged} turnos marcados para substituição.",
+        };
     }
 
     public function edit(#[CurrentUser] User $coordinator, Volunteer $volunteer): Response

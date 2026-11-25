@@ -87,6 +87,11 @@ any ──removal request──▶ anonymized   (terminal)
 - `pause` (volunteer or coordinator): published assignments from `inactive_since` to
   `inactive_until` (or all future ones) → `needs_replacement` + coordinators notified.
   `resume` happens manually or automatically on `inactive_until`. Never automatic inactivation.
+- `deactivate` (coordinator, from `active` or `inactive`) → `deactivated`: draft places freed,
+  published shifts → `needs_replacement`, no assignment even by hand. `reactivate`
+  (coordinator only) → `active` (FR-005b).
+- `delete` (coordinator with password, from `active`, `inactive` or `deactivated`) →
+  `anonymized` at once; refused while the person is a coordinator (FR-005b).
 - Minor (`is_minor`) cannot move to `active` without guardian fields filled.
 - `anonymized`: personal fields nulled/replaced, `user` deleted, `full_name` = "Voluntário
   #<id>"; availability, skills and absences deleted; assignments retained (FR-028).

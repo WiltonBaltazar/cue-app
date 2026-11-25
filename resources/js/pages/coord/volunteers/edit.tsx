@@ -2,6 +2,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Check, Copy } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { ConfirmDialog } from '@/components/app/confirm-dialog';
+import { LeaveTeamCard } from '@/components/app/leave-team-card';
 import { PauseCard } from '@/components/app/pause-card';
 import { RoleChangeDialog } from '@/components/app/role-change-dialog';
 import { VolunteerProfileDetails } from '@/components/app/volunteer-profile-details';
@@ -204,7 +205,8 @@ export default function VolunteerEdit({
 
                 {account &&
                     (volunteer.status === 'active' ||
-                        volunteer.status === 'inactive') && (
+                        volunteer.status === 'inactive' ||
+                        account.isCoordinator) && (
                         <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4">
                             <Heading
                                 variant="small"
@@ -239,6 +241,17 @@ export default function VolunteerEdit({
                     )}
 
                 <VolunteerProfileDetails volunteer={volunteer} />
+
+                {['active', 'inactive', 'deactivated'].includes(
+                    volunteer.status,
+                ) && (
+                    <LeaveTeamCard
+                        volunteerId={volunteer.id}
+                        name={volunteer.fullName}
+                        deactivated={volunteer.status === 'deactivated'}
+                        isCoordinator={account?.isCoordinator ?? false}
+                    />
+                )}
             </div>
         </>
     );

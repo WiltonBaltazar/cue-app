@@ -2,6 +2,7 @@
 
 namespace App\Actions\Registration;
 
+use App\Actions\Scheduling\FreeDraftPlaces;
 use App\Actions\Swaps\ReplacementFlagger;
 use App\Enums\VolunteerStatus;
 use App\Models\Volunteer;
@@ -9,23 +10,32 @@ use App\Support\LocalTime;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Carries out a data-removal request once its 7 days are over (FR-028): personal fields are
+ * Carries out a data-removal request once its 7 days are over (FR-028), or a coordinator's
+ * decision to delete someone (FR-005b): personal fields are
  * cleared, the login is deleted and the profile becomes "Voluntário #id". Past assignments
  * stay as anonymous participation records; the audit log is never touched (FR-029).
  */
 class AnonymizeVolunteer
 {
-    public function __construct(private ReplacementFlagger $flagger, private DeleteUserAccount $deleteAccount) {}
+    public function __construct(
+        private ReplacementFlagger $flagger,
+        private FreeDraftPlaces $freeDraftPlaces,
+        private DeleteUserAccount $deleteAccount,
+    ) {}
 
-    public function handle(Volunteer $volunteer): void
+    /**
+     * @return int published shifts flagged for replacement
+     */
+    public function handle(Volunteer $volunteer): int
     {
         if ($volunteer->isAnonymized()) {
-            return;
+            return 0;
         }
 
-        DB::transaction(function () use ($volunteer): void {
+        return DB::transaction(function () use ($volunteer): int {
             // Anything published since the request still needs someone else.
-            $this->flagger->flag($volunteer, LocalTime::today());
+            $this->freeDraftPlaces->handle($volunteer);
+            $flagged = $this->flagger->flag($volunteer, LocalTime::today());
 
             $volunteer->forceFill([
                 'status' => VolunteerStatus::Anonymized,
@@ -63,6 +73,8 @@ class AnonymizeVolunteer
             if ($user !== null) {
                 $this->deleteAccount->handle($user);
             }
+
+            return $flagged;
         });
     }
 }

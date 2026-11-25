@@ -57,12 +57,26 @@ const filterLinkClass = (active: boolean) =>
         active ? 'border-primary bg-muted' : 'text-muted-foreground',
     );
 
+type Filter = 'sem-turnos' | 'desactivados' | null;
+
+const summary = (filter: Filter, count: number) => {
+    if (filter === 'sem-turnos') {
+        return `${count} voluntários activos sem turnos há 3 meses. É só uma sugestão: ninguém é desactivado automaticamente.`;
+    }
+
+    if (filter === 'desactivados') {
+        return `${count} voluntários desactivados. Não podem ser escalados até um coordenador os reactivar.`;
+    }
+
+    return `${count} voluntários aprovados.`;
+};
+
 export default function VolunteersIndex({
     volunteers,
     filter,
 }: {
     volunteers: VolunteerSummary[];
-    filter: 'sem-turnos' | null;
+    filter: Filter;
 }) {
     return (
         <>
@@ -72,9 +86,7 @@ export default function VolunteersIndex({
                 <div>
                     <h1 className="text-2xl font-semibold">Voluntários</h1>
                     <p className="text-muted-foreground">
-                        {filter === 'sem-turnos'
-                            ? `${volunteers.length} voluntários activos sem turnos há 3 meses. É só uma sugestão: ninguém é desactivado automaticamente.`
-                            : `${volunteers.length} voluntários aprovados.`}
+                        {summary(filter, volunteers.length)}
                     </p>
                 </div>
 
@@ -95,6 +107,15 @@ export default function VolunteersIndex({
                     >
                         Sem turnos há 3 meses
                     </Link>
+                    <Link
+                        href={index({ query: { filtro: 'desactivados' } })}
+                        className={filterLinkClass(filter === 'desactivados')}
+                        aria-current={
+                            filter === 'desactivados' ? 'page' : undefined
+                        }
+                    >
+                        Desactivados
+                    </Link>
                 </nav>
 
                 <DataTable
@@ -102,7 +123,11 @@ export default function VolunteersIndex({
                     columns={columns}
                     data={volunteers}
                     searchPlaceholder="Pesquisar por nome ou área…"
-                    emptyMessage="Ainda não há voluntários aprovados."
+                    emptyMessage={
+                        filter === 'desactivados'
+                            ? 'Não há voluntários desactivados.'
+                            : 'Ainda não há voluntários aprovados.'
+                    }
                     renderCard={(row) => (
                         <Link
                             href={edit(row.original.id)}

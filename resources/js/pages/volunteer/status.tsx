@@ -1,19 +1,20 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { CircleAlert, Clock, CircleX } from 'lucide-react';
+import { CircleAlert, Clock, CircleX, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/format';
 import { resubmit } from '@/routes/volunteer';
 import { edit as editProfileData } from '@/routes/volunteer/profile';
 
 type Props = {
-    status: 'pending' | 'needs_correction' | 'rejected';
+    status: 'pending' | 'needs_correction' | 'rejected' | 'deactivated';
     statusLabel: string;
     notes: string | null;
     submittedAt: string | null;
 };
 
 /**
- * What a volunteer sees until their registration is approved (FR-038).
+ * What a volunteer sees until their registration is approved (FR-038), or after a
+ * coordinator deactivates them (FR-005b).
  */
 export default function VolunteerStatus({ status, notes, submittedAt }: Props) {
     return (
@@ -106,6 +107,25 @@ export default function VolunteerStatus({ status, notes, submittedAt }: Props) {
                             de mídia.
                         </p>
                     )}
+                </section>
+            )}
+
+            {status === 'deactivated' && (
+                <section className="flex flex-col items-center gap-3 py-8 text-center">
+                    <UserX
+                        className="size-12 text-muted-foreground"
+                        aria-hidden="true"
+                    />
+                    <h1 className="text-2xl font-semibold">
+                        Participação desactivada
+                    </h1>
+                    <p className="max-w-md text-muted-foreground">
+                        De momento não faz parte das escalas. Para voltar a
+                        servir, fale com um coordenador da equipa de mídia.
+                    </p>
+                    <Button variant="outline" asChild className="min-h-11">
+                        <Link href={editProfileData()}>Ver os meus dados</Link>
+                    </Button>
                 </section>
             )}
         </>

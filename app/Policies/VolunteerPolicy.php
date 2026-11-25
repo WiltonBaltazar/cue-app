@@ -46,6 +46,23 @@ class VolunteerPolicy
     }
 
     /**
+     * Take out of the team or bring back (FR-005b): never the volunteer's own choice.
+     */
+    public function deactivate(User $user, Volunteer $volunteer): bool
+    {
+        return $user->isCoordinator();
+    }
+
+    /**
+     * Approved people only; registrations still in review are rejected instead.
+     */
+    public function delete(User $user, Volunteer $volunteer): bool
+    {
+        return $user->isCoordinator()
+            && in_array($volunteer->status, [VolunteerStatus::Active, VolunteerStatus::Inactive, VolunteerStatus::Deactivated], true);
+    }
+
+    /**
      * On someone's behalf; volunteers register their own in their area.
      */
     public function registerAbsence(User $user, Volunteer $volunteer): bool
