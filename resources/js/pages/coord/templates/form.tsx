@@ -1,8 +1,10 @@
 import { Head, useForm } from '@inertiajs/react';
+import { Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { ConfirmDialog } from '@/components/app/confirm-dialog';
 import { PositionsEditor } from '@/components/app/positions-editor';
 import type { PositionInput } from '@/components/app/positions-editor';
+import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -11,7 +13,7 @@ import {
     TextField,
 } from '@/components/volunteer-form/fields';
 import type { Option } from '@/components/volunteer-form/types';
-import { index, store, update } from '@/routes/coord/templates';
+import { destroy, index, store, update } from '@/routes/coord/templates';
 
 type TemplateData = {
     id: number;
@@ -36,6 +38,8 @@ type TemplateData = {
 
 type Props = {
     template: TemplateData | null;
+    /** What deleting it would take away; null for a new activity. */
+    deletion: { dates: number; volunteers: number } | null;
     teamRoles: { id: number; name: string }[];
     levels: Option[];
     weekdays: Option<number>[];
@@ -66,11 +70,40 @@ function repetitions(weekday: string): Option[] {
     ];
 }
 
+/** Who and what is affected (FR-039). */
+function deletionWarning({
+    dates,
+    volunteers,
+}: {
+    dates: number;
+    volunteers: number;
+}): string {
+    if (dates === 0) {
+        return 'Não há datas futuras no calendário.';
+    }
+
+    const removed =
+        dates === 1
+            ? '1 data futura sai do calendário, mesmo que tenha sido alterada à mão.'
+            : `${dates} datas futuras saem do calendário, mesmo as alteradas à mão.`;
+
+    if (volunteers === 0) {
+        return `${removed} Ainda não há voluntários escalados.`;
+    }
+
+    return `${removed} ${
+        volunteers === 1
+            ? '1 voluntário escalado perde'
+            : `${volunteers} voluntários escalados perdem`
+    } esses turnos; quem já tinha a escala publicada é notificado.`;
+}
+
 /**
  * Recurring activity (FR-008). Saving updates future dates that were not changed by hand.
  */
 export default function TemplateForm({
     template,
+    deletion,
     teamRoles,
     levels,
     weekdays,
@@ -95,6 +128,8 @@ export default function TemplateForm({
             min_level: position.minLevel,
         })) ?? []) as PositionInput[],
     });
+
+    const removal = useForm({});
 
     const errors = form.errors as Record<string, string | undefined>;
 
@@ -287,6 +322,34 @@ export default function TemplateForm({
                     </Button>
                 )}
             </form>
+
+            {template && deletion && (
+                <div className="p-4 pt-0 lg:max-w-3xl">
+                    <section className="space-y-3 rounded-lg border p-4">
+                        <Heading
+                            variant="small"
+                            title="Apagar actividade"
+                            description="Remove a actividade e as datas que ainda não aconteceram. As datas passadas ficam no histórico. Não pode ser desfeito."
+                        />
+                        <ConfirmDialog
+                            title="Apagar esta actividade?"
+                            description={deletionWarning(deletion)}
+                            confirmLabel="Apagar actividade"
+                            cancelLabel="Voltar"
+                            destructive
+                            processing={removal.processing}
+                            onConfirm={() =>
+                                removal.delete(destroy(template.id).url)
+                            }
+                        >
+                            <Button variant="destructive" className="min-h-11">
+                                <Trash2 aria-hidden="true" />
+                                Apagar actividade
+                            </Button>
+                        </ConfirmDialog>
+                    </section>
+                </div>
+            )}
         </>
     );
 }

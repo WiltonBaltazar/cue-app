@@ -132,6 +132,7 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::post('modelos', [ActivityTemplateController::class, 'store'])->name('templates.store');
         Route::get('modelos/{template}', [ActivityTemplateController::class, 'edit'])->name('templates.edit');
         Route::put('modelos/{template}', [ActivityTemplateController::class, 'update'])->name('templates.update');
+        Route::delete('modelos/{template}', [ActivityTemplateController::class, 'destroy'])->name('templates.destroy');
 
         Route::get('eventos', [EventController::class, 'index'])->name('events.index');
         Route::get('eventos/novo', [EventController::class, 'create'])->name('events.create');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Coordinator;
 
+use App\Actions\Events\DeleteActivity;
 use App\Actions\Events\GenerateOccurrences;
 use App\Enums\Level;
 use App\Enums\Period;
@@ -48,7 +49,7 @@ class ActivityTemplateController extends Controller
     {
         Gate::authorize('create', ActivityTemplate::class);
 
-        return Inertia::render('coord/templates/form', [...$this->formOptions(), 'template' => null]);
+        return Inertia::render('coord/templates/form', [...$this->formOptions(), 'template' => null, 'deletion' => null]);
     }
 
     public function store(SaveActivityTemplateRequest $request, GenerateOccurrences $generateOccurrences): RedirectResponse
@@ -61,7 +62,7 @@ class ActivityTemplateController extends Controller
         return to_route('coord.templates.index');
     }
 
-    public function edit(ActivityTemplate $template): Response
+    public function edit(ActivityTemplate $template, DeleteActivity $deleteActivity): Response
     {
         Gate::authorize('update', $template);
 
@@ -69,6 +70,7 @@ class ActivityTemplateController extends Controller
 
         return Inertia::render('coord/templates/form', [
             ...$this->formOptions(),
+            'deletion' => $deleteActivity->affected($template),
             'template' => [
                 'id' => $template->id,
                 'name' => $template->name,
@@ -100,6 +102,17 @@ class ActivityTemplateController extends Controller
         $generateOccurrences->handle($template);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Actividade guardada. As datas futuras não personalizadas foram actualizadas.']);
+
+        return to_route('coord.templates.index');
+    }
+
+    public function destroy(ActivityTemplate $template, DeleteActivity $deleteActivity): RedirectResponse
+    {
+        Gate::authorize('delete', $template);
+
+        $deleteActivity->handle($template);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Actividade apagada, com as datas que ainda não aconteceram.']);
 
         return to_route('coord.templates.index');
     }
