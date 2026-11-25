@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\VolunteerStatus;
 use App\Models\User;
 use App\Models\Volunteer;
 
@@ -42,6 +43,14 @@ class VolunteerPolicy
     public function pause(User $user, Volunteer $volunteer): bool
     {
         return $user->isCoordinator() || $this->owns($user, $volunteer);
+    }
+
+    /**
+     * On someone's behalf; volunteers register their own in their area.
+     */
+    public function registerAbsence(User $user, Volunteer $volunteer): bool
+    {
+        return $user->isCoordinator() && in_array($volunteer->status, [VolunteerStatus::Active, VolunteerStatus::Inactive], true);
     }
 
     public function issueResetLink(User $user, Volunteer $volunteer): bool

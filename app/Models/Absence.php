@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\LogsAuditActivity;
+use App\Support\LocalTime;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,7 +33,24 @@ class Absence extends Model
             'starts_on' => 'immutable_date:Y-m-d',
             'ends_on' => 'immutable_date:Y-m-d',
             'reason' => 'encrypted',
+            'created_by' => 'integer',
         ];
+    }
+
+    /**
+     * Registered by someone other than the volunteer.
+     */
+    public function isByCoordinator(Volunteer $volunteer): bool
+    {
+        return $this->created_by !== null && $this->created_by !== $volunteer->user_id;
+    }
+
+    /**
+     * Coordinators take back only what coordinators registered, and only until it is over.
+     */
+    public function isRemovableByCoordinator(Volunteer $volunteer): bool
+    {
+        return $this->isByCoordinator($volunteer) && $this->ends_on->toDateString() >= LocalTime::today()->toDateString();
     }
 
     /**

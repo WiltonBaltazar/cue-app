@@ -6,7 +6,9 @@ use App\Enums\AssignmentStatus;
 use App\Enums\EventStatus;
 use App\Enums\ScheduleStatus;
 use App\Enums\SwapStatus;
+use App\Enums\VolunteerStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Absence;
 use App\Models\Assignment;
 use App\Models\SwapRequest;
 use App\Models\Volunteer;
@@ -18,12 +20,15 @@ use Inertia\Response;
 
 /**
  * One volunteer's participation: shifts done, declines, swaps and real vs declared
- * frequency (US5-4). Absence reasons are never shown here.
+ * frequency (US5-4), and their absences by date. Absence reasons are never shown here.
  */
 class VolunteerHistoryController extends Controller
 {
     /** Months used for the real frequency. */
     public const MONTHS = 6;
+
+    /** Past absences listed. */
+    private const PAST_ABSENCES = 20;
 
     public function __invoke(Volunteer $volunteer): Response
     {
@@ -75,6 +80,25 @@ class VolunteerHistoryController extends Controller
                 'swapsTaken' => SwapRequest::query()->where('accepted_by_id', $volunteer->id)->where('status', SwapStatus::Approved)->count(),
                 'absences' => $volunteer->absences()->count(),
             ],
+            'absences' => [
+                'upcoming' => $volunteer->absences()
+                    ->where('ends_on', '>=', $today->toDateString())
+                    ->orderBy('starts_on')
+                    ->get()
+                    ->map(fn (Absence $absence) => $this->absence($absence, $volunteer))->values(),
+                'past' => $volunteer->absences()
+                    ->where('ends_on', '<', $today->toDateString())
+                    ->orderByDesc('starts_on')
+                    ->limit(self::PAST_ABSENCES)
+                    ->get()
+                    ->map(fn (Absence $absence) => $this->absence($absence, $volunteer))->values(),
+                'pause' => $volunteer->status === VolunteerStatus::Inactive ? [
+                    'since' => $volunteer->inactive_since?->toDateString(),
+                    'until' => $volunteer->inactive_until?->toDateString(),
+                ] : null,
+                'today' => $today->toDateString(),
+                'canRegister' => Gate::allows('registerAbsence', $volunteer),
+            ],
             'frequency' => [
                 'perMonth' => round($doneInWindow / $months, 1),
                 'months' => (int) round($months),
@@ -92,5 +116,19 @@ class VolunteerHistoryController extends Controller
                 },
             ]),
         ]);
+    }
+
+    /**
+     * @return array{id: int, startsOn: string, endsOn: string, byCoordinator: bool, removable: bool}
+     */
+    private function absence(Absence $absence, Volunteer $volunteer): array
+    {
+        return [
+            'id' => $absence->id,
+            'startsOn' => $absence->starts_on->toDateString(),
+            'endsOn' => $absence->ends_on->toDateString(),
+            'byCoordinator' => $absence->isByCoordinator($volunteer),
+            'removable' => $absence->isRemovableByCoordinator($volunteer),
+        ];
     }
 }

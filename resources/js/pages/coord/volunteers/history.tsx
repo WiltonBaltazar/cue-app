@@ -1,4 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
+import type { ComponentProps } from 'react';
+import { VolunteerAbsences } from '@/components/app/volunteer-absences';
 import { Badge } from '@/components/ui/badge';
 import { edit, index } from '@/routes/coord/volunteers';
 
@@ -36,6 +38,7 @@ export default function VolunteerHistory({
     volunteer,
     stats,
     frequency,
+    absences,
     shifts,
 }: {
     volunteer: {
@@ -46,6 +49,7 @@ export default function VolunteerHistory({
     };
     stats: Stats;
     frequency: { perMonth: number; months: number };
+    absences: Omit<ComponentProps<typeof VolunteerAbsences>, 'volunteerId'>;
     shifts: Shift[];
 }) {
     return (
@@ -112,6 +116,8 @@ export default function VolunteerHistory({
                         ))}
                     </dl>
                 </section>
+
+                <VolunteerAbsences volunteerId={volunteer.id} {...absences} />
 
                 <section aria-labelledby="shifts" className="space-y-3">
                     <h2 id="shifts" className="font-medium">

@@ -17,6 +17,7 @@ use App\Http\Controllers\Coordinator\ServingProfileController;
 use App\Http\Controllers\Coordinator\SettingsController;
 use App\Http\Controllers\Coordinator\SwapController as CoordinatorSwapController;
 use App\Http\Controllers\Coordinator\TeamRoleController;
+use App\Http\Controllers\Coordinator\VolunteerAbsenceController;
 use App\Http\Controllers\Coordinator\VolunteerController;
 use App\Http\Controllers\Coordinator\VolunteerHistoryController;
 use App\Http\Controllers\HomeController;
@@ -119,6 +120,8 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::post('voluntarios/{volunteer}/link-redefinicao', [VolunteerController::class, 'issueResetLink'])->name('reset-links.store');
         Route::post('voluntarios/{volunteer}/pausa', [VolunteerController::class, 'pause'])->name('volunteers.pause');
         Route::post('voluntarios/{volunteer}/retomar', [VolunteerController::class, 'resume'])->name('volunteers.resume');
+        Route::post('voluntarios/{volunteer}/ausencias', [VolunteerAbsenceController::class, 'store'])->name('volunteers.absences.store');
+        Route::delete('voluntarios/{volunteer}/ausencias/{absence}', [VolunteerAbsenceController::class, 'destroy'])->name('volunteers.absences.destroy');
 
         Route::get('trocas', [CoordinatorSwapController::class, 'index'])->name('swaps.index');
         Route::post('trocas/{swap}/decidir', [CoordinatorSwapController::class, 'decide'])->name('swaps.decide');

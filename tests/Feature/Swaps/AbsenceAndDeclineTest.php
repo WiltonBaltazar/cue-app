@@ -5,6 +5,7 @@ use App\Enums\SwapStatus;
 use App\Models\Assignment;
 use App\Models\SwapRequest;
 use App\Models\User;
+use App\Models\Volunteer;
 use App\Notifications\ReplacementNeeded;
 use App\Support\LocalTime;
 use Illuminate\Support\Facades\Notification;
@@ -205,4 +206,78 @@ test('the absences tab lists upcoming shift days and whether the volunteer is pa
         ->assertInertia(fn ($page) => $page
             ->where('paused', true)
             ->where('pausedUntil', LocalTime::today()->addMonth()->toDateString()));
+});
+
+describe('absences registered by a coordinator', function () {
+    beforeEach(function () {
+        $this->day = $this->scenario->event->date->toDateString();
+        $this->register = fn (array $data = []) => $this->actingAs($this->coordinator)
+            ->post(route('coord.volunteers.absences.store', $this->volunteer), ['starts_on' => $this->day, 'ends_on' => $this->day, ...$data]);
+    });
+
+    test('put published shifts up for replacement and give them back when removed', function () {
+        ($this->register)()->assertSessionHasNoErrors();
+        $absence = $this->volunteer->absences()->firstOrFail();
+
+        expect($this->assignment->fresh()->status)->toBe(AssignmentStatus::NeedsReplacement)
+            ->and($absence->created_by)->toBe($this->coordinator->id)
+            ->and($absence->reason)->toBeNull();
+
+        $this->delete(route('coord.volunteers.absences.destroy', [$this->volunteer, $absence]))->assertRedirect();
+
+        expect($this->assignment->fresh()->status)->toBe(AssignmentStatus::Confirmed)
+            ->and($this->volunteer->absences()->count())->toBe(0);
+    });
+
+    test('follow the same date rules', function () {
+        ($this->register)(['starts_on' => LocalTime::today()->subDay()->toDateString()])->assertSessionHasErrors('starts_on');
+        ($this->register)(['ends_on' => LocalTime::today()->subDay()->toDateString()])->assertSessionHasErrors('ends_on');
+    });
+
+    test('show in the history by date, without reasons, next to the volunteer\'s own', function () {
+        $today = LocalTime::today();
+        $own = $this->volunteer->absences()->create([
+            'starts_on' => $today->addDays(40)->toDateString(), 'ends_on' => $today->addDays(41)->toDateString(),
+            'reason' => 'Consulta médica', 'created_by' => $this->volunteer->user_id,
+        ]);
+        $this->volunteer->absences()->create([
+            'starts_on' => $today->subDays(9)->toDateString(), 'ends_on' => $today->subDays(8)->toDateString(), 'created_by' => $this->coordinator->id,
+        ]);
+        ($this->register)();
+
+        $this->get(route('coord.volunteers.history', $this->volunteer))
+            ->assertDontSee('Consulta')
+            ->assertInertia(fn ($page) => $page
+                ->has('absences.upcoming', 2)
+                ->where('absences.upcoming.0.startsOn', $this->day)
+                ->where('absences.upcoming.0.byCoordinator', true)
+                ->where('absences.upcoming.0.removable', true)
+                ->where('absences.upcoming.1.id', $own->id)
+                ->where('absences.upcoming.1.byCoordinator', false)
+                ->where('absences.upcoming.1.removable', false)
+                ->where('absences.past.0.removable', false)
+                ->where('absences.pause', null)
+                ->where('absences.canRegister', true));
+    });
+
+    test('can not remove the volunteer\'s own, or one of someone else', function () {
+        $own = $this->volunteer->absences()->create(['starts_on' => $this->day, 'ends_on' => $this->day, 'created_by' => $this->volunteer->user_id]);
+        $other = $this->scenario->volunteer();
+
+        $this->actingAs($this->coordinator);
+        $this->delete(route('coord.volunteers.absences.destroy', [$this->volunteer, $own]))->assertForbidden();
+        $this->delete(route('coord.volunteers.absences.destroy', [$other, $own]))->assertNotFound();
+
+        expect($this->volunteer->absences()->count())->toBe(1);
+    });
+
+    test('are for coordinators only, and not for people still under review', function () {
+        $this->actingAs($this->volunteer->user)
+            ->post(route('coord.volunteers.absences.store', $this->volunteer), ['starts_on' => $this->day, 'ends_on' => $this->day])
+            ->assertForbidden();
+
+        $this->actingAs($this->coordinator)
+            ->post(route('coord.volunteers.absences.store', Volunteer::factory()->pending()->create()), ['starts_on' => $this->day, 'ends_on' => $this->day])
+            ->assertForbidden();
+    });
 });
