@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Coordinator;
 
+use App\Actions\Events\GenerateOccurrences;
 use App\Actions\Scheduling\DeleteSchedule;
 use App\Actions\Scheduling\GenerateEvent;
 use App\Actions\Scheduling\GenerateSchedule;
@@ -50,7 +51,7 @@ class ScheduleController extends Controller
         ]);
     }
 
-    public function store(Request $request, #[CurrentUser] User $coordinator, GenerateSchedule $generate): RedirectResponse
+    public function store(Request $request, #[CurrentUser] User $coordinator, GenerateSchedule $generate, GenerateOccurrences $occurrences): RedirectResponse
     {
         Gate::authorize('create', Schedule::class);
 
@@ -81,12 +82,14 @@ class ScheduleController extends Controller
             'created_by' => $coordinator->id,
         ]);
 
-        // An empty schedule is filled by hand; "Gerar de novo" can still propose later.
-        $message = $request->boolean('generate', true)
-            ? $this->generationMessage($generate->handle($schedule))
-            : 'Escala criada vazia. Escolha as pessoas em cada posição.';
+        if ($request->boolean('generate', true)) {
+            $this->flashGeneration($schedule, $generate->handle($schedule));
+        } else {
+            // An empty schedule is filled by hand; "Gerar de novo" can still propose later.
+            $occurrences->fillBetween($schedule->starts_on, $schedule->ends_on);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => $message]);
+            Inertia::flash('toast', ['type' => 'success', 'message' => 'Escala criada vazia. Escolha as pessoas em cada posição.']);
+        }
 
         return to_route('coord.schedules.edit', $schedule);
     }
@@ -159,9 +162,7 @@ class ScheduleController extends Controller
     {
         Gate::authorize('update', $schedule);
 
-        $result = $generate->handle($schedule);
-
-        Inertia::flash('toast', ['type' => 'success', 'message' => $this->generationMessage($result)]);
+        $this->flashGeneration($schedule, $generate->handle($schedule));
 
         return to_route('coord.schedules.edit', $schedule);
     }
@@ -234,10 +235,18 @@ class ScheduleController extends Controller
     /**
      * @param  array{created: int, missing: int}  $result
      */
-    private function generationMessage(array $result): string
+    private function flashGeneration(Schedule $schedule, array $result): void
     {
-        return $result['missing'] === 0
+        if ($schedule->events()->scheduled()->doesntExist()) {
+            Inertia::flash('toast', ['type' => 'warning', 'message' => 'Não há eventos neste período. Verifique se as actividades estão activas.']);
+
+            return;
+        }
+
+        $message = $result['missing'] === 0
             ? "Proposta gerada: {$result['created']} atribuições, sem lacunas."
             : "Proposta gerada: {$result['created']} atribuições, {$result['missing']} lugares por preencher.";
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $message]);
     }
 }

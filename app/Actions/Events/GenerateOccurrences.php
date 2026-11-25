@@ -46,6 +46,40 @@ class GenerateOccurrences
         return $created;
     }
 
+    /**
+     * Creates the occurrences still missing between two dates, however far past the horizon,
+     * so a schedule never covers an empty calendar. Existing events are left as they are.
+     *
+     * @return int occurrences created
+     */
+    public function fillBetween(CarbonImmutable $from, CarbonImmutable $to): int
+    {
+        // Calendar dates only: schedule dates are UTC midnights, today is a Maputo midnight.
+        $firstDay = max($from->toDateString(), LocalTime::today()->toDateString());
+        $lastDay = $to->toDateString();
+
+        return DB::transaction(function () use ($firstDay, $lastDay): int {
+            $created = 0;
+            $templates = ActivityTemplate::query()->where('is_active', true)->with('positions')->get();
+
+            foreach ($templates as $template) {
+                $existing = $template->events()
+                    ->betweenDates(CarbonImmutable::parse($firstDay), CarbonImmutable::parse($lastDay))
+                    ->get()
+                    ->keyBy(fn (Event $event) => $event->date->toDateString());
+
+                for ($date = CarbonImmutable::parse($firstDay); $date->toDateString() <= $lastDay; $date = $date->addDay()) {
+                    if ($template->occursOn($date) && ! $existing->has($date->toDateString())) {
+                        $this->createOccurrence($template, $date);
+                        $created++;
+                    }
+                }
+            }
+
+            return $created;
+        });
+    }
+
     private function syncTemplate(ActivityTemplate $template, CarbonImmutable $today, CarbonImmutable $horizon): int
     {
         $this->removeStale($template, $today);
@@ -71,15 +105,25 @@ class GenerateOccurrences
             $event = $existing->get($date->toDateString());
 
             if ($event === null) {
-                $event = new Event(['activity_template_id' => $template->id, 'type' => EventType::Recurring]);
-                $this->applyTemplate($event, $template, $date);
+                $this->createOccurrence($template, $date);
                 $created++;
-            } elseif (! $event->is_customized && ! $event->isCancelled() && $event->assignments_count === 0) {
-                $this->applyTemplate($event, $template, $date);
+            }
+        }
+
+        // Including those past the horizon, which a schedule may have created.
+        foreach ($existing as $event) {
+            if (! $event->is_customized && ! $event->isCancelled() && $event->assignments_count === 0) {
+                $this->applyTemplate($event, $template, $event->date);
             }
         }
 
         return $created;
+    }
+
+    private function createOccurrence(ActivityTemplate $template, CarbonImmutable $date): void
+    {
+        $event = new Event(['activity_template_id' => $template->id, 'type' => EventType::Recurring]);
+        $this->applyTemplate($event, $template, $date);
     }
 
     private function applyTemplate(Event $event, ActivityTemplate $template, CarbonImmutable $date): void

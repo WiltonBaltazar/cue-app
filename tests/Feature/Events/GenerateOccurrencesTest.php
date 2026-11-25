@@ -192,3 +192,22 @@ test('the daily command generates occurrences', function () {
 
     expect(Event::query()->count())->toBe(13);
 });
+
+test('occurrences past the horizon follow template changes', function () {
+    app(Settings::class)->set('event_horizon_months', 1);
+    $template = sundayTemplate();
+    app(GenerateOccurrences::class)->fillBetween(CarbonImmutable::parse('2027-01-20'), CarbonImmutable::parse('2027-01-31'));
+
+    $template->update(['location' => 'Pavilhão']);
+    app(GenerateOccurrences::class)->handle($template);
+
+    expect($template->events()->where('date', '>=', '2027-01-20')->pluck('location')->all())->toBe(['Pavilhão', 'Pavilhão']);
+});
+
+test('past dates are not filled', function () {
+    sundayTemplate(['starts_on' => '2026-10-01']);
+
+    app(GenerateOccurrences::class)->fillBetween(CarbonImmutable::parse('2026-10-01'), CarbonImmutable::parse('2026-11-08'));
+
+    expect(Event::query()->pluck('date')->map->toDateString()->all())->toBe(['2026-11-08']);
+});

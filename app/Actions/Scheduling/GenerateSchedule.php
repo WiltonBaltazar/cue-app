@@ -2,6 +2,7 @@
 
 namespace App\Actions\Scheduling;
 
+use App\Actions\Events\GenerateOccurrences;
 use App\Domain\Scheduling\ScheduleGenerator;
 use App\Domain\Scheduling\SchedulingContextLoader;
 use App\Models\Assignment;
@@ -11,13 +12,15 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Proposes assignments for a draft schedule (US3). Regenerating replaces only automatic,
- * unlocked assignments; manual edits survive.
+ * unlocked assignments; manual edits survive. Recurring events the period still lacks (past
+ * the horizon) are created first.
  */
 class GenerateSchedule
 {
     public function __construct(
         private SchedulingContextLoader $loader,
         private ScheduleGenerator $generator,
+        private GenerateOccurrences $occurrences,
     ) {}
 
     /**
@@ -30,6 +33,10 @@ class GenerateSchedule
         }
 
         return DB::transaction(function () use ($schedule): array {
+            if (! $schedule->isForSingleEvent()) {
+                $this->occurrences->fillBetween($schedule->starts_on, $schedule->ends_on);
+            }
+
             $schedule->assignments()
                 ->where('source', Assignment::SOURCE_AUTO)
                 ->where('is_locked', false)

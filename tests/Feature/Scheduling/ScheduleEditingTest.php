@@ -16,6 +16,8 @@ use App\Notifications\AvailabilityConflict;
 use App\Notifications\EventCancelled;
 use App\Notifications\SchedulePublished;
 use App\Support\LocalTime;
+use App\Support\Settings;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Notification;
 use Spatie\Activitylog\Models\Activity;
 use Tests\Support\ScheduleScenario;
@@ -319,4 +321,48 @@ test('people already on the event, and the one being replaced, are not offered',
 
     expect($filling)->toContain($free->id)->not->toContain($placed->id)
         ->and($replacing)->toContain($free->id)->not->toContain($placed->id);
+});
+
+test('a schedule past the horizon gets its recurring events', function (bool $generate) {
+    $this->travelTo(CarbonImmutable::parse('2026-11-25 10:00', 'Africa/Maputo'));
+    app(Settings::class)->set('event_horizon_months', 1);
+    $template = ActivityTemplate::factory()->withPosition($this->scenario->camera, 1)->create(['starts_on' => '2026-11-01']);
+    $this->scenario->volunteer();
+
+    $this->actingAs($this->coordinator)
+        ->post(route('coord.schedules.store'), [
+            'starts_on' => '2027-01-20',
+            'ends_on' => '2027-02-13',
+            'generate' => $generate,
+        ])
+        ->assertSessionHasNoErrors();
+
+    $schedule = Schedule::query()->where('starts_on', '2027-01-20')->firstOrFail();
+
+    expect($template->events()->orderBy('date')->pluck('date')->map->toDateString()->all())
+        ->toBe(['2027-01-24', '2027-01-31', '2027-02-07'])
+        ->and($schedule->assignments()->count())->toBe($generate ? 3 : 0);
+
+    // The existing empty schedule recovers with "Gerar de novo", without duplicating events.
+    $this->post(route('coord.schedules.generate', $schedule))->assertSessionHasNoErrors();
+
+    expect($template->events()->count())->toBe(3)
+        ->and($schedule->assignments()->count())->toBe(3);
+})->with(['generated' => true, 'empty' => false]);
+
+test('generating leaves cancelled events and inactive activities alone', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-25 10:00', 'Africa/Maputo'));
+    $active = ActivityTemplate::factory()->withPosition($this->scenario->camera, 1)->create(['starts_on' => '2026-11-01']);
+    $inactive = ActivityTemplate::factory()->create(['starts_on' => '2026-11-01', 'is_active' => false]);
+    app(GenerateOccurrences::class)->handle();
+    $cancelled = $active->events()->where('date', '2027-01-24')->firstOrFail();
+    $cancelled->forceFill(['status' => 'cancelled'])->save();
+
+    $this->actingAs($this->coordinator)
+        ->post(route('coord.schedules.store'), ['starts_on' => '2027-01-20', 'ends_on' => '2027-02-13'])
+        ->assertSessionHasNoErrors();
+
+    expect($active->events()->where('date', '2027-01-24')->count())->toBe(1)
+        ->and($cancelled->fresh()->isCancelled())->toBeTrue()
+        ->and($inactive->events()->count())->toBe(0);
 });
