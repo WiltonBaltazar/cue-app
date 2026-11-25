@@ -91,6 +91,24 @@ the position's minimum level; `shortages` lists those role slugs across all cell
 { "weekdays": [1,2,3,4,5,6,7], "periods": ["morning","afternoon","evening"], "counts": { "2.evening": 6, "7.morning": 14 }, "demand": { "7.morning": 9 }, "shortages": ["audio"], "shortageCells": { "7.morning": ["audio"] } }
 ```
 
+### `GET /app-api/availability-on-date?date=2026-11-08`
+
+Active and paused volunteers, by name. `reason` says they are paused, absent (dates only,
+never why) or not usually available that weekday.
+
+```json
+{ "date": "2026-11-08", "unavailable": [{ "volunteerId": 3, "name": "Ana Machava", "reason": "Ausente de 01/11 a 10/11" }], "available": [{ "volunteerId": 5, "name": "João Sitoe", "when": "Manhã" }] }
+```
+
+### `GET /app-api/volunteers-not-serving?month=2026-11`
+
+Who has no confirmed shift in the month (drafts count as shifts), with the rule that keeps
+them out of every place, or the dates with a place they could still take.
+
+```json
+{ "month": "2026-11", "events": 9, "serving": 33, "notServing": [{ "volunteerId": 3, "name": "Ana Machava", "reason": "Nenhum evento do mês pede as funções que tem" }] }
+```
+
 ## Errors
 
 | Status | Body |

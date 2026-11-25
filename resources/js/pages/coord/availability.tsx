@@ -2,6 +2,10 @@ import { Head } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
+import {
+    AvailabilityOnDate,
+    NotServingInMonth,
+} from '@/components/app/volunteer-availability';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -251,6 +255,9 @@ export default function Availability({
                         </p>
                     </>
                 )}
+
+                <AvailabilityOnDate />
+                <NotServingInMonth />
             </div>
         </>
     );

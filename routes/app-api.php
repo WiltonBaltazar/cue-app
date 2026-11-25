@@ -37,5 +37,7 @@ Route::middleware('role:coordinator')->group(function () {
 
     // Overview (US5): availability matrix and event coverage.
     Route::get('availability-matrix', [OverviewController::class, 'availability'])->name('availability-matrix');
+    Route::get('availability-on-date', [OverviewController::class, 'onDate'])->name('availability-on-date');
+    Route::get('volunteers-not-serving', [OverviewController::class, 'notServing'])->name('volunteers-not-serving');
     Route::get('coverage', [OverviewController::class, 'coverage'])->name('coverage');
 });

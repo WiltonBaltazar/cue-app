@@ -4,6 +4,7 @@ namespace App\Http\Controllers\AppApi;
 
 use App\Domain\Overview\AvailabilityMatrix;
 use App\Domain\Overview\CoverageReport;
+use App\Domain\Overview\VolunteerAvailability;
 use App\Enums\Level;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
@@ -18,7 +19,8 @@ use Illuminate\Validation\Rule;
 
 /**
  * Availability matrix and event coverage for the coordinator overview (US5,
- * contracts/app-api.md). Counts only: no names or contacts.
+ * contracts/app-api.md). Coordinator-only; names appear where a person has to be chosen,
+ * contacts and reasons of absences never.
  */
 class OverviewController extends Controller
 {
@@ -38,6 +40,24 @@ class OverviewController extends Controller
         $minLevel = isset($validated['minLevel']) ? Level::from($validated['minLevel']) : null;
 
         return response()->json($matrix->build($role, $minLevel));
+    }
+
+    public function onDate(Request $request, VolunteerAvailability $availability): JsonResponse
+    {
+        Gate::authorize('viewAny', Volunteer::class);
+
+        $validated = $request->validate(['date' => ['required', 'date_format:Y-m-d']]);
+
+        return response()->json($availability->on(CarbonImmutable::parse($validated['date'])));
+    }
+
+    public function notServing(Request $request, VolunteerAvailability $availability): JsonResponse
+    {
+        Gate::authorize('viewAny', Volunteer::class);
+
+        $validated = $request->validate(['month' => ['required', 'date_format:Y-m']]);
+
+        return response()->json($availability->notServing(CarbonImmutable::parse($validated['month'].'-01')));
     }
 
     public function coverage(Request $request, CoverageReport $report): JsonResponse
