@@ -2,6 +2,8 @@ import { Head } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
+import type { ComponentProps } from 'react';
+import { AvailabilityCellDialog } from '@/components/app/availability-cell-dialog';
 import {
     AvailabilityOnDate,
     NotServingInMonth,
@@ -53,17 +55,18 @@ export default function Availability({
     const [role, setRole] = useState(ALL);
     const [minLevel, setMinLevel] = useState(ALL);
 
+    const roleFilter = role === ALL ? undefined : role;
+    const levelFilter =
+        roleFilter === undefined || minLevel === ALL ? undefined : minLevel;
+
     const query = useQuery({
         queryKey: ['availability-matrix', role, minLevel],
         queryFn: () =>
             apiFetch<Matrix>(
                 availabilityMatrix({
                     query: {
-                        role: role === ALL ? undefined : role,
-                        minLevel:
-                            role === ALL || minLevel === ALL
-                                ? undefined
-                                : minLevel,
+                        role: roleFilter,
+                        minLevel: levelFilter,
                     },
                 }).url,
             ),
@@ -73,6 +76,11 @@ export default function Availability({
     const roleName = (slug: string) =>
         roles.find((item) => item.slug === slug)?.name ?? slug;
     const matrix = query.data;
+    const levelName = levels.find((item) => item.value === levelFilter)?.label;
+    const filterLabel =
+        roleFilter === undefined
+            ? 'Voluntários activos normalmente disponíveis.'
+            : `Normalmente disponíveis em ${roleName(roleFilter)}${levelName ? `, nível mínimo ${levelName}` : ''}.`;
 
     return (
         <>
@@ -83,7 +91,8 @@ export default function Availability({
                     <h1 className="text-2xl font-semibold">Disponibilidade</h1>
                     <p className="text-muted-foreground">
                         Quantos voluntários activos estão normalmente
-                        disponíveis em cada dia e período.
+                        disponíveis em cada dia e período. Toque num número para
+                        ver os nomes.
                     </p>
                 </div>
 
@@ -224,6 +233,15 @@ export default function Availability({
                                                 return (
                                                     <MatrixCell
                                                         key={key}
+                                                        people={{
+                                                            weekday,
+                                                            period,
+                                                            title: `${weekdays[weekday]}, ${periods[period].toLowerCase()}`,
+                                                            filter: filterLabel,
+                                                            role: roleFilter,
+                                                            minLevel:
+                                                                levelFilter,
+                                                        }}
                                                         count={
                                                             matrix.counts[
                                                                 key
@@ -264,10 +282,12 @@ export default function Availability({
 }
 
 function MatrixCell({
+    people,
     count,
     demand,
     shortRoles,
 }: {
+    people: Omit<ComponentProps<typeof AvailabilityCellDialog>, 'count'>;
     count: number;
     demand: number | undefined;
     shortRoles: string[];
@@ -282,7 +302,13 @@ function MatrixCell({
                 count === 0 && !demand && 'text-muted-foreground',
             )}
         >
-            <span className="text-lg font-semibold tabular-nums">{count}</span>
+            {count > 0 ? (
+                <AvailabilityCellDialog count={count} {...people} />
+            ) : (
+                <span className="inline-flex min-h-11 items-center px-1 text-lg font-semibold tabular-nums">
+                    0
+                </span>
+            )}
             {demand !== undefined && (
                 <span className="ml-1 text-muted-foreground">
                     · precisa {demand}

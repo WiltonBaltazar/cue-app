@@ -255,3 +255,32 @@ test('the named availability endpoints are coordinator only and validate their i
         $this->actingAs($this->coordinator)->getJson(strtok($url, '?').'?date=x&month=x')->assertStatus(422);
     }
 });
+
+test('each count of the matrix opens the names behind it, with the same filters', function () {
+    $person = fn (string $name, TeamRole $role, Level $level = Level::Beginner, array $slots = [[7, Period::Morning]]) => Volunteer::factory()->active()
+        ->withSkill($role, $level)->availableOn($slots)->create(['full_name' => $name]);
+    $person('Berta Áudio', $this->audio, Level::Advanced);
+    $person('Ana Câmara', $this->camera);
+    $person('Carlos Áudio', $this->audio);
+    $person('Dino Terça', $this->audio, slots: [[2, Period::Evening]]);
+    Volunteer::factory()->pending()->availableOn([[7, Period::Morning]])->create();
+
+    $this->actingAs($this->coordinator);
+    $cell = ['weekday' => 7, 'period' => 'morning'];
+
+    foreach ([
+        [[], ['Ana Câmara', 'Berta Áudio', 'Carlos Áudio']],
+        [['role' => 'audio'], ['Berta Áudio', 'Carlos Áudio']],
+        [['role' => 'audio', 'minLevel' => 'intermediate'], ['Berta Áudio']],
+    ] as [$filters, $names]) {
+        $people = $this->getJson(route('app-api.availability-people', [...$cell, ...$filters]))->assertOk()->json('data');
+
+        expect(array_column($people, 'name'))->toBe($names)
+            ->and($this->getJson(route('app-api.availability-matrix', $filters))->json('counts')['7.morning'])->toBe(count($names));
+    }
+
+    expect($people[0]['roles'])->toBe(['Áudio (Avançado)']);
+
+    $this->getJson(route('app-api.availability-people', ['weekday' => 8, 'period' => 'x']))->assertJsonValidationErrors(['weekday', 'period']);
+    $this->actingAs(User::factory()->volunteer()->create())->getJson(route('app-api.availability-people', $cell))->assertForbidden();
+});

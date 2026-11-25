@@ -46,8 +46,9 @@ Colleagues eligible to receive a directed swap.
 ### `GET /app-api/positions/{position}/candidates?substituir={assignment}`
 
 Ranked candidates for an open place or to replace someone (`substituir`), ordered by
-eligibility, number of broken rules, then the generator's ranking (FR-019). Only volunteers
-who have the position's role are listed.
+eligibility, number of broken rules, then the generator's ranking (FR-019). `data` has the
+volunteers with the position's role; `others` the active ones without it, by name (same
+shape, `level` null, `violations` includes `role`). `role` is the role's name.
 
 ```json
 {
@@ -89,6 +90,14 @@ the position's minimum level; `shortages` lists those role slugs across all cell
 
 ```json
 { "weekdays": [1,2,3,4,5,6,7], "periods": ["morning","afternoon","evening"], "counts": { "2.evening": 6, "7.morning": 14 }, "demand": { "7.morning": 9 }, "shortages": ["audio"], "shortageCells": { "7.morning": ["audio"] } }
+```
+
+### `GET /app-api/availability-people?weekday=7&period=morning&role=audio&minLevel=intermediate`
+
+The names behind one count of the matrix, with the same filters.
+
+```json
+{ "data": [{ "volunteerId": 3, "name": "Ana Machava", "roles": ["Áudio (Avançado)"] }] }
 ```
 
 ### `GET /app-api/availability-on-date?date=2026-11-08`

@@ -6,6 +6,7 @@ use App\Domain\Overview\AvailabilityMatrix;
 use App\Domain\Overview\CoverageReport;
 use App\Domain\Overview\VolunteerAvailability;
 use App\Enums\Level;
+use App\Enums\Period;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\TeamRole;
@@ -31,15 +32,23 @@ class OverviewController extends Controller
     {
         Gate::authorize('viewAny', Volunteer::class);
 
+        return response()->json($matrix->build(...$this->roleFilter($request)));
+    }
+
+    public function people(Request $request, AvailabilityMatrix $matrix): JsonResponse
+    {
+        Gate::authorize('viewAny', Volunteer::class);
+
         $validated = $request->validate([
-            'role' => ['nullable', 'string', Rule::exists('team_roles', 'slug')],
-            'minLevel' => ['nullable', Rule::enum(Level::class)],
+            'weekday' => ['required', 'integer', 'between:1,7'],
+            'period' => ['required', Rule::enum(Period::class)],
         ]);
 
-        $role = isset($validated['role']) ? TeamRole::query()->where('slug', $validated['role'])->first() : null;
-        $minLevel = isset($validated['minLevel']) ? Level::from($validated['minLevel']) : null;
-
-        return response()->json($matrix->build($role, $minLevel));
+        return response()->json(['data' => $matrix->people(
+            (int) $validated['weekday'],
+            Period::from($validated['period']),
+            ...$this->roleFilter($request),
+        )]);
     }
 
     public function onDate(Request $request, VolunteerAvailability $availability): JsonResponse
@@ -80,5 +89,21 @@ class OverviewController extends Controller
         }
 
         return response()->json(['data' => $report->between($from, $to)]);
+    }
+
+    /**
+     * @return array{TeamRole|null, Level|null}
+     */
+    private function roleFilter(Request $request): array
+    {
+        $validated = $request->validate([
+            'role' => ['nullable', 'string', Rule::exists('team_roles', 'slug')],
+            'minLevel' => ['nullable', Rule::enum(Level::class)],
+        ]);
+
+        return [
+            isset($validated['role']) ? TeamRole::query()->where('slug', $validated['role'])->first() : null,
+            isset($validated['minLevel']) ? Level::from($validated['minLevel']) : null,
+        ];
     }
 }

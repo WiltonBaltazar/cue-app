@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\Position;
 use App\Models\TeamRole;
 use App\Models\Volunteer;
+use App\Models\VolunteerSkill;
 use App\Support\LocalTime;
 use Illuminate\Support\Collection;
 
@@ -68,6 +69,30 @@ final class AvailabilityMatrix
             'shortages' => $shortages,
             'shortageCells' => $shortageCells,
         ];
+    }
+
+    /**
+     * The names behind one count, with the same filters.
+     *
+     * @return list<array{volunteerId: int, name: string, roles: list<string>}>
+     */
+    public function people(int $weekday, Period $period, ?TeamRole $role = null, ?Level $minLevel = null): array
+    {
+        return array_values(Volunteer::query()
+            ->schedulable()
+            ->whereHas('availabilities', fn ($query) => $query->where('weekday', $weekday)->where('period', $period))
+            ->with('skills.teamRole')
+            ->orderBy('full_name')
+            ->get()
+            ->filter(fn (Volunteer $volunteer): bool => $role === null || $this->qualifies($volunteer, $role->id, $minLevel))
+            ->map(fn (Volunteer $volunteer): array => [
+                'volunteerId' => $volunteer->id,
+                'name' => $volunteer->full_name,
+                'roles' => array_values($volunteer->skills
+                    ->map(fn (VolunteerSkill $skill): string => "{$skill->teamRole->name} ({$skill->level->label()})")
+                    ->all()),
+            ])
+            ->all());
     }
 
     public static function key(int $weekday, Period $period): string
