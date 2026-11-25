@@ -23,7 +23,7 @@ class NotificationPreference extends Model
      */
     public const TYPES = [
         'schedule_published' => ['label' => 'Escala publicada', 'description' => 'Quando sai uma escala com turnos seus.', 'for' => 'volunteer'],
-        'assignment_changed' => ['label' => 'Alterações aos turnos', 'description' => 'Quando um turno seu é acrescentado ou retirado.', 'for' => 'volunteer'],
+        'assignment_changed' => ['label' => 'Alterações aos turnos', 'description' => 'Quando um turno seu é acrescentado, retirado ou muda de data ou hora.', 'for' => 'volunteer'],
         'shift_check' => ['label' => 'Confirmação antes do turno', 'description' => 'Três dias antes, para dizer se ainda pode ir.', 'for' => 'volunteer'],
         'shift_reminder' => ['label' => 'Lembrete do turno', 'description' => 'Na véspera, com a hora de chegada.', 'for' => 'volunteer'],
         'event_cancelled' => ['label' => 'Eventos cancelados', 'description' => 'Quando um evento em que está escalado é cancelado.', 'for' => 'volunteer'],

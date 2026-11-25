@@ -89,6 +89,7 @@ class EventController extends Controller
         return Inertia::render('coord/events/form', [
             ...$this->formOptions(),
             'event' => null,
+            'peopleToNotify' => 0,
             'defaultDate' => $request->string('data')->toString() ?: LocalTime::today()->toDateString(),
         ]);
     }
@@ -111,6 +112,9 @@ class EventController extends Controller
         return Inertia::render('coord/events/form', [
             ...$this->formOptions(),
             'event' => EventPresenter::full($event),
+            'peopleToNotify' => $event->assignments()->active()
+                ->whereHas('schedule', fn ($query) => $query->published())
+                ->count(),
             'defaultDate' => $event->date->toDateString(),
         ]);
     }
@@ -119,11 +123,21 @@ class EventController extends Controller
     {
         Gate::authorize('update', $event);
 
+        $conflicts = fn (): array => $event->assignments()->active()->whereNotNull('conflict_flagged_at')->pluck('id')->all();
+        $before = $conflicts();
+
         $saveEvent->handle($event, $request->eventData());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => $event->activity_template_id !== null
+        $new = count(array_diff($conflicts(), $before));
+        $message = $event->activity_template_id !== null
             ? 'Ocorrência alterada. As restantes datas mantêm o modelo.'
-            : 'Evento actualizado.']);
+            : 'Evento actualizado.';
+
+        Inertia::flash('toast', $new === 0
+            ? ['type' => 'success', 'message' => $message]
+            : ['type' => 'warning', 'message' => $message.' '.($new === 1
+                ? '1 pessoa escalada não pode na nova data ou hora: veja a escala.'
+                : "{$new} pessoas escaladas não podem na nova data ou hora: veja a escala.")]);
 
         return to_route('coord.events.show', $event);
     }

@@ -1,13 +1,17 @@
 <?php
 
+use App\Enums\AssignmentStatus;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
 use App\Models\ActivityTemplate;
 use App\Models\Event;
 use App\Models\TeamRole;
 use App\Models\User;
+use App\Notifications\ShiftRescheduled;
 use App\Support\LocalTime;
+use Illuminate\Support\Facades\Notification;
 use Spatie\Activitylog\Models\Activity;
+use Tests\Support\ScheduleScenario;
 
 beforeEach(function () {
     $this->coordinator = User::factory()->coordinator()->create();
@@ -214,4 +218,124 @@ test('the monthly week must be 1 to 4 or the last', function () {
     $this->actingAs($this->coordinator)
         ->post(route('coord.templates.store'), ['month_week' => 5])
         ->assertSessionHasErrors('month_week');
+});
+
+describe('editing an event with people assigned', function () {
+    beforeEach(function () {
+        $this->scenario = ScheduleScenario::create();
+        $this->event = $this->scenario->event;
+        $this->scenario->volunteer();
+        $this->scenario->volunteer();
+        $this->actingAs($this->coordinator)->post(route('coord.schedules.generate', $this->scenario->schedule));
+        expect($this->event->assignments()->count())->toBe(2);
+
+        $this->update = fn (array $overrides = []) => $this->put(route('coord.events.update', $this->event), specialEventPayload([
+            'name' => 'Culto especial',
+            'date' => $this->event->date->toDateString(),
+            'positions' => [['team_role_id' => $this->camera->id, 'quantity' => 2, 'min_level' => null]],
+            ...$overrides,
+        ]));
+    });
+
+    test('keeps them in their places', function () {
+        ($this->update)(['positions' => [
+            ['team_role_id' => $this->audio->id, 'quantity' => 1, 'min_level' => null],
+            ['team_role_id' => $this->camera->id, 'quantity' => 3, 'min_level' => 'beginner'],
+        ]])->assertSessionHasNoErrors()->assertRedirect(route('coord.events.show', $this->event));
+
+        $position = $this->scenario->position->fresh();
+
+        expect($this->event->fresh()->name)->toBe('Culto especial')
+            ->and($position->quantity)->toBe(3)
+            ->and($position->assignments()->count())->toBe(2)
+            ->and($this->event->fresh()->requiredPeople())->toBe(4);
+    });
+
+    test('a role with people can not be removed or cut below them', function () {
+        ($this->update)(['positions' => [['team_role_id' => $this->audio->id, 'quantity' => 1]]])
+            ->assertSessionHasErrors('positions');
+        ($this->update)(['positions' => [['team_role_id' => $this->camera->id, 'quantity' => 1]]])
+            ->assertSessionHasErrors('positions.0.quantity');
+
+        expect($this->event->fresh()->name)->toBe('Culto de Domingo')
+            ->and($this->event->assignments()->count())->toBe(2);
+    });
+
+    test('a role left only with declined shifts can be removed', function () {
+        $this->event->assignments()->update(['status' => AssignmentStatus::Declined]);
+
+        ($this->update)(['positions' => [['team_role_id' => $this->audio->id, 'quantity' => 1]]])
+            ->assertSessionHasNoErrors();
+
+        expect($this->event->positions()->pluck('team_role_id')->all())->toBe([$this->audio->id]);
+    });
+
+    test('a new time is announced to people in a published schedule, once', function () {
+        $this->post(route('coord.schedules.publish', $this->scenario->schedule));
+        Notification::fake();
+
+        ($this->update)()->assertSessionHasNoErrors();
+        Notification::assertSentTimes(ShiftRescheduled::class, 2);
+
+        // Same times again: nothing new to tell.
+        Notification::fake();
+        ($this->update)(['location' => 'Outra sala'])->assertSessionHasNoErrors();
+        Notification::assertNothingSent();
+    });
+
+    test('a new time in a draft schedule is not announced', function () {
+        Notification::fake();
+        ($this->update)()->assertSessionHasNoErrors();
+        Notification::assertNothingSent();
+    });
+
+    test('reminders go out again for a new arrival time', function () {
+        $this->event->assignments()->update(['check_sent_at' => now(), 'reminder_sent_at' => now()]);
+
+        ($this->update)()->assertSessionHasNoErrors();
+
+        expect($this->event->assignments()->whereNull('check_sent_at')->whereNull('reminder_sent_at')->count())->toBe(2);
+    });
+
+    test('people who can not come at the new time are flagged, and cleared if it moves back', function () {
+        // The scenario's people only come on Sunday mornings.
+        ($this->update)()->assertSessionHasNoErrors();
+        expect($this->event->assignments()->whereNotNull('conflict_flagged_at')->count())->toBe(2);
+
+        ($this->update)(['arrival_time' => '07:30', 'start_time' => '08:30', 'end_time' => '11:30'])->assertSessionHasNoErrors();
+        expect($this->event->assignments()->whereNotNull('conflict_flagged_at')->count())->toBe(0);
+    });
+
+    test('a clash the coordinator already accepted is not flagged by a new time', function () {
+        $this->event->assignments->each(fn ($assignment) => $assignment->volunteer->availabilities()->delete());
+
+        ($this->update)(['arrival_time' => '07:45', 'start_time' => '08:30', 'end_time' => '11:30'])->assertSessionHasNoErrors();
+
+        expect($this->event->assignments()->whereNotNull('conflict_flagged_at')->count())->toBe(0);
+    });
+
+    test('the form says how many people would be told', function () {
+        $this->post(route('coord.schedules.publish', $this->scenario->schedule));
+
+        $this->get(route('coord.events.edit', $this->event))
+            ->assertInertia(fn ($page) => $page->where('peopleToNotify', 2));
+    });
+
+    test('it can not move outside the schedule its people are in', function () {
+        ($this->update)(['date' => $this->scenario->schedule->ends_on->addDay()->toDateString()])
+            ->assertSessionHasErrors('date');
+    });
+});
+
+test('an occurrence can not move to a date its template already fills', function () {
+    $template = ActivityTemplate::factory()->withPosition($this->camera, 1)->create();
+    [$first, $second] = collect([7, 14])->map(fn (int $days) => Event::factory()->withPosition($this->camera, 1)->create([
+        'activity_template_id' => $template->id,
+        'type' => EventType::Recurring,
+        'date' => LocalTime::today()->addDays($days)->toDateString(),
+    ]))->all();
+
+    $this->actingAs($this->coordinator)
+        ->put(route('coord.events.update', $first), specialEventPayload(['date' => $second->date->toDateString()]))
+        ->assertSessionHasErrors('date');
 });

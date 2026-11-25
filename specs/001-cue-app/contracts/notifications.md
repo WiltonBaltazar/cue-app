@@ -33,7 +33,7 @@ only same-origin paths are ever opened.
 | `registration_submitted` | coordinators | new registration | US1, FR-023 |
 | `registration_decided` | volunteer | approved / rejected / correction requested | US1 |
 | `schedule_published` | each assigned volunteer | publish | US3, US6 |
-| `assignment_changed` | affected volunteer(s) | edit after publish | FR-023 |
+| `assignment_changed` | affected volunteer(s) | edit after publish, or the event's date/times change | FR-023 |
 | `event_cancelled` | assigned volunteers | event cancel | US2 |
 | `shift_check` | assigned volunteer | `check_reminder_hours_before` (72 h); action "Não posso ir" → decline flow | US4 |
 | `shift_reminder` | assigned volunteer | `reminder_hours_before` (24 h) | US6 |
@@ -49,7 +49,7 @@ only same-origin paths are ever opened.
 - Dispatched after DB commit (`afterCommit`) on the queue; target SC-007 < 1 min.
 - `shift_check` / `shift_reminder`: `shifts:remind` runs every 5 minutes and marks
   `assignments.check_sent_at` / `reminder_sent_at`, so each goes out once per assignment
-  (reset when another volunteer takes the place). A shift booked inside the reminder
+  (reset when another volunteer takes the place or the arrival time changes). A shift booked inside the reminder
   window gets only the reminder.
 - 404/410 from push service → delete subscription.
 - Other failures → retry 3× with backoff; in-app copy always persists.

@@ -12,6 +12,7 @@ import type { EventFull } from '@/types';
 
 type Props = {
     event: EventFull | null;
+    peopleToNotify: number;
     defaultDate: string;
     teamRoles: { id: number; name: string }[];
     levels: Option[];
@@ -22,6 +23,7 @@ type Props = {
  */
 export default function EventForm({
     event,
+    peopleToNotify,
     defaultDate,
     teamRoles,
     levels,
@@ -74,6 +76,14 @@ export default function EventForm({
                 </div>
 
                 <InputError message={errors.event} />
+
+                {peopleToNotify > 0 && (
+                    <p className="rounded-lg border bg-muted/50 p-3 text-sm">
+                        {peopleToNotify === 1
+                            ? 'Há 1 pessoa com turno publicado neste evento. Se mudar a data ou as horas, será avisada.'
+                            : `Há ${peopleToNotify} pessoas com turno publicado neste evento. Se mudar a data ou as horas, serão avisadas.`}
+                    </p>
+                )}
 
                 <TextField
                     label="Nome"
