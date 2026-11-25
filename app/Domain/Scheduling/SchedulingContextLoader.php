@@ -138,7 +138,7 @@ class SchedulingContextLoader
     {
         $events = $schedule->events()
             ->scheduled()
-            ->when($only !== null, fn ($query) => $query->whereKey($only->id))
+            ->when($only, fn ($query, Event $event) => $query->whereKey($event->id))
             ->with(['positions.teamRole', 'positions.assignments' => fn ($query) => $query->active()])
             ->get();
 
