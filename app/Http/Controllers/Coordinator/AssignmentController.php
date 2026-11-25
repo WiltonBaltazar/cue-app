@@ -28,6 +28,7 @@ class AssignmentController extends Controller
             'position_id' => ['required', 'integer', 'exists:positions,id'],
             'volunteer_id' => ['required', 'integer', 'exists:volunteers,id'],
             'override_note' => ['nullable', 'string', 'max:500'],
+            'add_role' => ['boolean'],
         ]);
 
         $assign->handle(
@@ -35,6 +36,7 @@ class AssignmentController extends Controller
             Volunteer::query()->whereKey($validated['volunteer_id'])->firstOrFail(),
             $coordinator,
             overrideNote: $validated['override_note'] ?? null,
+            addRole: $request->boolean('add_role'),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Atribuição guardada.']);
@@ -50,6 +52,7 @@ class AssignmentController extends Controller
             'volunteer_id' => ['required', 'integer', 'exists:volunteers,id'],
             'lock_version' => ['required', 'integer'],
             'override_note' => ['nullable', 'string', 'max:500'],
+            'add_role' => ['boolean'],
         ]);
 
         $assign->handle(
@@ -59,6 +62,7 @@ class AssignmentController extends Controller
             $assignment,
             (int) $validated['lock_version'],
             $validated['override_note'] ?? null,
+            $request->boolean('add_role'),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Atribuição alterada.']);

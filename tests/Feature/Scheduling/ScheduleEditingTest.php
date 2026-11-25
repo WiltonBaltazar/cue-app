@@ -11,6 +11,7 @@ use App\Models\Assignment;
 use App\Models\Event;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Models\Volunteer;
 use App\Notifications\AssignmentChanged;
 use App\Notifications\AvailabilityConflict;
 use App\Notifications\EventCancelled;
@@ -365,4 +366,52 @@ test('generating leaves cancelled events and inactive activities alone', functio
     expect($active->events()->where('date', '2027-01-24')->count())->toBe(1)
         ->and($cancelled->fresh()->isCancelled())->toBeTrue()
         ->and($inactive->events()->count())->toBe(0);
+});
+
+test('people without the role are offered apart, with what else would be broken', function () {
+    $fits = $this->scenario->volunteer();
+    $other = Volunteer::factory()->active()->availableOn([[2, Period::Evening]])->create(['full_name' => 'Ana Sem Função', 'variable_hours' => false]);
+    Volunteer::factory()->pending()->create();
+
+    $response = $this->actingAs($this->coordinator)
+        ->getJson(route('app-api.positions.candidates', $this->scenario->position))
+        ->assertOk()
+        ->assertJsonPath('role', 'Operação de câmara');
+
+    expect(array_column($response->json('data'), 'volunteerId'))->toBe([$fits->id])
+        ->and(array_column($response->json('others'), 'volunteerId'))->toBe([$other->id])
+        ->and($response->json('others.0.violations'))->toBe(['role', 'availability'])
+        ->and($response->json('others.0.level'))->toBeNull();
+});
+
+test('someone without the role can be assigned just once or given the role', function (bool $addRole) {
+    $other = Volunteer::factory()->active()->create();
+
+    $this->actingAs($this->coordinator)
+        ->post(route('coord.assignments.store'), [
+            'position_id' => $this->scenario->position->id,
+            'volunteer_id' => $other->id,
+            'add_role' => $addRole,
+        ])
+        ->assertSessionHasNoErrors();
+
+    $skill = $other->skills()->first();
+
+    expect(Assignment::query()->where('volunteer_id', $other->id)->exists())->toBeTrue()
+        ->and($skill?->team_role_id)->toBe($addRole ? $this->scenario->camera->id : null)
+        ->and($skill?->level)->toBe($addRole ? Level::Beginner : null);
+})->with([true, false]);
+
+test('the role is never added twice, nor when the person could not be assigned', function () {
+    $skilled = $this->scenario->volunteer(Level::Advanced);
+    $payload = fn (Volunteer $volunteer) => ['position_id' => $this->scenario->position->id, 'volunteer_id' => $volunteer->id, 'add_role' => true];
+    $this->actingAs($this->coordinator)->post(route('coord.assignments.store'), $payload($skilled))->assertSessionHasNoErrors();
+
+    expect($skilled->skills()->pluck('level')->all())->toBe([Level::Advanced]);
+
+    $this->scenario->position->update(['quantity' => 1]);
+    $other = Volunteer::factory()->active()->create();
+    $this->post(route('coord.assignments.store'), $payload($other))->assertSessionHasErrors('position_id');
+
+    expect($other->skills()->count())->toBe(0);
 });

@@ -5,6 +5,7 @@ namespace App\Actions\Scheduling;
 use App\Domain\Scheduling\ConstraintChecker;
 use App\Domain\Scheduling\SchedulingContextLoader;
 use App\Domain\Scheduling\Violation;
+use App\Enums\Level;
 use App\Models\Assignment;
 use App\Models\Position;
 use App\Models\Schedule;
@@ -18,7 +19,8 @@ use Illuminate\Validation\ValidationException;
 /**
  * Manual assignment by a coordinator (FR-013): to an open place or replacing someone.
  * Breaking a hard rule needs an explicit note and is audited; a stale version is refused
- * so two coordinators do not overwrite each other.
+ * so two coordinators do not overwrite each other. Someone without the role can be given it
+ * at the same time, as a beginner, so generation finds them from then on.
  */
 class AssignVolunteer
 {
@@ -43,7 +45,7 @@ class AssignVolunteer
         return $this->checker->check($this->loader->profileOf($volunteer), $this->loader->slotFor($position), $context, automatic: false);
     }
 
-    public function handle(Position $position, Volunteer $volunteer, User $coordinator, ?Assignment $replacing = null, ?int $lockVersion = null, ?string $overrideNote = null): Assignment
+    public function handle(Position $position, Volunteer $volunteer, User $coordinator, ?Assignment $replacing = null, ?int $lockVersion = null, ?string $overrideNote = null, bool $addRole = false): Assignment
     {
         if ($replacing !== null) {
             $this->guard->ensureCurrent($replacing, $lockVersion);
@@ -64,7 +66,7 @@ class AssignVolunteer
 
         $previousVolunteer = $replacing?->volunteer;
 
-        $assignment = DB::transaction(function () use ($position, $volunteer, $coordinator, $replacing, $schedule, $violations, $overrideNote): Assignment {
+        $assignment = DB::transaction(function () use ($position, $volunteer, $coordinator, $replacing, $schedule, $violations, $overrideNote, $addRole): Assignment {
             $assignment = $replacing ?? new Assignment([
                 'schedule_id' => $schedule->id,
                 'position_id' => $position->id,
@@ -80,6 +82,15 @@ class AssignVolunteer
             $assignment->conflict_flagged_at = null;
             $assignment->updated_by = $coordinator->id;
             $assignment->save();
+
+            if ($addRole && in_array(Violation::Role, $violations, true)) {
+                $volunteer->skills()->create([
+                    'team_role_id' => $position->team_role_id,
+                    'interested' => false,
+                    'has_experience' => false,
+                    'level' => Level::Beginner,
+                ]);
+            }
 
             return $assignment;
         });

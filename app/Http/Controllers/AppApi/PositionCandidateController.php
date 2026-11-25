@@ -26,7 +26,13 @@ class PositionCandidateController extends Controller
             ? Assignment::query()->where('position_id', $position->id)->findOrFail($request->integer('substituir'))
             : null;
 
-        return response()->json(['data' => $finder->for($position->load('event'), $replacing)]);
+        $found = $finder->for($position->load(['event', 'teamRole']), $replacing);
+
+        return response()->json([
+            'data' => $found['candidates'],
+            'others' => $found['others'],
+            'role' => $position->teamRole->name,
+        ]);
     }
 
     public function check(Request $request, AssignVolunteer $assign): JsonResponse
