@@ -30,6 +30,7 @@ use App\Http\Controllers\Volunteer\DataRemovalController;
 use App\Http\Controllers\Volunteer\NotificationPreferenceController;
 use App\Http\Controllers\Volunteer\PauseController;
 use App\Http\Controllers\Volunteer\ProfileController as VolunteerProfileController;
+use App\Http\Controllers\Volunteer\SchedulePdfController as VolunteerSchedulePdfController;
 use App\Http\Controllers\Volunteer\ShiftController;
 use App\Http\Controllers\Volunteer\StatusController;
 use App\Http\Controllers\Volunteer\SwapController;
@@ -53,6 +54,7 @@ Route::middleware(['auth', 'volunteer.active'])->group(function () {
     Route::get('/', HomeController::class)->name('home');
     Route::get('minha-escala', [ShiftController::class, 'index'])->name('volunteer.shifts.index');
     Route::get('escala/{schedule}', [ShiftController::class, 'team'])->name('schedules.show');
+    Route::get('escala/{schedule}/pdf', VolunteerSchedulePdfController::class)->name('schedules.pdf');
     Route::post('minha-escala/{assignment}/recusar', [ShiftController::class, 'decline'])->name('volunteer.shifts.decline');
 
     Route::get('ausencias', [AbsenceController::class, 'index'])->name('absences.index');

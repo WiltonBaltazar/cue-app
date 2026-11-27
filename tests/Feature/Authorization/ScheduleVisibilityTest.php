@@ -142,3 +142,32 @@ test('opened from a shift, the team schedule shows only that event', function ()
         ->get(route('schedules.show', ['schedule' => $this->scenario->schedule, 'evento' => 999999]))
         ->assertInertia(fn ($page) => $page->where('focusedEventId', null)->has('events', 2));
 });
+
+test('volunteers download the published schedule as a PDF with short names', function () {
+    $this->actingAs($this->me->user)
+        ->get(route('schedules.pdf', $this->scenario->schedule))
+        ->assertNotFound();
+
+    $this->actingAs($this->coordinator)->post(route('coord.schedules.publish', $this->scenario->schedule));
+
+    $html = '';
+    View::composer('pdf.schedule', function ($view) use (&$html) {
+        $html = view()->file($view->getPath(), $view->getData())->render();
+    });
+
+    $this->actingAs($this->me->user)
+        ->get(route('volunteer.shifts.index'))
+        ->assertInertia(fn ($page) => $page->where('schedules.0.id', $this->scenario->schedule->id));
+
+    $response = $this->actingAs($this->me->user)
+        ->get(route('schedules.pdf', $this->scenario->schedule))
+        ->assertOk()
+        ->assertHeader('content-type', 'application/pdf');
+
+    expect(substr((string) $response->getContent(), 0, 4))->toBe('%PDF')
+        ->and($html)->toContain('Ana M.')
+        ->toContain('João S.')
+        ->not->toContain('Machava')
+        ->not->toContain('Sitoe')
+        ->not->toContain((string) $this->colleague->user?->phone);
+});

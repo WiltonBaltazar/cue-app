@@ -111,7 +111,7 @@
                             <td class="role">{{ $position->teamRole->name }}</td>
                             <td>
                                 @foreach ($position->assignments as $assignment)
-                                    <div class="person">{{ $assignment->volunteer->firstAndLastName() }}</div>
+                                    <div class="person">{{ $fullNames ? $assignment->volunteer->firstAndLastName() : $assignment->volunteer->shortName() }}</div>
                                 @endforeach
                                 @if ($missing > 0)
                                     <div class="gap">{{ $missing }} por preencher</div>

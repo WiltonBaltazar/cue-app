@@ -1,8 +1,10 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { Download } from 'lucide-react';
 import { ShiftCard } from '@/components/app/shift-card';
 import type { Shift } from '@/components/app/shift-card';
-import { formatMonth } from '@/lib/format';
+import { formatDate, formatMonth } from '@/lib/format';
 import { index as absences } from '@/routes/absences';
+import { pdf as schedulePdf, show as showSchedule } from '@/routes/schedules';
 import { edit as volunteerData } from '@/routes/volunteer/profile';
 
 /** Shifts grouped by month, in date order, so the list reads like a calendar. */
@@ -20,7 +22,15 @@ function byMonth(shifts: Shift[]): { month: string; shifts: Shift[] }[] {
     }));
 }
 
-export default function MyShifts({ shifts }: { shifts: Shift[] }) {
+type PublishedSchedule = { id: number; startsOn: string; endsOn: string };
+
+export default function MyShifts({
+    shifts,
+    schedules,
+}: {
+    shifts: Shift[];
+    schedules: PublishedSchedule[];
+}) {
     // "Não posso ir" on the 72 h check push lands here with ?recusar={id}.
     const { url } = usePage();
     const declineId = Number(
@@ -63,6 +73,43 @@ export default function MyShifts({ shifts }: { shifts: Shift[] }) {
                     </Link>
                     .
                 </p>
+            )}
+
+            {schedules.length > 0 && (
+                <section className="mt-6">
+                    <h2 className="font-display text-xl font-semibold">
+                        Escala completa
+                    </h2>
+                    <ul className="mt-3 divide-y overflow-hidden rounded-2xl border bg-card">
+                        {schedules.map((schedule) => (
+                            <li
+                                key={schedule.id}
+                                className="flex flex-wrap items-center justify-between gap-2 p-4"
+                            >
+                                <Link
+                                    href={showSchedule(schedule.id)}
+                                    className="min-h-11 content-center font-medium underline-offset-4 hover:underline"
+                                >
+                                    {formatDate(
+                                        `${schedule.startsOn}T12:00:00Z`,
+                                    )}{' '}
+                                    –{' '}
+                                    {formatDate(`${schedule.endsOn}T12:00:00Z`)}
+                                </Link>
+                                <a
+                                    href={schedulePdf(schedule.id).url}
+                                    className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary underline underline-offset-4"
+                                >
+                                    <Download
+                                        className="size-4"
+                                        aria-hidden="true"
+                                    />
+                                    Descarregar PDF
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
             )}
 
             {byMonth(shifts).map((group) => (

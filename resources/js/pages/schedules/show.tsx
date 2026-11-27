@@ -1,8 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
+import { Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDate, formatShortDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { show } from '@/routes/schedules';
+import { pdf, show } from '@/routes/schedules';
 
 type Props = {
     schedule: { id: number; startsOn: string; endsOn: string };
@@ -52,10 +53,19 @@ export default function TeamSchedule({
                     {formatDate(`${schedule.endsOn}T12:00:00Z`)})
                 </Link>
             ) : (
-                <p className="text-muted-foreground">
-                    {formatDate(`${schedule.startsOn}T12:00:00Z`)} –{' '}
-                    {formatDate(`${schedule.endsOn}T12:00:00Z`)}
-                </p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-muted-foreground">
+                        {formatDate(`${schedule.startsOn}T12:00:00Z`)} –{' '}
+                        {formatDate(`${schedule.endsOn}T12:00:00Z`)}
+                    </p>
+                    <a
+                        href={pdf(schedule.id).url}
+                        className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary underline underline-offset-4"
+                    >
+                        <Download className="size-4" aria-hidden="true" />
+                        Descarregar PDF
+                    </a>
+                </div>
             )}
 
             <ol className="mt-4 space-y-3">

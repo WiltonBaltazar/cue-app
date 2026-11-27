@@ -29,6 +29,18 @@ class ShiftController extends Controller
     {
         return Inertia::render('volunteer/shifts/index', [
             'shifts' => $user->volunteer === null ? [] : VolunteerShifts::upcoming($user->volunteer),
+            // Published schedules still running, to see or download in full.
+            'schedules' => Schedule::query()
+                ->published()
+                ->where('ends_on', '>=', LocalTime::today()->toDateString())
+                ->orderBy('starts_on')
+                ->get()
+                ->map(fn (Schedule $schedule) => [
+                    'id' => $schedule->id,
+                    'startsOn' => $schedule->starts_on->toDateString(),
+                    'endsOn' => $schedule->ends_on->toDateString(),
+                ])
+                ->values(),
         ]);
     }
 
