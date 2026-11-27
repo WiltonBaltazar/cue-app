@@ -1,0 +1,1227 @@
+<!doctype html>
+<html lang="pt">
+    <head>
+        <meta charset="utf-8" />
+        <title>Manual do Escalado — Cue App</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Saira+Semi+Condensed:wght@500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --navy: #142f5c;
+                --blue: #155aa8;
+                --gold: #fec015;
+                --ink: #1b2333;
+                --muted: #5b6577;
+                --line: #dfe4ec;
+                --studio: #f2f5fa;
+                --red: #c8102e;
+            }
+            @page {
+                size: A5;
+                margin: 17mm 15mm 19mm 15mm;
+                @bottom-center {
+                    content: counter(page);
+                    font-family: 'Saira Semi Condensed', sans-serif;
+                    font-weight: 600;
+                    font-size: 9pt;
+                    color: #5b6577;
+                }
+                @top-right {
+                    content: 'Manual do Escalado';
+                    font-family: 'Instrument Sans', sans-serif;
+                    font-size: 7.5pt;
+                    color: #6b7486;
+                    letter-spacing: 0.02em;
+                }
+            }
+            @page cover {
+                margin: 0;
+                @bottom-center {
+                    content: none;
+                }
+                @top-right {
+                    content: none;
+                }
+            }
+            @page front {
+                @bottom-center {
+                    content: none;
+                }
+                @top-right {
+                    content: none;
+                }
+            }
+            @page back {
+                margin: 0;
+                @bottom-center {
+                    content: none;
+                }
+                @top-right {
+                    content: none;
+                }
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+            html {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            body {
+                margin: 0;
+                background: #fff;
+                color: var(--ink);
+                font-family: 'Instrument Sans', system-ui, sans-serif;
+                font-size: 9.6pt;
+                line-height: 1.48;
+                hyphens: auto;
+            }
+            h1,
+            h2,
+            h3,
+            .display {
+                font-family: 'Saira Semi Condensed', sans-serif;
+                color: var(--navy);
+            }
+            p {
+                margin: 0 0 3mm;
+            }
+            strong {
+                font-weight: 600;
+                color: var(--navy);
+            }
+
+            /* ---------- Cover ---------- */
+            .cover {
+                page: cover;
+                width: 148mm;
+                height: 210mm;
+                background: var(--navy);
+                color: #fff;
+                position: relative;
+                overflow: hidden;
+                padding: 22mm 16mm 18mm;
+                display: flex;
+                flex-direction: column;
+                break-after: page;
+            }
+            .cover .logo {
+                width: 20mm;
+                height: 20mm;
+                border-radius: 5mm;
+                background: #fff;
+                display: grid;
+                place-items: center;
+            }
+            .cover .logo img {
+                width: 14mm;
+            }
+            .cover .eyebrow {
+                margin-top: 30mm;
+                display: flex;
+                align-items: center;
+                gap: 2.5mm;
+                font-size: 9.5pt;
+                color: #c9d4ea;
+            }
+            .tally {
+                width: 3mm;
+                height: 3mm;
+                border-radius: 50%;
+                background: var(--gold);
+                box-shadow: 0 0 0 1.2mm rgba(254, 192, 21, 0.22);
+            }
+            .cover h1 {
+                color: #fff;
+                font-size: 44pt;
+                line-height: 0.95;
+                font-weight: 800;
+                margin: 5mm 0 6mm;
+                letter-spacing: -0.01em;
+            }
+            .cover .sub {
+                font-size: 11.5pt;
+                color: #dbe3f2;
+                max-width: 95mm;
+                line-height: 1.45;
+            }
+            .cover .slate {
+                margin-top: auto;
+                border-top: 0.3mm solid rgba(255, 255, 255, 0.18);
+                padding-top: 5mm;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                font-size: 8.5pt;
+                color: #c9d4ea;
+            }
+            .cover .slate b {
+                display: block;
+                color: #fff;
+                font-family: 'Saira Semi Condensed';
+                font-size: 12pt;
+                font-weight: 700;
+            }
+            .cover .big-time {
+                position: absolute;
+                right: -6mm;
+                top: 74mm;
+                font-family: 'Saira Semi Condensed';
+                font-weight: 800;
+                font-size: 120pt;
+                line-height: 1;
+                color: rgba(255, 255, 255, 0.05);
+            }
+
+            /* ---------- Front matter ---------- */
+            .front {
+                page: front;
+                break-after: page;
+            }
+            .front h2 {
+                font-size: 20pt;
+                margin: 0 0 5mm;
+                font-weight: 700;
+            }
+            .lead {
+                font-size: 11pt;
+                color: var(--ink);
+            }
+            .toc {
+                list-style: none;
+                padding: 0;
+                margin: 6mm 0 0;
+            }
+            .toc li {
+                display: flex;
+                align-items: baseline;
+                gap: 3mm;
+                padding: 2.6mm 0;
+                border-bottom: 0.25mm solid var(--line);
+            }
+            .toc .n {
+                font-family: 'Saira Semi Condensed';
+                font-weight: 700;
+                color: var(--blue);
+                width: 7mm;
+                font-size: 12pt;
+            }
+            .toc .t {
+                flex: 1;
+                font-weight: 500;
+            }
+            .toc .p {
+                font-family: 'Saira Semi Condensed';
+                font-weight: 600;
+                color: var(--muted);
+            }
+
+            .nav-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 4mm;
+            }
+            .nav-table td {
+                padding: 2.4mm 0;
+                border-bottom: 0.25mm solid var(--line);
+                vertical-align: top;
+            }
+            .nav-table td:first-child {
+                width: 26mm;
+                font-weight: 600;
+                color: var(--navy);
+            }
+            .navstrip {
+                margin: 5mm 0 2mm;
+                border-radius: 3mm;
+                overflow: hidden;
+                border: 0.3mm solid var(--line);
+                height: 15mm;
+                background: url(telas/escala.png) bottom center / 100% auto
+                    no-repeat;
+            }
+
+            /* ---------- Chapters ---------- */
+            .chapter {
+                break-before: page;
+            }
+            .chapter-head {
+                display: flex;
+                align-items: flex-end;
+                gap: 4mm;
+                margin-bottom: 4mm;
+                padding-bottom: 3.5mm;
+                border-bottom: 0.6mm solid var(--navy);
+            }
+            .chapter-head .num {
+                font-family: 'Saira Semi Condensed';
+                font-weight: 800;
+                font-size: 38pt;
+                line-height: 0.8;
+                color: var(--gold);
+            }
+            .chapter-head h2 {
+                margin: 0;
+                font-size: 19pt;
+                line-height: 1.05;
+                font-weight: 700;
+            }
+            .chapter-head .kicker {
+                display: block;
+                font-family: 'Instrument Sans';
+                font-size: 8pt;
+                color: var(--muted);
+                font-weight: 500;
+                margin-bottom: 1mm;
+            }
+            h3 {
+                font-size: 12.5pt;
+                margin: 5mm 0 2mm;
+                font-weight: 700;
+                break-after: avoid;
+            }
+
+            .split {
+                display: grid;
+                grid-template-columns: 1fr 38mm;
+                gap: 6mm;
+                align-items: start;
+                margin: 2mm 0 3mm;
+                break-inside: avoid;
+            }
+            .split.wide {
+                grid-template-columns: 1fr 42mm;
+            }
+
+            ol.steps {
+                list-style: none;
+                counter-reset: s;
+                padding: 0;
+                margin: 0 0 3mm;
+            }
+            ol.steps > li {
+                counter-increment: s;
+                position: relative;
+                padding: 0 0 2.6mm 8.5mm;
+                break-inside: avoid;
+            }
+            ol.steps > li::before {
+                content: counter(s);
+                position: absolute;
+                left: 0;
+                top: 0.2mm;
+                width: 5.6mm;
+                height: 5.6mm;
+                border-radius: 50%;
+                background: var(--navy);
+                color: #fff;
+                font-family: 'Saira Semi Condensed';
+                font-weight: 700;
+                font-size: 8.5pt;
+                display: grid;
+                place-items: center;
+                line-height: 1;
+            }
+            ol.steps ul {
+                margin: 1.5mm 0 0;
+                padding-left: 4mm;
+            }
+            ol.steps ul li {
+                margin-bottom: 1mm;
+            }
+
+            .phone {
+                border: 1.4mm solid #10213f;
+                border-radius: 6mm;
+                overflow: hidden;
+                background: #10213f;
+                box-shadow: 0 1.5mm 4mm rgba(20, 47, 92, 0.18);
+            }
+            .phone img {
+                display: block;
+                width: 100%;
+                border-radius: 4.6mm;
+            }
+            figure {
+                margin: 0;
+                break-inside: avoid;
+            }
+            figcaption {
+                font-size: 7.5pt;
+                color: var(--muted);
+                text-align: center;
+                margin-top: 2mm;
+                line-height: 1.35;
+            }
+
+            .note {
+                border-radius: 2.5mm;
+                padding: 3mm 3.5mm 3mm 4mm;
+                margin: 3mm 0;
+                background: var(--studio);
+                border-left: 1.2mm solid var(--blue);
+                font-size: 9.2pt;
+                break-inside: avoid;
+            }
+            .note.gold {
+                border-left-color: var(--gold);
+                background: #fff8e1;
+            }
+            .note.red {
+                border-left-color: var(--red);
+                background: #fdf0f2;
+            }
+            .note b.lbl {
+                display: block;
+                font-family: 'Saira Semi Condensed';
+                font-weight: 700;
+                color: var(--navy);
+                font-size: 9.5pt;
+                margin-bottom: 0.5mm;
+            }
+
+            table.def {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 9pt;
+                margin: 2mm 0 3mm;
+            }
+            table.def td {
+                padding: 1.8mm 0;
+                border-bottom: 0.25mm solid var(--line);
+                vertical-align: top;
+            }
+            table.def td:first-child {
+                width: 38%;
+                font-weight: 600;
+                color: var(--navy);
+                padding-right: 3mm;
+            }
+
+            .key {
+                display: inline-block;
+                padding: 0 1.6mm;
+                border: 0.3mm solid #b9c3d3;
+                border-radius: 1.2mm;
+                font-weight: 600;
+                font-size: 9pt;
+                color: var(--navy);
+                background: #fff;
+                white-space: nowrap;
+            }
+            .key.red {
+                background: var(--red);
+                border-color: var(--red);
+                color: #fff;
+            }
+
+            .pair {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6mm;
+                margin: 3mm 6mm;
+                break-inside: avoid;
+            }
+
+            .faq {
+                margin: 0;
+            }
+            .faq dt {
+                font-family: 'Saira Semi Condensed';
+                font-weight: 700;
+                color: var(--navy);
+                font-size: 10.5pt;
+                margin-top: 2.4mm;
+                break-after: avoid;
+            }
+            .faq dd {
+                margin: 0.6mm 0 0;
+                padding-bottom: 2.2mm;
+                border-bottom: 0.25mm solid var(--line);
+                break-inside: avoid;
+            }
+
+            /* ---------- Back cover ---------- */
+            .back {
+                page: back;
+                break-before: page;
+                width: 148mm;
+                height: 210mm;
+                background: var(--navy);
+                color: #dbe3f2;
+                padding: 0 16mm;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+            }
+            .back img {
+                width: 16mm;
+                margin-bottom: 6mm;
+            }
+            .back .display {
+                color: #fff;
+                font-size: 16pt;
+                font-weight: 700;
+                margin-bottom: 2mm;
+            }
+            .back p {
+                font-size: 9pt;
+                max-width: 90mm;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- ============ COVER ============ -->
+        <section class="cover">
+            <div class="logo"><img src="telas/logo.png" alt="" /></div>
+            <div class="big-time">07:30</div>
+            <div class="eyebrow">
+                <span class="tally"></span> Cue App · Equipa de média
+            </div>
+            <h1>Manual do<br />Escalado</h1>
+            <div class="sub">
+                Como ver os seus turnos, pedir trocas e avisar quando não pode
+                ir — passo a passo, pelo telemóvel.
+            </div>
+            <div class="slate">
+                <div><b>RTVAO</b>Rádio e Televisão Alfa &amp; Ómega</div>
+                <div style="text-align: right">
+                    <b>Edição 1</b>Novembro de 2026
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ WELCOME + TOC ============ -->
+        <section class="front">
+            <h2>Bem-vindo à equipa</h2>
+            <p class="lead">
+                O Cue App diz-lhe quando vai servir na equipa de média da RTVAO.
+                Pelo telemóvel, pode ver a sua escala, pedir uma troca e avisar
+                quando não pode ir.
+            </p>
+            <p>
+                Este manual é para os <strong>escalados</strong>: os voluntários
+                que servem nos cultos e eventos — câmara, áudio, vídeo,
+                streaming, iluminação e outras funções. Cada capítulo explica
+                uma tarefa, com os passos numerados e a tela que vai ver.
+            </p>
+
+            <ul class="toc" id="toc">
+                <li>
+                    <span class="n">1</span
+                    ><span class="t">Entrar pela primeira vez</span
+                    ><span class="p" data-ch="1"></span>
+                </li>
+                <li>
+                    <span class="n">2</span
+                    ><span class="t">O ecrã Início: o seu próximo turno</span
+                    ><span class="p" data-ch="2"></span>
+                </li>
+                <li>
+                    <span class="n">3</span
+                    ><span class="t">Ver todos os seus turnos</span
+                    ><span class="p" data-ch="3"></span>
+                </li>
+                <li>
+                    <span class="n">4</span
+                    ><span class="t">Pedir uma troca</span
+                    ><span class="p" data-ch="4"></span>
+                </li>
+                <li>
+                    <span class="n">5</span
+                    ><span class="t">Avisar que não pode ir</span
+                    ><span class="p" data-ch="5"></span>
+                </li>
+                <li>
+                    <span class="n">6</span
+                    ><span class="t">Marcar ausências e pausas</span
+                    ><span class="p" data-ch="6"></span>
+                </li>
+                <li>
+                    <span class="n">7</span
+                    ><span class="t">Mudar os dias em que pode servir</span
+                    ><span class="p" data-ch="7"></span>
+                </li>
+                <li>
+                    <span class="n">8</span
+                    ><span class="t">Escolher os avisos que recebe</span
+                    ><span class="p" data-ch="8"></span>
+                </li>
+                <li>
+                    <span class="n">9</span
+                    ><span class="t">Perguntas frequentes</span
+                    ><span class="p" data-ch="9"></span>
+                </li>
+            </ul>
+        </section>
+
+        <section class="front">
+            <h2>Como andar na app</h2>
+            <p>
+                Na parte de baixo do ecrã há sempre cinco botões. É por eles que
+                se anda na app.
+            </p>
+            <div
+                class="navstrip"
+                role="img"
+                aria-label="Barra de navegação com Início, Escala, Trocas, Ausências e Perfil"
+            ></div>
+            <table class="nav-table">
+                <tr>
+                    <td>Início</td>
+                    <td>O seu próximo turno, com a hora de chegada.</td>
+                </tr>
+                <tr>
+                    <td>Escala</td>
+                    <td>Todos os seus turnos, mês a mês.</td>
+                </tr>
+                <tr>
+                    <td>Trocas</td>
+                    <td>Pedir ou aceitar uma troca com um colega.</td>
+                </tr>
+                <tr>
+                    <td>Ausências</td>
+                    <td>
+                        Avisar os dias em que não pode servir, ou fazer uma
+                        pausa.
+                    </td>
+                </tr>
+                <tr>
+                    <td>Perfil</td>
+                    <td>
+                        Os seus dados, os dias em que pode servir e os avisos.
+                        Para sair da app, toque em <strong>Sair</strong>.
+                    </td>
+                </tr>
+            </table>
+            <div class="note gold">
+                <b class="lbl">O sino</b>
+                No canto de cima, o sino mostra os seus avisos: escalas novas,
+                mudanças, pedidos de troca e lembretes.
+            </div>
+        </section>
+
+        <!-- ============ 1 ============ -->
+        <section class="chapter" data-ch="1">
+            <div class="chapter-head">
+                <span class="num">1</span>
+                <h2>
+                    <span class="kicker">Começar</span>Entrar pela primeira vez
+                </h2>
+            </div>
+            <p>
+                Precisa de um cadastro aprovado. Depois disso, entra sempre com
+                o seu número de telefone e a sua palavra-passe.
+            </p>
+
+            <div class="split">
+                <div>
+                    <ol class="steps">
+                        <li>
+                            Peça a um coordenador o
+                            <strong>link de cadastro</strong>.
+                        </li>
+                        <li>
+                            Preencha o formulário e escolha uma palavra-passe
+                            com pelo menos 8 caracteres.
+                        </li>
+                        <li>
+                            Espere a aprovação. Se for pedida uma correção,
+                            corrija os dados e reenvie o cadastro.
+                        </li>
+                        <li>
+                            Abra a app e escreva o seu
+                            <strong>número de telefone</strong>, sem o +258.
+                        </li>
+                        <li>
+                            Escreva a sua <strong>palavra-passe</strong> e toque
+                            em <span class="key">Entrar</span>.
+                        </li>
+                    </ol>
+                    <div class="note">
+                        Deixe marcado
+                        <strong
+                            >Manter sessão iniciada neste dispositivo</strong
+                        >
+                        para não ter de entrar todas as vezes.
+                    </div>
+                </div>
+                <figure>
+                    <div class="phone">
+                        <img src="telas/entrar.png" alt="" />
+                    </div>
+                    <figcaption>Ecrã de entrada</figcaption>
+                </figure>
+            </div>
+
+            <div class="note gold">
+                <b class="lbl">Esqueceu a palavra-passe?</b>
+                Toque em <strong>Esqueceu-se?</strong>. Se não tem e-mail, peça
+                ao coordenador um link novo. O link só funciona uma vez.
+            </div>
+
+            <h3>Instalar a app no telemóvel</h3>
+            <p>
+                Com a app instalada, abre como as outras apps e recebe os avisos
+                mesmo fechada.
+            </p>
+            <table class="def">
+                <tr>
+                    <td>Android</td>
+                    <td>
+                        Abra o site no Chrome, toque nos três pontos e escolha
+                        <strong>Adicionar ao ecrã principal</strong>.
+                    </td>
+                </tr>
+                <tr>
+                    <td>iPhone</td>
+                    <td>
+                        Abra o site no Safari, toque em
+                        <strong>Partilhar</strong> e escolha
+                        <strong>Adicionar ao ecrã principal</strong>.
+                    </td>
+                </tr>
+            </table>
+            <p>
+                Depois, em <strong>Perfil → Notificações</strong>, permita os
+                avisos neste dispositivo.
+            </p>
+        </section>
+
+        <!-- ============ 2 ============ -->
+        <section class="chapter" data-ch="2">
+            <div class="chapter-head">
+                <span class="num">2</span>
+                <h2>
+                    <span class="kicker">O dia a dia</span>O ecrã Início: o seu
+                    próximo turno
+                </h2>
+            </div>
+            <p>
+                Ao entrar, o cartão azul mostra o seu próximo turno. O mais
+                importante é a <strong>hora de chegada</strong>, em números
+                grandes: é a hora a que deve estar no local para montar o
+                equipamento.
+            </p>
+
+            <div class="split wide">
+                <div>
+                    <table class="def">
+                        <tr>
+                            <td>Daqui a 2 dias</td>
+                            <td>Quanto falta, e a data.</td>
+                        </tr>
+                        <tr>
+                            <td>Chegada às 07:30</td>
+                            <td>A hora a que deve chegar.</td>
+                        </tr>
+                        <tr>
+                            <td>Culto de Domingo</td>
+                            <td>O nome do evento.</td>
+                        </tr>
+                        <tr>
+                            <td>Função</td>
+                            <td>O que vai fazer, por exemplo Áudio.</td>
+                        </tr>
+                        <tr>
+                            <td>Horário</td>
+                            <td>Quando o evento começa e acaba.</td>
+                        </tr>
+                        <tr>
+                            <td>Local</td>
+                            <td>Onde é o evento.</td>
+                        </tr>
+                        <tr>
+                            <td>Com quem vai servir</td>
+                            <td>Os colegas escalados consigo, por função.</td>
+                        </tr>
+                    </table>
+                    <p>
+                        No fim do cartão há dois botões:
+                        <span class="key">Pedir troca</span> (capítulo 4) e
+                        <span class="key">Não posso ir</span> (capítulo 5).
+                    </p>
+                </div>
+                <figure>
+                    <div class="phone">
+                        <img src="telas/inicio.png" alt="" />
+                    </div>
+                    <figcaption>O cartão do próximo turno</figcaption>
+                </figure>
+            </div>
+            <div class="note">
+                <b class="lbl">No dia do turno</b>
+                A luz dourada ao lado da data acende-se no dia em que serve.
+                Abaixo do cartão há atalhos para marcar ausências, mudar os seus
+                dias e fazer uma pausa.
+            </div>
+        </section>
+
+        <!-- ============ 3 ============ -->
+        <section class="chapter" data-ch="3">
+            <div class="chapter-head">
+                <span class="num">3</span>
+                <h2>
+                    <span class="kicker">O dia a dia</span>Ver todos os seus
+                    turnos
+                </h2>
+            </div>
+            <p>
+                Toque em <strong>Escala</strong>, em baixo. Aparecem todos os
+                seus turnos, organizados por mês. Cada linha mostra o dia, o
+                evento, a sua função e a hora de chegada.
+            </p>
+            <div class="split">
+                <div>
+                    <ol class="steps">
+                        <li>Toque num turno para o abrir.</li>
+                        <li>Veja o horário e o local.</li>
+                        <li>
+                            Toque em
+                            <strong>Ver a equipa deste evento</strong> para ver
+                            todos os escalados.
+                        </li>
+                        <li>
+                            Se precisar, use
+                            <span class="key">Pedir troca</span> ou
+                            <span class="key">Não posso ir</span>.
+                        </li>
+                    </ol>
+                    <div class="note">
+                        Toque outra vez no turno para o fechar.
+                    </div>
+                </div>
+                <figure>
+                    <div class="phone">
+                        <img src="telas/escala.png" alt="" />
+                    </div>
+                    <figcaption>A minha escala, com um turno aberto</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ 4 ============ -->
+        <section class="chapter" data-ch="4">
+            <div class="chapter-head">
+                <span class="num">4</span>
+                <h2><span class="kicker">Imprevistos</span>Pedir uma troca</h2>
+            </div>
+            <p>
+                Use <strong>Pedir troca</strong> quando não pode ir e quer que
+                um colega fique com o seu turno.
+            </p>
+            <div class="split">
+                <div>
+                    <ol class="steps">
+                        <li>
+                            Abra o turno, no Início ou em Escala, e toque em
+                            <span class="key">Pedir troca</span>.
+                        </li>
+                        <li>
+                            Escolha quem pode assumir:
+                            <ul>
+                                <li>
+                                    <strong>Qualquer colega disponível</strong>
+                                    — o pedido vai para todos os que podem fazer
+                                    essa função nesse dia.
+                                </li>
+                                <li>
+                                    <strong>Um colega da lista</strong> — o
+                                    pedido vai só para essa pessoa.
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            Toque em <span class="key">Enviar pedido</span>.
+                        </li>
+                    </ol>
+                </div>
+                <figure>
+                    <div class="phone">
+                        <img src="telas/pedir-troca.png" alt="" />
+                    </div>
+                    <figcaption>Escolher quem pode assumir</figcaption>
+                </figure>
+            </div>
+            <div class="note red">
+                <b class="lbl">Importante</b>
+                O turno continua seu até um colega aceitar e o coordenador
+                aprovar. Até lá, conte que vai servir.
+            </div>
+            <p>
+                Só aparecem colegas que sabem fazer a função e estão livres
+                nesse dia. Se ninguém puder, o pedido fica aberto e os
+                coordenadores são avisados. Para acompanhar ou cancelar o
+                pedido, vá a <strong>Trocas → Os meus pedidos</strong>.
+            </p>
+
+            <h3>Ficar com o turno de um colega</h3>
+            <div class="split">
+                <div>
+                    <p>
+                        Quando um colega precisa de substituto num turno que
+                        pode fazer, recebe um aviso.
+                    </p>
+                    <ol class="steps">
+                        <li>Toque em <strong>Trocas</strong>, em baixo.</li>
+                        <li>
+                            Em
+                            <strong>Colegas que precisam de substituto</strong>,
+                            toque no turno.
+                        </li>
+                        <li>
+                            Confirme em
+                            <span class="key">Assumir este turno</span>.
+                        </li>
+                    </ol>
+                    <p>
+                        O coordenador aprova a troca e recebe a resposta por
+                        aviso.
+                    </p>
+                </div>
+                <figure>
+                    <div class="phone">
+                        <img src="telas/trocas.png" alt="" />
+                    </div>
+                    <figcaption>A página Trocas</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ 5 ============ -->
+        <section class="chapter" data-ch="5">
+            <div class="chapter-head">
+                <span class="num">5</span>
+                <h2>
+                    <span class="kicker">Imprevistos</span>Avisar que não pode
+                    ir
+                </h2>
+            </div>
+            <p>
+                Use <strong>Não posso ir</strong> quando surge um imprevisto e
+                não tem quem o substitua. Avise o mais cedo possível.
+            </p>
+            <div class="split">
+                <div>
+                    <ol class="steps">
+                        <li>
+                            Abra o turno e toque em
+                            <span class="key">Não posso ir</span>.
+                        </li>
+                        <li>Leia a mensagem.</li>
+                        <li>
+                            Toque no botão vermelho
+                            <span class="key red">Não posso ir</span> para
+                            confirmar.
+                        </li>
+                    </ol>
+                    <p>
+                        Os coordenadores são avisados e o turno é oferecido aos
+                        colegas que podem assumir.
+                    </p>
+                    <div class="note">
+                        Mudou de ideias? Toque em <strong>Cancelar</strong> e o
+                        turno continua seu.
+                    </div>
+                </div>
+                <figure>
+                    <div class="phone">
+                        <img src="telas/nao-posso-ir.png" alt="" />
+                    </div>
+                    <figcaption>Confirmar que não pode ir</figcaption>
+                </figure>
+            </div>
+            <div class="note gold">
+                <b class="lbl">Três dias antes</b>
+                Antes de cada turno, a app pergunta se ainda pode ir. Responda,
+                para a equipa poder planear.
+            </div>
+        </section>
+
+        <!-- ============ 6 ============ -->
+        <section class="chapter" data-ch="6">
+            <div class="chapter-head">
+                <span class="num">6</span>
+                <h2>
+                    <span class="kicker">Planear</span>Marcar ausências e pausas
+                </h2>
+            </div>
+            <p>
+                Se sabe com antecedência que não pode servir, marque a ausência.
+                Assim não é escalado nesses dias.
+            </p>
+
+            <h3>Um só dia</h3>
+            <div class="split">
+                <div>
+                    <ol class="steps">
+                        <li>Toque em <strong>Ausências</strong>, em baixo.</li>
+                        <li>
+                            Em <strong>Bloquear datas</strong>, deixe
+                            <strong>Um dia</strong> escolhido.
+                        </li>
+                        <li>
+                            Toque num dos seus próximos turnos, ou escolha o dia
+                            no calendário.
+                        </li>
+                        <li>
+                            Se quiser, escreva o motivo. Só os coordenadores o
+                            veem.
+                        </li>
+                        <li>
+                            Toque em <span class="key">Bloquear este dia</span>.
+                        </li>
+                    </ol>
+                </div>
+                <figure>
+                    <div class="phone">
+                        <img src="telas/ausencia-um-dia.png" alt="" />
+                    </div>
+                    <figcaption>Bloquear um dia</figcaption>
+                </figure>
+            </div>
+
+            <h3>Vários dias seguidos</h3>
+            <div class="split">
+                <div>
+                    <p>Para férias ou uma viagem.</p>
+                    <ol class="steps">
+                        <li>
+                            Em <strong>Bloquear datas</strong>, toque em
+                            <strong>Vários dias</strong>.
+                        </li>
+                        <li>
+                            Escolha o primeiro dia em <strong>De</strong> e o
+                            último em <strong>Até</strong>.
+                        </li>
+                        <li>
+                            Toque em
+                            <span class="key">Bloquear estes dias</span>.
+                        </li>
+                    </ol>
+                    <p>
+                        Se já tinha turnos nesses dias, os coordenadores
+                        procuram um substituto. As datas marcadas aparecem em
+                        <strong>Datas bloqueadas</strong>, no fim da página, e
+                        pode apagá-las aí.
+                    </p>
+                </div>
+                <figure>
+                    <div class="phone">
+                        <img src="telas/ausencia-varios.png" alt="" />
+                    </div>
+                    <figcaption>Bloquear vários dias</figcaption>
+                </figure>
+            </div>
+
+            <h3>Fazer uma pausa</h3>
+            <div class="split">
+                <div>
+                    <p>
+                        Para uma fase mais ocupada: deixa de ser escalado até à
+                        data que escolher.
+                    </p>
+                    <ol class="steps">
+                        <li>
+                            Em <strong>Fazer uma pausa</strong>, escolha
+                            <strong>1 mês</strong>, <strong>3 meses</strong> ou
+                            <strong>Sem data de regresso</strong>.
+                        </li>
+                        <li>
+                            Toque em <span class="key">Fazer pausa</span> e
+                            confirme.
+                        </li>
+                    </ol>
+                    <div class="note">
+                        Para voltar antes do tempo, toque em
+                        <strong>Voltar a participar</strong>.
+                    </div>
+                </div>
+                <figure>
+                    <div class="phone">
+                        <img src="telas/pausa.png" alt="" />
+                    </div>
+                    <figcaption>Fazer uma pausa</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ 7 ============ -->
+        <section class="chapter" data-ch="7">
+            <div class="chapter-head">
+                <span class="num">7</span>
+                <h2>
+                    <span class="kicker">Planear</span>Mudar os dias em que pode
+                    servir
+                </h2>
+            </div>
+            <p>
+                Os seus dias habituais ajudam o coordenador a fazer escalas
+                justas. Mantenha-os atualizados.
+            </p>
+            <div class="split">
+                <div>
+                    <ol class="steps">
+                        <li>
+                            Toque em <strong>Perfil</strong> e depois em
+                            <strong>Os meus dados</strong>.
+                        </li>
+                        <li>Desça até <strong>Disponibilidade</strong>.</li>
+                        <li>
+                            Toque nos dias e períodos em que pode servir. Os
+                            escolhidos ficam azuis.
+                        </li>
+                        <li>
+                            Escolha com que frequência pode servir, por exemplo
+                            2 a 3 vezes por mês.
+                        </li>
+                        <li>
+                            Desça até ao fim e toque em
+                            <span class="key">Guardar</span>.
+                        </li>
+                    </ol>
+                </div>
+                <figure>
+                    <div class="phone">
+                        <img src="telas/disponibilidade.png" alt="" />
+                    </div>
+                    <figcaption>Dias e períodos disponíveis</figcaption>
+                </figure>
+            </div>
+            <div class="note">
+                As mudanças só contam para as escalas ainda não publicadas. Os
+                turnos já marcados não mudam.
+            </div>
+            <div class="note gold">
+                <b class="lbl">Eventos especiais</b>
+                Para eventos fora da rotina semanal, pode ser escalado noutros
+                dias. Se não puder ir, marque uma ausência (capítulo 6).
+            </div>
+        </section>
+
+        <!-- ============ 8 ============ -->
+        <section class="chapter" data-ch="8">
+            <div class="chapter-head">
+                <span class="num">8</span>
+                <h2>
+                    <span class="kicker">Planear</span>Escolher os avisos que
+                    recebe
+                </h2>
+            </div>
+            <p>
+                A app avisa quando sai uma escala, quando um turno muda e na
+                véspera de cada turno.
+            </p>
+            <div class="split">
+                <div>
+                    <ol class="steps">
+                        <li>
+                            Toque em <strong>Perfil</strong> e depois em
+                            <strong>Notificações</strong>.
+                        </li>
+                        <li>Deixe marcados os avisos que quer receber.</li>
+                        <li>Toque em <span class="key">Guardar</span>.</li>
+                    </ol>
+                    <table class="def">
+                        <tr>
+                            <td>Escala publicada</td>
+                            <td>Saiu uma escala com turnos seus.</td>
+                        </tr>
+                        <tr>
+                            <td>Confirmação</td>
+                            <td>
+                                Três dias antes, para dizer se ainda pode ir.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Lembrete</td>
+                            <td>Na véspera, com a hora de chegada.</td>
+                        </tr>
+                        <tr>
+                            <td>Pedidos de troca</td>
+                            <td>Um colega procura substituto.</td>
+                        </tr>
+                    </table>
+                </div>
+                <figure>
+                    <div class="phone">
+                        <img src="telas/notificacoes.png" alt="" />
+                    </div>
+                    <figcaption>Escolher os avisos</figcaption>
+                </figure>
+            </div>
+            <div class="note">
+                Recomendamos deixar tudo marcado. O que desligar continua a
+                aparecer no sino da app.
+            </div>
+        </section>
+
+        <!-- ============ 9 ============ -->
+        <section class="chapter" data-ch="9">
+            <div class="chapter-head">
+                <span class="num">9</span>
+                <h2><span class="kicker">Ajuda</span>Perguntas frequentes</h2>
+            </div>
+            <dl class="faq">
+                <dt>Não consigo entrar.</dt>
+                <dd>
+                    Confirme o número, sem +258, e a palavra-passe. Toque no
+                    ícone do olho para ver o que escreveu. Se não resultar,
+                    toque em <strong>Esqueceu-se?</strong> ou fale com um
+                    coordenador.
+                </dd>
+                <dt>O meu cadastro ainda não foi aprovado.</dt>
+                <dd>
+                    Espere pela aprovação. Se for pedida uma correção, corrija
+                    os dados e reenvie o cadastro.
+                </dd>
+                <dt>Não vejo nenhum turno.</dt>
+                <dd>
+                    A escala ainda não foi publicada, ou não foi escalado nesse
+                    período. Quando sair, recebe um aviso.
+                </dd>
+                <dt>Pedi troca. Já posso faltar?</dt>
+                <dd>
+                    Não. O turno continua seu até um colega aceitar e o
+                    coordenador aprovar.
+                </dd>
+                <dt>Vou viajar duas semanas.</dt>
+                <dd>
+                    Marque uma ausência de
+                    <strong>Vários dias</strong> (capítulo 6).
+                </dd>
+                <dt>Fui escalado num dia que não escolhi.</dt>
+                <dd>
+                    Pode acontecer em eventos especiais. Se não puder ir, use
+                    <strong>Pedir troca</strong> ou
+                    <strong>Não posso ir</strong>.
+                </dd>
+                <dt>Não recebo avisos no telemóvel.</dt>
+                <dd>
+                    Instale a app (capítulo 1) e permita as notificações em
+                    <strong>Perfil → Notificações</strong>. Confirme que os
+                    avisos não estão bloqueados no navegador.
+                </dd>
+            </dl>
+        </section>
+
+        <!-- ============ BACK ============ -->
+        <section class="back">
+            <img src="telas/logo.png" alt="" />
+            <div class="display">Obrigado por servir.</div>
+            <p style="margin-bottom: 6mm">
+                Ainda tem dúvidas? Fale com um coordenador da equipa de média.
+            </p>
+            <p>
+                Cue App · Equipa de média da RTVAO<br />Rádio e Televisão Alfa
+                &amp; Ómega — IEAD, Ministério Alfa &amp; Ómega
+            </p>
+        </section>
+    </body>
+</html>
