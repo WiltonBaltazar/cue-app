@@ -19,7 +19,7 @@ class HomeController extends Controller
      */
     public function __invoke(#[CurrentUser] User $user, OpenSwaps $openSwaps): Response|RedirectResponse
     {
-        if ($user->isCoordinator() && ! VolunteerView::active($user)) {
+        if ($user->isCoordinator() && VolunteerView::target($user) === null) {
             return to_route('coord.dashboard');
         }
 

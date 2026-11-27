@@ -68,6 +68,7 @@ class AuditController extends Controller
         'updated' => 'Alterou',
         'deleted' => 'Apagou',
         'viewed_sensitive_profile' => 'Consultou o perfil completo',
+        'viewed_as_volunteer' => 'Viu a app como o voluntário',
         'issued_reset_link' => 'Emitiu link de redefinição',
         'settings_updated' => 'Alterou as definições',
     ];

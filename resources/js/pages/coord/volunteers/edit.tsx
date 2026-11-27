@@ -28,6 +28,7 @@ import {
     update,
     pause as pauseVolunteer,
     resume as resumeVolunteer,
+    viewAs,
 } from '@/routes/coord/volunteers';
 import { edit as editProfile } from '@/routes/coord/volunteers/profile';
 import type { VolunteerFull } from '@/types';
@@ -85,6 +86,13 @@ export default function VolunteerEdit({
                             className="text-sm underline-offset-4 hover:underline"
                         >
                             Editar dados
+                        </Link>
+                        <Link
+                            href={viewAs(volunteer.id)}
+                            as="button"
+                            className="text-sm underline-offset-4 hover:underline"
+                        >
+                            Ver como este voluntário
                         </Link>
                     </div>
                 </header>

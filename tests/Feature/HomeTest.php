@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use App\Models\Volunteer;
+use Spatie\Activitylog\Models\Activity;
 
 test('guests are sent to the login page', function () {
     $this->get(route('home'))->assertRedirect(route('login'));
@@ -35,41 +36,57 @@ test('shared props expose only what the UI needs about the user', function () {
                 'phone' => $user->phone,
                 'role' => 'volunteer',
                 'volunteerStatus' => null,
-                'volunteerView' => false,
+                'volunteerView' => null,
                 'twoFactorEnabled' => false,
             ])
             ->where('unreadNotifications', 0));
 });
 
-test('a coordinator who serves can switch to the volunteer view and back', function () {
+test('a coordinator can view the app as a volunteer, read-only, until they open management', function () {
     $coordinator = User::factory()->coordinator()->create();
-    Volunteer::factory()->active()->for($coordinator)->create();
-    $this->actingAs($coordinator->fresh());
+    $volunteer = Volunteer::factory()->active()->create(['full_name' => 'Ana Machava']);
+    $this->actingAs($coordinator);
 
-    $this->post(route('volunteer-view.enter'))->assertRedirect(route('home'));
+    $this->post(route('coord.volunteers.view-as', $volunteer))->assertRedirect(route('home'));
 
     $this->get(route('home'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('volunteer/home')
-            ->where('auth.user.volunteerView', true));
+            ->where('auth.user.volunteerView', ['id' => $volunteer->id, 'name' => 'Ana Machava']));
+
+    // Their pages show their data.
+    $this->get(route('absences.index'))->assertOk();
+    $this->get(route('volunteer.profile.edit'))
+        ->assertInertia(fn ($page) => $page->where('volunteer.id', $volunteer->id));
+
+    // Nothing can be changed on their behalf.
+    $this->post(route('profile.pause'))->assertRedirect();
+    expect($volunteer->fresh()->status->value)->toBe('active');
+
+    expect(Activity::query()->where('event', 'viewed_as_volunteer')->where('subject_id', $volunteer->id)->exists())->toBeTrue();
 
     $this->get(route('coord.dashboard'))
-        ->assertInertia(fn ($page) => $page->where('auth.user.volunteerView', false));
+        ->assertInertia(fn ($page) => $page->where('auth.user.volunteerView', null));
 
     $this->get(route('home'))->assertRedirect(route('coord.dashboard'));
 });
 
-test('a coordinator without a serving profile is sent to create one', function () {
-    $this->actingAs(User::factory()->coordinator()->create())
-        ->post(route('volunteer-view.enter'))
-        ->assertRedirect(route('coord.serving-profile.create'));
+test('a coordinator who serves can view their own app without naming a volunteer', function () {
+    $coordinator = User::factory()->coordinator()->create();
+    $own = Volunteer::factory()->active()->for($coordinator)->create();
 
-    $this->get(route('home'))->assertRedirect(route('coord.dashboard'));
+    $this->actingAs($coordinator->fresh())->post(route('volunteer-view.enter'))->assertRedirect(route('home'));
+
+    $this->get(route('home'))
+        ->assertInertia(fn ($page) => $page->where('auth.user.volunteerView.id', $own->id));
+    expect(Activity::query()->where('event', 'viewed_as_volunteer')->exists())->toBeFalse();
 });
 
-test('volunteers can not use the volunteer view switch', function () {
+test('volunteers can not view the app as someone else', function () {
+    $other = Volunteer::factory()->active()->create();
+
     $this->actingAs(User::factory()->volunteer()->create())
-        ->post(route('volunteer-view.enter'))
+        ->post(route('coord.volunteers.view-as', $other))
         ->assertForbidden();
 });

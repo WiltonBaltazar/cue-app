@@ -4,22 +4,38 @@ namespace App\Http\Controllers\Coordinator;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Volunteer;
 use App\Support\VolunteerView;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 
 /**
- * "Ver como voluntário": a coordinator with a serving profile opens the volunteer app.
+ * "Ver como voluntário": a coordinator opens the volunteer app as one volunteer sees it (read-only).
+ * Without a volunteer chosen, a coordinator who also serves sees their own.
  */
 class VolunteerViewController extends Controller
 {
-    public function __invoke(#[CurrentUser] User $user): RedirectResponse
+    public function __invoke(#[CurrentUser] User $coordinator, ?Volunteer $volunteer = null): RedirectResponse
     {
-        if ($user->volunteer === null) {
-            return to_route('coord.serving-profile.create');
+        $volunteer ??= $coordinator->volunteer;
+
+        if ($volunteer === null) {
+            return to_route('coord.volunteers.index');
         }
 
-        VolunteerView::enter();
+        Gate::authorize('viewSensitive', $volunteer);
+        abort_if($volunteer->isAnonymized(), 404);
+
+        if ($volunteer->user_id !== $coordinator->id) {
+            activity('audit')
+                ->performedOn($volunteer)
+                ->causedBy($coordinator)
+                ->event('viewed_as_volunteer')
+                ->log('viewed_as_volunteer');
+        }
+
+        VolunteerView::enter($volunteer);
 
         return to_route('home');
     }

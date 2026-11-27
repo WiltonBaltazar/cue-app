@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ApplyVolunteerView;
 use App\Http\Middleware\EnsureConsentCurrent;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureVolunteerActive;
@@ -52,6 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             HandleAppearance::class,
+            ApplyVolunteerView::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             EnsureConsentCurrent::class,

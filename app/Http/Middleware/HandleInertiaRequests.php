@@ -50,8 +50,11 @@ class HandleInertiaRequests extends Middleware
                     'phone' => $user->phone,
                     'role' => $user->role->value,
                     'volunteerStatus' => $user->volunteer?->status->value,
-                    // Lazy: route middleware may leave the view after this runs.
-                    'volunteerView' => fn () => VolunteerView::active($user),
+                    // The volunteer a coordinator is viewing the app as (read-only), if any.
+                    'volunteerView' => ($viewed = VolunteerView::target($user)) === null ? null : [
+                        'id' => $viewed->id,
+                        'name' => $viewed->full_name,
+                    ],
                     'twoFactorEnabled' => $user->hasConfirmedTwoFactor(),
                 ],
             ],

@@ -16,7 +16,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { home } from '@/routes';
-import { dashboard } from '@/routes/coord';
+import { edit as editVolunteer } from '@/routes/coord/volunteers';
 import { index as absences } from '@/routes/absences';
 import { edit as editProfile } from '@/routes/profile';
 import { index as swaps } from '@/routes/swaps';
@@ -52,6 +52,8 @@ const navItems: (NavItem & { matchPrefix?: string })[] = [
 export default function VolunteerLayout({ children }: PropsWithChildren) {
     const { isCurrentUrl } = useCurrentUrl();
     const { auth } = usePage().props;
+    // A coordinator viewing the app as one volunteer (read-only).
+    const viewing = auth.user?.volunteerView ?? null;
 
     const isActive = (item: (typeof navItems)[number]) =>
         isCurrentUrl(item.href) ||
@@ -99,10 +101,15 @@ export default function VolunteerLayout({ children }: PropsWithChildren) {
                     </nav>
 
                     <div className="ml-auto flex items-center gap-1">
-                        {auth.user?.role === 'coordinator' && (
+                        {viewing === null ? (
+                            <>
+                                <PushButton />
+                                <NotificationBell />
+                            </>
+                        ) : (
                             <Button variant="outline" size="sm" asChild>
                                 <Link
-                                    href={dashboard()}
+                                    href={editVolunteer(viewing.id)}
                                     aria-label="Voltar à gestão"
                                 >
                                     <LayoutGrid aria-hidden="true" />
@@ -112,10 +119,14 @@ export default function VolunteerLayout({ children }: PropsWithChildren) {
                                 </Link>
                             </Button>
                         )}
-                        <PushButton />
-                        <NotificationBell />
                     </div>
                 </div>
+                {viewing !== null && (
+                    <p className="border-t bg-muted px-4 py-2 text-center text-sm">
+                        A ver a app como <strong>{viewing.name}</strong> · só
+                        leitura
+                    </p>
+                )}
             </header>
 
             <main className="mx-auto w-full max-w-3xl flex-1 px-4 pt-4 pb-24 md:pb-8">

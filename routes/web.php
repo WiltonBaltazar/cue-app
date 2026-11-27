@@ -33,7 +33,6 @@ use App\Http\Controllers\Volunteer\ProfileController as VolunteerProfileControll
 use App\Http\Controllers\Volunteer\ShiftController;
 use App\Http\Controllers\Volunteer\StatusController;
 use App\Http\Controllers\Volunteer\SwapController;
-use App\Http\Middleware\LeaveVolunteerView;
 use Illuminate\Support\Facades\Route;
 use Spatie\Honeypot\ProtectAgainstSpam;
 
@@ -96,7 +95,7 @@ Route::post('vista-voluntario', VolunteerViewController::class)
     ->middleware(['auth', 'role:coordinator'])
     ->name('volunteer-view.enter');
 
-Route::middleware(['auth', 'role:coordinator', LeaveVolunteerView::class])
+Route::middleware(['auth', 'role:coordinator'])
     ->prefix('gestao')
     ->name('coord.')
     ->group(function () {
@@ -126,6 +125,7 @@ Route::middleware(['auth', 'role:coordinator', LeaveVolunteerView::class])
         Route::get('voluntarios/{volunteer}/dados', [VolunteerController::class, 'editProfile'])->name('volunteers.profile.edit');
         Route::put('voluntarios/{volunteer}/dados', [VolunteerController::class, 'updateProfile'])->name('volunteers.profile.update');
         Route::get('voluntarios/{volunteer}/historico', VolunteerHistoryController::class)->name('volunteers.history');
+        Route::post('voluntarios/{volunteer}/ver-como', VolunteerViewController::class)->name('volunteers.view-as');
         Route::post('voluntarios/{volunteer}/link-redefinicao', [VolunteerController::class, 'issueResetLink'])->name('reset-links.store');
         Route::post('voluntarios/{volunteer}/pausa', [VolunteerController::class, 'pause'])->name('volunteers.pause');
         Route::post('voluntarios/{volunteer}/retomar', [VolunteerController::class, 'resume'])->name('volunteers.resume');
