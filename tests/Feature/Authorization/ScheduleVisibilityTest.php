@@ -143,7 +143,7 @@ test('opened from a shift, the team schedule shows only that event', function ()
         ->assertInertia(fn ($page) => $page->where('focusedEventId', null)->has('events', 2));
 });
 
-test('volunteers download the published schedule as a PDF with short names', function () {
+test('volunteers download the published schedule as a PDF with first and last names', function () {
     $this->actingAs($this->me->user)
         ->get(route('schedules.pdf', $this->scenario->schedule))
         ->assertNotFound();
@@ -165,9 +165,9 @@ test('volunteers download the published schedule as a PDF with short names', fun
         ->assertHeader('content-type', 'application/pdf');
 
     expect(substr((string) $response->getContent(), 0, 4))->toBe('%PDF')
-        ->and($html)->toContain('Ana M.')
-        ->toContain('João S.')
-        ->not->toContain('Machava')
-        ->not->toContain('Sitoe')
+        ->and($html)->toContain('Ana Machava')
+        ->toContain('João Sitoe')
+        ->not->toContain('Maria')
+        ->not->toContain('Pedro')
         ->not->toContain((string) $this->colleague->user?->phone);
 });

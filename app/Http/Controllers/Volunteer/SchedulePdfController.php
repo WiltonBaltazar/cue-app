@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * The published team schedule as a PDF, with colleagues as "Nome A." (FR-027).
+ * The published team schedule as a PDF, with first and last names like the coordinator's (FR-036).
  */
 class SchedulePdfController extends Controller
 {
@@ -18,6 +18,6 @@ class SchedulePdfController extends Controller
         abort_unless($schedule->isPublished(), 404);
         Gate::authorize('view', $schedule);
 
-        return $render->download($schedule, fullNames: false);
+        return $render->download($schedule, fullNames: true);
     }
 }

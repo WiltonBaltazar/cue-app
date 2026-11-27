@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\File;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Printable schedule (FR-015), no contacts. Coordinators get first and last names (FR-036);
- * volunteers get colleagues as "Nome A.", as on screen (FR-027).
+ * Printable schedule (FR-015), no contacts. Prints first and last names (FR-036), or "Nome A."
+ * when $fullNames is false.
  */
 class RenderSchedulePdf
 {
