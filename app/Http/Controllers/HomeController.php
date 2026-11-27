@@ -6,6 +6,7 @@ use App\Enums\VolunteerStatus;
 use App\Models\User;
 use App\Support\OpenSwaps;
 use App\Support\VolunteerShifts;
+use App\Support\VolunteerView;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -14,11 +15,11 @@ use Inertia\Response;
 class HomeController extends Controller
 {
     /**
-     * "/" is the volunteer home; coordinators start in the management area.
+     * "/" is the volunteer home; coordinators start in the management area unless they chose the volunteer view.
      */
     public function __invoke(#[CurrentUser] User $user, OpenSwaps $openSwaps): Response|RedirectResponse
     {
-        if ($user->isCoordinator()) {
+        if ($user->isCoordinator() && ! VolunteerView::active($user)) {
             return to_route('coord.dashboard');
         }
 

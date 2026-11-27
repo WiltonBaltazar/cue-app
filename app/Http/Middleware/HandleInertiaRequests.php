@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\VolunteerView;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -49,6 +50,8 @@ class HandleInertiaRequests extends Middleware
                     'phone' => $user->phone,
                     'role' => $user->role->value,
                     'volunteerStatus' => $user->volunteer?->status->value,
+                    // Lazy: route middleware may leave the view after this runs.
+                    'volunteerView' => fn () => VolunteerView::active($user),
                     'twoFactorEnabled' => $user->hasConfirmedTwoFactor(),
                 ],
             ],

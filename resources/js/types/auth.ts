@@ -10,6 +10,7 @@ export type User = {
     phone: string;
     role: UserRole;
     volunteerStatus: string | null;
+    volunteerView: boolean;
     twoFactorEnabled: boolean;
     avatar?: string;
 };

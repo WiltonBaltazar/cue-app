@@ -5,7 +5,8 @@ import type { BreadcrumbItem } from '@/types';
 
 /**
  * Default layout for signed-in pages: coordinators get the sidebar, volunteers
- * the phone-first bottom navigation.
+ * the phone-first bottom navigation. A coordinator in the volunteer view gets
+ * the volunteer layout too, with a way back to management.
  */
 export default function AppLayout({
     breadcrumbs = [],
@@ -16,7 +17,7 @@ export default function AppLayout({
 }) {
     const { auth } = usePage().props;
 
-    if (auth.user?.role === 'coordinator') {
+    if (auth.user?.role === 'coordinator' && !auth.user.volunteerView) {
         return (
             <CoordinatorLayout breadcrumbs={breadcrumbs}>
                 {children}

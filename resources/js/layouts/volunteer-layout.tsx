@@ -1,9 +1,10 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeftRight,
     CalendarDays,
     CalendarOff,
     House,
+    LayoutGrid,
     UserRound,
 } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
@@ -13,7 +14,9 @@ import { InstallAppPrompt } from '@/components/app/install-app';
 import { PushButton, PushPrompt } from '@/components/app/push-prompt';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { home } from '@/routes';
+import { dashboard } from '@/routes/coord';
 import { index as absences } from '@/routes/absences';
 import { edit as editProfile } from '@/routes/profile';
 import { index as swaps } from '@/routes/swaps';
@@ -48,6 +51,7 @@ const navItems: (NavItem & { matchPrefix?: string })[] = [
  */
 export default function VolunteerLayout({ children }: PropsWithChildren) {
     const { isCurrentUrl } = useCurrentUrl();
+    const { auth } = usePage().props;
 
     const isActive = (item: (typeof navItems)[number]) =>
         isCurrentUrl(item.href) ||
@@ -95,6 +99,19 @@ export default function VolunteerLayout({ children }: PropsWithChildren) {
                     </nav>
 
                     <div className="ml-auto flex items-center gap-1">
+                        {auth.user?.role === 'coordinator' && (
+                            <Button variant="outline" size="sm" asChild>
+                                <Link
+                                    href={dashboard()}
+                                    aria-label="Voltar à gestão"
+                                >
+                                    <LayoutGrid aria-hidden="true" />
+                                    <span className="hidden sm:inline">
+                                        Voltar à gestão
+                                    </span>
+                                </Link>
+                            </Button>
+                        )}
                         <PushButton />
                         <NotificationBell />
                     </div>

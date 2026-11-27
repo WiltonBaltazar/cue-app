@@ -21,6 +21,7 @@ use App\Http\Controllers\Coordinator\TeamRoleController;
 use App\Http\Controllers\Coordinator\VolunteerAbsenceController;
 use App\Http\Controllers\Coordinator\VolunteerController;
 use App\Http\Controllers\Coordinator\VolunteerHistoryController;
+use App\Http\Controllers\Coordinator\VolunteerViewController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Public\RegistrationController;
 use App\Http\Controllers\Volunteer\AbsenceController;
@@ -32,6 +33,7 @@ use App\Http\Controllers\Volunteer\ProfileController as VolunteerProfileControll
 use App\Http\Controllers\Volunteer\ShiftController;
 use App\Http\Controllers\Volunteer\StatusController;
 use App\Http\Controllers\Volunteer\SwapController;
+use App\Http\Middleware\LeaveVolunteerView;
 use Illuminate\Support\Facades\Route;
 use Spatie\Honeypot\ProtectAgainstSpam;
 
@@ -90,7 +92,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('perfil/remover-dados', [DataRemovalController::class, 'destroy'])->name('data-removal.destroy');
 });
 
-Route::middleware(['auth', 'role:coordinator'])
+Route::post('vista-voluntario', VolunteerViewController::class)
+    ->middleware(['auth', 'role:coordinator'])
+    ->name('volunteer-view.enter');
+
+Route::middleware(['auth', 'role:coordinator', LeaveVolunteerView::class])
     ->prefix('gestao')
     ->name('coord.')
     ->group(function () {
