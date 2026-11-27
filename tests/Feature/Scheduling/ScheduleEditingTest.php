@@ -112,6 +112,28 @@ test('regenerating swaps people when others are equally fair', function () {
         ->and($picked())->not->toBe($first);
 });
 
+test('regenerating replaces a generated date with the event added by hand', function () {
+    $this->scenario->volunteer();
+    $this->scenario->volunteer();
+    $template = ActivityTemplate::factory()->create(['name' => 'Culto de Domingo', 'starts_on' => LocalTime::today()->subWeek()->toDateString()]);
+    $this->scenario->event->update(['activity_template_id' => $template->id]);
+
+    $this->actingAs($this->coordinator)->post(route('coord.schedules.generate', $this->scenario->schedule))->assertSessionHasNoErrors();
+    expect($this->scenario->event->assignments()->count())->toBe(2);
+
+    $byHand = Event::factory()->create([
+        'name' => 'CULTO DE DOMINGO',
+        ...$this->scenario->event->only(['date', 'period', 'arrival_at', 'starts_at', 'ends_at', 'teardown_until']),
+    ]);
+    $byHand->positions()->create(['team_role_id' => $this->scenario->camera->id, 'quantity' => 2]);
+
+    $this->actingAs($this->coordinator)->post(route('coord.schedules.generate', $this->scenario->schedule))->assertSessionHasNoErrors();
+
+    expect(Event::query()->whereKey($this->scenario->event->id)->exists())->toBeFalse()
+        ->and($byHand->refresh()->activity_template_id)->toBe($template->id)
+        ->and($byHand->assignments()->count())->toBe(2);
+});
+
 test('a manual edit that breaks a rule only warns: no note needed, and it is audited', function () {
     $unavailable = $this->scenario->volunteer(slots: [[2, Period::Evening]]);
 

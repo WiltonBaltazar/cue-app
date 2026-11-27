@@ -212,19 +212,35 @@ test('past dates are not filled', function () {
     expect(Event::query()->pluck('date')->map->toDateString()->all())->toBe(['2026-11-08']);
 });
 
-test('a date already set up by hand as an extraordinary event of the same activity is skipped', function () {
+test('creating an activity adopts the events already added by hand on its dates', function () {
+    $sunday = Event::factory()->create(['name' => 'Culto público', 'date' => '2026-11-15']);
+    $farOff = Event::factory()->create(['name' => 'CULTO PÚBLICO', 'date' => '2027-03-07']);
+    $other = Event::factory()->create(['name' => 'Conferência', 'date' => '2026-11-22']);
     $template = sundayTemplate(['name' => 'CULTO PÚBLICO']);
-    Event::factory()->create(['name' => 'Culto público', 'date' => '2026-11-15']);
-    Event::factory()->create(['name' => 'CULTO PÚBLICO', 'date' => '2027-03-07']);
-    Event::factory()->create(['name' => 'Conferência', 'date' => '2026-11-22']);
 
     app(GenerateOccurrences::class)->handle();
     app(GenerateOccurrences::class)->fillBetween(CarbonImmutable::parse('2027-03-01'), CarbonImmutable::parse('2027-03-31'));
 
-    $recurring = $template->events()->pluck('date')->map->toDateString();
+    foreach ([$sunday, $farOff] as $byHand) {
+        $byHand->refresh();
 
-    expect($recurring)->not->toContain('2026-11-15')
-        ->and($recurring)->not->toContain('2027-03-07')
-        ->and($recurring)->toContain('2026-11-22')
-        ->and($recurring)->toContain('2027-03-14');
+        expect($byHand->activity_template_id)->toBe($template->id)
+            ->and($byHand->type)->toBe(EventType::Recurring)
+            ->and($byHand->is_customized)->toBeTrue()
+            ->and(Event::query()->where('date', $byHand->date->toDateString())->count())->toBe(1);
+    }
+
+    expect($other->refresh()->type)->toBe(EventType::Special)
+        ->and($template->events()->pluck('date')->map->toDateString())->toContain('2026-11-22', '2027-03-14');
+});
+
+test('a generated duplicate of an event added by hand is replaced by it', function () {
+    $template = sundayTemplate(['name' => 'CULTO PÚBLICO']);
+    app(GenerateOccurrences::class)->handle();
+    $byHand = Event::factory()->create(['name' => 'CULTO PÚBLICO', 'date' => '2026-11-15']);
+
+    app(GenerateOccurrences::class)->fillBetween(CarbonImmutable::parse('2026-11-01'), CarbonImmutable::parse('2026-11-30'));
+
+    expect(Event::query()->where('date', '2026-11-15')->pluck('id')->all())->toBe([$byHand->id])
+        ->and($byHand->refresh()->activity_template_id)->toBe($template->id);
 });

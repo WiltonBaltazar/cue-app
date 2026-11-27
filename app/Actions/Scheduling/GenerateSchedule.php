@@ -35,10 +35,6 @@ class GenerateSchedule
         }
 
         return DB::transaction(function () use ($schedule): array {
-            if (! $schedule->isForSingleEvent()) {
-                $this->occurrences->fillBetween($schedule->starts_on, $schedule->ends_on);
-            }
-
             $previous = $schedule->assignments()
                 ->where('source', Assignment::SOURCE_AUTO)
                 ->where('is_locked', false);
@@ -49,6 +45,12 @@ class GenerateSchedule
                 ->all();
 
             $previous->delete();
+
+            // After the automatic assignments are gone, so occurrences duplicating an event
+            // added by hand are free to be removed.
+            if (! $schedule->isForSingleEvent()) {
+                $this->occurrences->fillBetween($schedule->starts_on, $schedule->ends_on);
+            }
 
             $context = $this->loader->forPeriod($schedule->starts_on, $schedule->ends_on);
             $result = $this->generator->generate(

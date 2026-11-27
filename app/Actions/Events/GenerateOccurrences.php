@@ -14,11 +14,11 @@ use Illuminate\Support\Facades\DB;
 /**
  * Keeps recurring activities' occurrences in step with their templates for the configured
  * horizon (US2, FR-008, FR-009):
- * - creates missing occurrences of active templates, except on dates where the same activity
- *   was already added by hand as an extraordinary event (it stands in for the occurrence);
+ * - creates missing occurrences of active templates; where the same activity was already
+ *   added by hand as an extraordinary event, that event becomes the occurrence instead;
  * - re-syncs future, non-customised, scheduled occurrences with the template;
  * - removes future, non-customised, scheduled occurrences that no longer match
- *   (weekday changed or template deactivated).
+ *   (weekday changed, template deactivated, or a duplicate of an event added by hand).
  * Past, customised and cancelled occurrences, and any occurrence that already has
  * assignments, are never touched.
  */
@@ -64,14 +64,21 @@ class GenerateOccurrences
             $templates = ActivityTemplate::query()->where('is_active', true)->with('positions')->get();
 
             foreach ($templates as $template) {
+                $byHand = $this->addedByHand($template, $firstDay, $lastDay);
+                $this->removeStale($template, CarbonImmutable::parse($firstDay), $byHand);
                 $existing = $template->events()
                     ->betweenDates(CarbonImmutable::parse($firstDay), CarbonImmutable::parse($lastDay))
                     ->get()
                     ->keyBy(fn (Event $event) => $event->date->toDateString());
-                $byHand = $this->addedByHand($template, $firstDay, $lastDay);
 
                 for ($date = CarbonImmutable::parse($firstDay); $date->toDateString() <= $lastDay; $date = $date->addDay()) {
-                    if ($template->occursOn($date) && ! $existing->has($date->toDateString()) && ! isset($byHand[$date->toDateString()])) {
+                    if (! $template->occursOn($date) || $existing->has($date->toDateString())) {
+                        continue;
+                    }
+
+                    if (isset($byHand[$date->toDateString()])) {
+                        $this->adopt($byHand[$date->toDateString()], $template);
+                    } else {
                         $this->createOccurrence($template, $date);
                         $created++;
                     }
@@ -84,7 +91,7 @@ class GenerateOccurrences
 
     private function syncTemplate(ActivityTemplate $template, CarbonImmutable $today, CarbonImmutable $horizon): int
     {
-        $this->removeStale($template, $today);
+        $this->removeStale($template, $today, $this->addedByHand($template, $today->toDateString(), '9999-12-31'));
 
         if (! $template->is_active) {
             return 0;
@@ -107,7 +114,13 @@ class GenerateOccurrences
 
             $event = $existing->get($date->toDateString());
 
-            if ($event === null && ! isset($byHand[$date->toDateString()])) {
+            if ($event !== null) {
+                continue;
+            }
+
+            if (isset($byHand[$date->toDateString()])) {
+                $this->adopt($byHand[$date->toDateString()], $template);
+            } else {
                 $this->createOccurrence($template, $date);
                 $created++;
             }
@@ -124,10 +137,10 @@ class GenerateOccurrences
     }
 
     /**
-     * Dates with an extraordinary event of the same name, e.g. a service set up by hand before
-     * its recurring activity existed. Generating there would put the service twice in a schedule.
+     * Extraordinary events of the same name by date, e.g. services set up by hand before their
+     * recurring activity existed. Generating there would put the service twice in a schedule.
      *
-     * @return array<string, true>
+     * @return array<string, Event>
      */
     private function addedByHand(ActivityTemplate $template, string $from, string $to): array
     {
@@ -135,11 +148,24 @@ class GenerateOccurrences
             ->where('type', EventType::Special)
             ->where('status', '!=', EventStatus::Cancelled)
             ->whereBetween('date', [$from, $to])
-            ->get(['name', 'date'])
+            ->get()
             // Compared here: SQLite's lower() leaves accented capitals ("PÚBLICO") as they are.
             ->filter(fn (Event $event): bool => mb_strtolower(trim($event->name)) === mb_strtolower(trim($template->name)))
-            ->mapWithKeys(fn (Event $event) => [$event->date->toDateString() => true])
+            ->keyBy(fn (Event $event) => $event->date->toDateString())
             ->all();
+    }
+
+    /**
+     * An event added by hand on one of the activity's dates becomes its occurrence. It keeps its
+     * own times, positions and people (customised), so the template never overwrites them.
+     */
+    private function adopt(Event $event, ActivityTemplate $template): void
+    {
+        $event->forceFill([
+            'activity_template_id' => $template->id,
+            'type' => EventType::Recurring,
+            'is_customized' => true,
+        ])->save();
     }
 
     private function createOccurrence(ActivityTemplate $template, CarbonImmutable $date): void
@@ -174,15 +200,20 @@ class GenerateOccurrences
         }
     }
 
-    private function removeStale(ActivityTemplate $template, CarbonImmutable $today): void
+    /**
+     * Also removes occurrences that duplicate an extraordinary event added by hand.
+     *
+     * @param  array<string, Event>  $byHand  see addedByHand()
+     */
+    private function removeStale(ActivityTemplate $template, CarbonImmutable $from, array $byHand = []): void
     {
         $template->events()
-            ->where('date', '>=', $today->toDateString())
+            ->where('date', '>=', $from->toDateString())
             ->where('is_customized', false)
             ->where('status', EventStatus::Scheduled)
             ->whereDoesntHave('assignments')
             ->get()
-            ->reject(fn (Event $event) => $template->is_active && $template->occursOn($event->date))
+            ->reject(fn (Event $event) => $template->is_active && $template->occursOn($event->date) && ! isset($byHand[$event->date->toDateString()]))
             ->each(fn (Event $event) => $event->delete());
     }
 }
