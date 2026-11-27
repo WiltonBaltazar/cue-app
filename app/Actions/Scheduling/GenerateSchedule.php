@@ -3,6 +3,7 @@
 namespace App\Actions\Scheduling;
 
 use App\Actions\Events\GenerateOccurrences;
+use App\Domain\Scheduling\CandidateScorer;
 use App\Domain\Scheduling\ScheduleGenerator;
 use App\Domain\Scheduling\SchedulingContextLoader;
 use App\Models\Assignment;
@@ -12,7 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Proposes assignments for a draft schedule (US3). Regenerating replaces only automatic,
- * unlocked assignments; manual edits survive. Recurring events the period still lacks (past
+ * unlocked assignments; manual edits survive, and each slot steers away from the person it had
+ * before. Recurring events the period still lacks (past
  * the horizon) are created first.
  */
 class GenerateSchedule
@@ -37,10 +39,16 @@ class GenerateSchedule
                 $this->occurrences->fillBetween($schedule->starts_on, $schedule->ends_on);
             }
 
-            $schedule->assignments()
+            $previous = $schedule->assignments()
                 ->where('source', Assignment::SOURCE_AUTO)
-                ->where('is_locked', false)
-                ->delete();
+                ->where('is_locked', false);
+
+            // "Gerar de novo" should give a different mix, not the same proposal again.
+            $avoid = (clone $previous)->get(['event_id', 'position_id', 'volunteer_id'])
+                ->mapWithKeys(fn (Assignment $assignment) => [CandidateScorer::avoidKey($assignment->event_id, $assignment->position_id, $assignment->volunteer_id) => true])
+                ->all();
+
+            $previous->delete();
 
             $context = $this->loader->forPeriod($schedule->starts_on, $schedule->ends_on);
             $result = $this->generator->generate(
@@ -48,6 +56,7 @@ class GenerateSchedule
                 $this->loader->openSlots($schedule),
                 $schedule->starts_on->toDateString(),
                 $schedule->ends_on->toDateString(),
+                $avoid,
             );
 
             foreach ($result['assignments'] as $assignment) {

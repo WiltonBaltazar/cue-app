@@ -361,7 +361,7 @@ export default function ScheduleEdit({
                             <>
                                 <ConfirmDialog
                                     title="Gerar de novo?"
-                                    description="As atribuições automáticas são refeitas. As que alterou à mão mantêm-se."
+                                    description="As atribuições automáticas são refeitas, com outras pessoas sempre que for justo. As que alterou à mão mantêm-se."
                                     confirmLabel="Gerar"
                                     onConfirm={() =>
                                         router.post(

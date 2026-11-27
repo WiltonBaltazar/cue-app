@@ -95,6 +95,23 @@ test('regenerating keeps manual assignments and replaces automatic ones', functi
         ->and($assignments->firstWhere('volunteer_id', $manual->id)?->is_locked)->toBeTrue();
 });
 
+test('regenerating swaps people when others are equally fair', function () {
+    foreach (range(1, 3) as $i) {
+        $this->scenario->volunteer();
+    }
+
+    $picked = fn () => $this->scenario->schedule->assignments()->pluck('volunteer_id')->sort()->values()->all();
+
+    $this->actingAs($this->coordinator)->post(route('coord.schedules.generate', $this->scenario->schedule))->assertSessionHasNoErrors();
+    $first = $picked();
+
+    $this->actingAs($this->coordinator)->post(route('coord.schedules.generate', $this->scenario->schedule))->assertSessionHasNoErrors();
+
+    expect($first)->toHaveCount(2)
+        ->and($picked())->toHaveCount(2)
+        ->and($picked())->not->toBe($first);
+});
+
 test('a manual edit that breaks a rule only warns: no note needed, and it is audited', function () {
     $unavailable = $this->scenario->volunteer(slots: [[2, Period::Evening]]);
 

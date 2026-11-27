@@ -10,6 +10,8 @@ use App\Enums\Level;
  * 1. no shift yet this calendar month, so everyone serves at least once when there are
  *    places ("Ocasionalmente" after the rest, then people who already have one);
  * 2. fewest recent assignments (fair rotation, SC-005);
+ * 2b. on "Gerar de novo", not the person this slot had in the previous proposal, so
+ *    regenerating swaps people wherever someone equally fair is available;
  * 3. whoever has gone longest without serving, so that nobody who served before the recent
  *    window is picked again ahead of someone who never did;
  * 4. regular availability before "horários variáveis" (spec assumption);
@@ -20,9 +22,10 @@ use App\Enums\Level;
 final class CandidateScorer
 {
     /**
-     * @return array{int, int, string, int, int, int, int}
+     * @param  array<string, true>  $avoid  keys from self::avoidKey() of the previous proposal
+     * @return array{int, int, int, string, int, int, int, int}
      */
-    public function key(VolunteerProfile $volunteer, Slot $slot, SchedulingContext $context, string $windowFrom, string $windowTo): array
+    public function key(VolunteerProfile $volunteer, Slot $slot, SchedulingContext $context, string $windowFrom, string $windowTo, array $avoid = []): array
     {
         return [
             match (true) {
@@ -31,6 +34,7 @@ final class CandidateScorer
                 default => 0,
             },
             $context->loadOf($volunteer->id, $windowFrom, $windowTo),
+            isset($avoid[self::avoidKey($slot->eventId, $slot->positionId, $volunteer->id)]) ? 1 : 0,
             $context->lastServedBefore($volunteer->id, $slot->date),
             $volunteer->variableHours ? 1 : 0,
             $volunteer->prefers($slot->roleId) ? 0 : 1,
@@ -41,13 +45,19 @@ final class CandidateScorer
 
     /**
      * @param  list<VolunteerProfile>  $candidates
+     * @param  array<string, true>  $avoid
      * @return list<VolunteerProfile>
      */
-    public function rank(array $candidates, Slot $slot, SchedulingContext $context, string $windowFrom, string $windowTo): array
+    public function rank(array $candidates, Slot $slot, SchedulingContext $context, string $windowFrom, string $windowTo, array $avoid = []): array
     {
-        usort($candidates, fn (VolunteerProfile $a, VolunteerProfile $b): int => $this->key($a, $slot, $context, $windowFrom, $windowTo) <=> $this->key($b, $slot, $context, $windowFrom, $windowTo));
+        usort($candidates, fn (VolunteerProfile $a, VolunteerProfile $b): int => $this->key($a, $slot, $context, $windowFrom, $windowTo, $avoid) <=> $this->key($b, $slot, $context, $windowFrom, $windowTo, $avoid));
 
         return $candidates;
+    }
+
+    public static function avoidKey(int $eventId, int $positionId, int $volunteerId): string
+    {
+        return "{$eventId}:{$positionId}:{$volunteerId}";
     }
 
     private function needsSupporter(Slot $slot, SchedulingContext $context): bool

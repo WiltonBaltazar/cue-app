@@ -28,9 +28,10 @@ final class ScheduleGenerator
 
     /**
      * @param  list<Slot>  $slots  quantity = people still needed in each
+     * @param  array<string, true>  $avoid  previous picks to steer away from (CandidateScorer::avoidKey)
      * @return array{assignments: list<array{slot: Slot, volunteerId: int}>, gaps: GapReport}
      */
-    public function generate(SchedulingContext $context, array $slots, string $periodStart, string $periodEnd): array
+    public function generate(SchedulingContext $context, array $slots, string $periodStart, string $periodEnd, array $avoid = []): array
     {
         $windowFrom = date('Y-m-d', (int) strtotime("{$periodStart} -".self::RECENT_DAYS.' days'));
         $months = [];
@@ -55,7 +56,7 @@ final class ScheduleGenerator
                     continue;
                 }
 
-                $ranked = $this->scorer->rank($eligible, $slot, $context, $windowFrom, $periodEnd);
+                $ranked = $this->scorer->rank($eligible, $slot, $context, $windowFrom, $periodEnd, $avoid);
                 $chosen = $this->firstKeepingCoverage($ranked, $unit, $coverage) ?? $ranked[0];
                 $coverage->take($chosen->id, $unit);
                 $context->add(Booking::forSlot($chosen->id, $slot));
