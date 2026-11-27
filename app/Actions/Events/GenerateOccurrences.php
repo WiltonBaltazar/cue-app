@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Keeps recurring activities' occurrences in step with their templates for the configured
  * horizon (US2, FR-008, FR-009):
- * - creates missing occurrences of active templates;
+ * - creates missing occurrences of active templates, except on dates where the same activity
+ *   was already added by hand as an extraordinary event (it stands in for the occurrence);
  * - re-syncs future, non-customised, scheduled occurrences with the template;
  * - removes future, non-customised, scheduled occurrences that no longer match
  *   (weekday changed or template deactivated).
@@ -67,9 +68,10 @@ class GenerateOccurrences
                     ->betweenDates(CarbonImmutable::parse($firstDay), CarbonImmutable::parse($lastDay))
                     ->get()
                     ->keyBy(fn (Event $event) => $event->date->toDateString());
+                $byHand = $this->addedByHand($template, $firstDay, $lastDay);
 
                 for ($date = CarbonImmutable::parse($firstDay); $date->toDateString() <= $lastDay; $date = $date->addDay()) {
-                    if ($template->occursOn($date) && ! $existing->has($date->toDateString())) {
+                    if ($template->occursOn($date) && ! $existing->has($date->toDateString()) && ! isset($byHand[$date->toDateString()])) {
                         $this->createOccurrence($template, $date);
                         $created++;
                     }
@@ -96,6 +98,7 @@ class GenerateOccurrences
 
         $created = 0;
         $date = $template->starts_on->greaterThan($today) ? $template->starts_on : $today;
+        $byHand = $this->addedByHand($template, $date->toDateString(), $horizon->toDateString());
 
         for (; $date->lte($horizon); $date = $date->addDay()) {
             if (! $template->occursOn($date)) {
@@ -104,7 +107,7 @@ class GenerateOccurrences
 
             $event = $existing->get($date->toDateString());
 
-            if ($event === null) {
+            if ($event === null && ! isset($byHand[$date->toDateString()])) {
                 $this->createOccurrence($template, $date);
                 $created++;
             }
@@ -118,6 +121,25 @@ class GenerateOccurrences
         }
 
         return $created;
+    }
+
+    /**
+     * Dates with an extraordinary event of the same name, e.g. a service set up by hand before
+     * its recurring activity existed. Generating there would put the service twice in a schedule.
+     *
+     * @return array<string, true>
+     */
+    private function addedByHand(ActivityTemplate $template, string $from, string $to): array
+    {
+        return Event::query()
+            ->where('type', EventType::Special)
+            ->where('status', '!=', EventStatus::Cancelled)
+            ->whereBetween('date', [$from, $to])
+            ->get(['name', 'date'])
+            // Compared here: SQLite's lower() leaves accented capitals ("PÚBLICO") as they are.
+            ->filter(fn (Event $event): bool => mb_strtolower(trim($event->name)) === mb_strtolower(trim($template->name)))
+            ->mapWithKeys(fn (Event $event) => [$event->date->toDateString() => true])
+            ->all();
     }
 
     private function createOccurrence(ActivityTemplate $template, CarbonImmutable $date): void
