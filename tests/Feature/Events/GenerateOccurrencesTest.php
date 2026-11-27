@@ -4,8 +4,11 @@ use App\Actions\Events\GenerateOccurrences;
 use App\Enums\EventType;
 use App\Enums\Level;
 use App\Models\ActivityTemplate;
+use App\Models\Assignment;
 use App\Models\Event;
+use App\Models\Schedule;
 use App\Models\TeamRole;
+use App\Models\Volunteer;
 use App\Support\LocalTime;
 use App\Support\Settings;
 use Carbon\CarbonImmutable;
@@ -226,7 +229,9 @@ test('creating an activity adopts the events already added by hand on its dates'
 
         expect($byHand->activity_template_id)->toBe($template->id)
             ->and($byHand->type)->toBe(EventType::Recurring)
-            ->and($byHand->is_customized)->toBeTrue()
+            ->and($byHand->is_customized)->toBeFalse()
+            ->and($byHand->requiredPeople())->toBe(4)
+            ->and(LocalTime::timeOf($byHand->starts_at))->toBe('08:30')
             ->and(Event::query()->where('date', $byHand->date->toDateString())->count())->toBe(1);
     }
 
@@ -243,4 +248,46 @@ test('a generated duplicate of an event added by hand is replaced by it', functi
 
     expect(Event::query()->where('date', '2026-11-15')->pluck('id')->all())->toBe([$byHand->id])
         ->and($byHand->refresh()->activity_template_id)->toBe($template->id);
+});
+
+test('an event added by hand with people already assigned keeps its own roles when adopted', function () {
+    $byHand = Event::factory()->withPosition($this->camera, 1)->create(['name' => 'CULTO PÚBLICO', 'date' => '2026-11-15']);
+    $schedule = Schedule::factory()->create(['starts_on' => '2026-11-01', 'ends_on' => '2026-11-30']);
+    $schedule->assignments()->create([
+        'position_id' => $byHand->positions()->value('id'),
+        'event_id' => $byHand->id,
+        'volunteer_id' => Volunteer::factory()->create()->id,
+        'source' => Assignment::SOURCE_MANUAL,
+    ]);
+    $template = sundayTemplate(['name' => 'CULTO PÚBLICO']);
+
+    app(GenerateOccurrences::class)->handle();
+
+    $byHand->refresh();
+
+    expect($byHand->activity_template_id)->toBe($template->id)
+        ->and($byHand->is_customized)->toBeTrue()
+        ->and($byHand->requiredPeople())->toBe(1);
+});
+
+test('filling a period brings untouched occurrences in line with the activity', function () {
+    $template = sundayTemplate();
+    app(GenerateOccurrences::class)->handle();
+    $template->positions()->where('team_role_id', $this->audio->id)->delete();
+
+    app(GenerateOccurrences::class)->fillBetween(CarbonImmutable::parse('2026-11-01'), CarbonImmutable::parse('2026-11-30'));
+
+    expect(Event::query()->where('date', '2026-11-15')->firstOrFail()->requiredPeople())->toBe(3);
+});
+
+test('events adopted before are no longer marked customised', function () {
+    $template = sundayTemplate();
+    $byHand = Event::factory()->create(['name' => 'Culto', 'date' => '2026-11-15']);
+    $edited = Event::factory()->create(['activity_template_id' => $template->id, 'type' => EventType::Recurring, 'date' => '2026-11-22', 'is_customized' => true]);
+    $byHand->forceFill(['activity_template_id' => $template->id, 'type' => EventType::Recurring, 'is_customized' => true])->save();
+
+    (require database_path('migrations/2026_11_27_000100_resync_events_adopted_by_activities.php'))->up();
+
+    expect($byHand->refresh()->is_customized)->toBeFalse()
+        ->and($edited->refresh()->is_customized)->toBeTrue();
 });

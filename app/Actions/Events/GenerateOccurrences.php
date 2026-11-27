@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Support\LocalTime;
 use App\Support\Settings;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -49,7 +50,8 @@ class GenerateOccurrences
 
     /**
      * Creates the occurrences still missing between two dates, however far past the horizon,
-     * so a schedule never covers an empty calendar. Existing events are left as they are.
+     * so a schedule never covers an empty calendar. Occurrences nobody customised or was
+     * assigned to are brought back in line with the activity.
      *
      * @return int occurrences created
      */
@@ -68,6 +70,7 @@ class GenerateOccurrences
                 $this->removeStale($template, CarbonImmutable::parse($firstDay), $byHand);
                 $existing = $template->events()
                     ->betweenDates(CarbonImmutable::parse($firstDay), CarbonImmutable::parse($lastDay))
+                    ->withCount('assignments')
                     ->get()
                     ->keyBy(fn (Event $event) => $event->date->toDateString());
 
@@ -83,6 +86,9 @@ class GenerateOccurrences
                         $created++;
                     }
                 }
+
+                // A schedule regenerated after the activity changed follows its current roles.
+                $this->resync($existing, $template);
             }
 
             return $created;
@@ -127,13 +133,23 @@ class GenerateOccurrences
         }
 
         // Including those past the horizon, which a schedule may have created.
-        foreach ($existing as $event) {
+        $this->resync($existing, $template);
+
+        return $created;
+    }
+
+    /**
+     * Re-applies the template to occurrences nobody has customised or been assigned to.
+     *
+     * @param  Collection<string, Event>  $events  loaded with assignments_count
+     */
+    private function resync(Collection $events, ActivityTemplate $template): void
+    {
+        foreach ($events as $event) {
             if (! $event->is_customized && ! $event->isCancelled() && $event->assignments_count === 0) {
                 $this->applyTemplate($event, $template, $event->date);
             }
         }
-
-        return $created;
     }
 
     /**
@@ -156,16 +172,21 @@ class GenerateOccurrences
     }
 
     /**
-     * An event added by hand on one of the activity's dates becomes its occurrence. It keeps its
-     * own times, positions and people (customised), so the template never overwrites them.
+     * An event added by hand on one of the activity's dates becomes its occurrence, with the
+     * activity's times and roles. If people are already assigned to it, it keeps its own setup
+     * (customised) so nobody loses a place.
      */
     private function adopt(Event $event, ActivityTemplate $template): void
     {
+        $assigned = $event->assignments()->exists();
+
         $event->forceFill([
             'activity_template_id' => $template->id,
             'type' => EventType::Recurring,
-            'is_customized' => true,
-        ])->save();
+            'is_customized' => $assigned,
+        ]);
+
+        $assigned ? $event->save() : $this->applyTemplate($event, $template, $event->date);
     }
 
     private function createOccurrence(ActivityTemplate $template, CarbonImmutable $date): void

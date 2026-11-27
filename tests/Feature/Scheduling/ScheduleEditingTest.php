@@ -115,7 +115,7 @@ test('regenerating swaps people when others are equally fair', function () {
 test('regenerating replaces a generated date with the event added by hand', function () {
     $this->scenario->volunteer();
     $this->scenario->volunteer();
-    $template = ActivityTemplate::factory()->create(['name' => 'Culto de Domingo', 'starts_on' => LocalTime::today()->subWeek()->toDateString()]);
+    $template = ActivityTemplate::factory()->withPosition($this->scenario->camera, 2)->create(['name' => 'Culto de Domingo', 'starts_on' => LocalTime::today()->subWeek()->toDateString()]);
     $this->scenario->event->update(['activity_template_id' => $template->id]);
 
     $this->actingAs($this->coordinator)->post(route('coord.schedules.generate', $this->scenario->schedule))->assertSessionHasNoErrors();
