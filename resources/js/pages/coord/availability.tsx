@@ -91,8 +91,10 @@ export default function Availability({
                     <h1 className="text-2xl font-semibold">Disponibilidade</h1>
                     <p className="text-muted-foreground">
                         Quantos voluntários activos estão normalmente
-                        disponíveis em cada dia e período. Toque num número para
-                        ver os nomes.
+                        disponíveis em cada dia e período, incluindo quem tem
+                        horários variáveis. São as mesmas pessoas que a geração
+                        da escala pode escolher. Toque num número para ver os
+                        nomes.
                     </p>
                 </div>
 

@@ -284,3 +284,19 @@ test('each count of the matrix opens the names behind it, with the same filters'
     $this->getJson(route('app-api.availability-people', ['weekday' => 8, 'period' => 'x']))->assertJsonValidationErrors(['weekday', 'period']);
     $this->actingAs(User::factory()->volunteer()->create())->getJson(route('app-api.availability-people', $cell))->assertForbidden();
 });
+
+test('people with variable hours count in every cell and are marked in the names, as the scheduler sees them', function () {
+    Volunteer::factory()->active()->withSkill($this->audio)->availableOn([[7, Period::Morning]])->create(['full_name' => 'Ana Domingo']);
+    Volunteer::factory()->active()->withSkill($this->audio)->availableOn([])->create(['full_name' => 'Berta Variável', 'variable_hours' => true]);
+
+    $this->actingAs($this->coordinator);
+
+    $counts = $this->getJson(route('app-api.availability-matrix'))->json('counts');
+    expect($counts['7.morning'])->toBe(2)
+        ->and($counts['2.evening'])->toBe(1)
+        ->and($counts)->toHaveCount(21);
+
+    $people = $this->getJson(route('app-api.availability-people', ['weekday' => 2, 'period' => 'evening']))->json('data');
+    expect(array_column($people, 'name'))->toBe(['Berta Variável'])
+        ->and($people[0]['variableHours'])->toBeTrue();
+});

@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
+import { Badge } from '@/components/ui/badge';
 import {
     Dialog,
     DialogContent,
@@ -13,7 +14,12 @@ import { apiFetch } from '@/lib/query-client';
 import { availabilityPeople } from '@/routes/app-api';
 import { history } from '@/routes/coord/volunteers';
 
-type Person = { volunteerId: number; name: string; roles: string[] };
+type Person = {
+    volunteerId: number;
+    name: string;
+    variableHours: boolean;
+    roles: string[];
+};
 
 /**
  * A count of the availability table that opens the names behind it, with the same filters.
@@ -104,6 +110,11 @@ function People(filters: {
                     >
                         {person.name}
                     </Link>
+                    {person.variableHours && (
+                        <Badge variant="outline" className="ml-2">
+                            Horários variáveis
+                        </Badge>
+                    )}
                     <p className="text-sm text-muted-foreground">
                         {person.roles.length > 0
                             ? person.roles.join(', ')

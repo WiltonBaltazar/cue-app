@@ -14,7 +14,8 @@ use App\Support\LocalTime;
 use Illuminate\Support\Collection;
 
 /**
- * How many active volunteers are usually available per weekday × period, optionally only
+ * How many active volunteers are usually available per weekday × period (counting those with
+ * variable hours in every cell, as the scheduler does), optionally only
  * those with one role at a minimum level (US5-1), and which roles are short: an upcoming
  * event needs more people in a role than there are available volunteers who could take
  * it (US5-3).
@@ -48,9 +49,13 @@ final class AvailabilityMatrix
                 continue;
             }
 
-            foreach ($volunteer->availabilities as $availability) {
-                $key = self::key($availability->weekday, $availability->period);
-                $counts[$key] = ($counts[$key] ?? 0) + 1;
+            foreach (array_keys(Availability::WEEKDAYS) as $weekday) {
+                foreach (Period::cases() as $period) {
+                    if (self::isAvailable($volunteer, $weekday, $period)) {
+                        $key = self::key($weekday, $period);
+                        $counts[$key] = ($counts[$key] ?? 0) + 1;
+                    }
+                }
             }
         }
 
@@ -74,13 +79,15 @@ final class AvailabilityMatrix
     /**
      * The names behind one count, with the same filters.
      *
-     * @return list<array{volunteerId: int, name: string, roles: list<string>}>
+     * @return list<array{volunteerId: int, name: string, variableHours: bool, roles: list<string>}>
      */
     public function people(int $weekday, Period $period, ?TeamRole $role = null, ?Level $minLevel = null): array
     {
         return array_values(Volunteer::query()
             ->schedulable()
-            ->whereHas('availabilities', fn ($query) => $query->where('weekday', $weekday)->where('period', $period))
+            ->where(fn ($query) => $query
+                ->where('variable_hours', true)
+                ->orWhereHas('availabilities', fn ($query) => $query->where('weekday', $weekday)->where('period', $period)))
             ->with('skills.teamRole')
             ->orderBy('full_name')
             ->get()
@@ -88,11 +95,22 @@ final class AvailabilityMatrix
             ->map(fn (Volunteer $volunteer): array => [
                 'volunteerId' => $volunteer->id,
                 'name' => $volunteer->full_name,
+                'variableHours' => $volunteer->variable_hours,
                 'roles' => array_values($volunteer->skills
                     ->map(fn (VolunteerSkill $skill): string => "{$skill->teamRole->name} ({$skill->level->label()})")
                     ->all()),
             ])
             ->all());
+    }
+
+    /**
+     * The scheduler's rule: the declared weekday and period, or any time with variable hours.
+     */
+    public static function isAvailable(Volunteer $volunteer, int $weekday, Period $period): bool
+    {
+        return $volunteer->variable_hours || $volunteer->availabilities->contains(
+            fn (Availability $availability) => $availability->weekday === $weekday && $availability->period === $period,
+        );
     }
 
     public static function key(int $weekday, Period $period): string
@@ -150,8 +168,7 @@ final class AvailabilityMatrix
     {
         return $volunteers
             ->filter(fn (Volunteer $volunteer) => $this->qualifies($volunteer, $position->team_role_id, $position->min_level)
-                && $volunteer->availabilities->contains(fn (Availability $availability) => $availability->weekday === $event->date->dayOfWeekIso
-                    && $availability->period === $event->period))
+                && self::isAvailable($volunteer, $event->date->dayOfWeekIso, $event->period))
             ->count();
     }
 

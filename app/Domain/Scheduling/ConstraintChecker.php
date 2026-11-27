@@ -30,7 +30,7 @@ final class ConstraintChecker
             $violations[] = Violation::MinLevel;
         }
 
-        if (! $volunteer->isAvailableFor($slot)) {
+        if (! $volunteer->isAvailable($slot->weekday, $slot->period)) {
             $violations[] = Violation::Availability;
         }
 

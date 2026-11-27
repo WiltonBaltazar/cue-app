@@ -65,13 +65,13 @@ test('an extraordinary event takes people available that day', function () {
     expect(Assignment::query()->where('event_id', $event->id)->pluck('volunteer_id')->all())->toBe([$volunteer->id]);
 });
 
-test('an extraordinary event takes people who serve other days by arrangement', function () {
+test('serving other days by arrangement does not make anyone available', function () {
     $event = extraordinaryEvent($this);
-    $volunteer = $this->scenario->volunteer(attributes: ['other_days_by_arrangement' => true]);
+    $this->scenario->volunteer(attributes: ['other_days_by_arrangement' => true]);
 
     generateEvent($this, $event)->assertSessionHasNoErrors();
 
-    expect(Assignment::query()->where('event_id', $event->id)->pluck('volunteer_id')->all())->toBe([$volunteer->id]);
+    expect(Assignment::query()->where('event_id', $event->id)->count())->toBe(0);
 });
 
 test('an absence still keeps people out of an extraordinary event', function () {
@@ -98,8 +98,8 @@ test('recurring events still need weekly availability', function () {
 
 test('generating one event leaves the rest of the draft untouched', function () {
     $event = extraordinaryEvent($this);
-    $this->scenario->volunteer(attributes: ['other_days_by_arrangement' => true]);
-    $this->scenario->volunteer(attributes: ['other_days_by_arrangement' => true]);
+    $this->scenario->volunteer(slots: [[7, Period::Morning], [6, Period::Afternoon]]);
+    $this->scenario->volunteer(slots: [[7, Period::Morning], [6, Period::Afternoon]]);
     $this->actingAs($this->coordinator)->post(route('coord.schedules.generate', $this->scenario->schedule));
     $sundayIds = Assignment::query()->where('event_id', $this->scenario->event->id)->pluck('id')->all();
     expect($sundayIds)->toHaveCount(2);
@@ -111,8 +111,8 @@ test('generating one event leaves the rest of the draft untouched', function () 
 });
 
 test('on a published schedule only empty places are filled and those people are told', function () {
-    $this->scenario->volunteer(attributes: ['other_days_by_arrangement' => true]);
-    $this->scenario->volunteer(attributes: ['other_days_by_arrangement' => true]);
+    $this->scenario->volunteer(slots: [[7, Period::Morning], [6, Period::Afternoon]]);
+    $this->scenario->volunteer(slots: [[7, Period::Morning], [6, Period::Afternoon]]);
     $this->actingAs($this->coordinator)->post(route('coord.schedules.generate', $this->scenario->schedule));
     $this->actingAs($this->coordinator)->post(route('coord.schedules.publish', $this->scenario->schedule));
     $event = extraordinaryEvent($this);
