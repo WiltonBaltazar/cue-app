@@ -94,6 +94,7 @@ class SchedulingContextLoader
             frequency: $volunteer->max_frequency,
             variableHours: $volunteer->variable_hours,
             canSupportOthers: $volunteer->can_support_others,
+            otherDaysByArrangement: $volunteer->other_days_by_arrangement,
             availability: $volunteer->availabilities
                 ->mapWithKeys(fn ($slot) => ["{$slot->weekday}|{$slot->period->value}" => true])
                 ->all(),
@@ -125,7 +126,7 @@ class SchedulingContextLoader
             busyUntil: $event->teardown_until->getTimestamp(),
             quantity: $quantity ?? $position->quantity,
             label: $event->name.' · '.$event->date->format('d/m').' '.LocalTime::timeOf($event->starts_at).' · '.$position->teamRole->name,
-            checksWeeklyAvailability: $event->type !== EventType::Special,
+            isExtraordinary: $event->type === EventType::Special,
         );
     }
 

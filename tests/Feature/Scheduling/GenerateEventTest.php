@@ -19,8 +19,8 @@ beforeEach(function () {
 });
 
 /**
- * An extraordinary event on the Saturday before the scenario's Sunday, at a time nobody
- * declared as available.
+ * An extraordinary event on the Saturday afternoon before the scenario's Sunday; scenario
+ * volunteers are only available on Sunday mornings by default.
  */
 function extraordinaryEvent(object $test, int $quantity = 1): Event
 {
@@ -47,9 +47,27 @@ function generateEvent(object $test, Event $event)
         ->post(route('coord.schedules.generate-event', [$test->scenario->schedule, $event]));
 }
 
-test('an extraordinary event is filled without weekly availability', function () {
+test('an extraordinary event skips people who are not available that day', function () {
     $event = extraordinaryEvent($this);
-    $volunteer = $this->scenario->volunteer(); // only available on Sunday mornings
+    $this->scenario->volunteer(); // only available on Sunday mornings
+
+    generateEvent($this, $event)->assertSessionHasNoErrors();
+
+    expect(Assignment::query()->where('event_id', $event->id)->count())->toBe(0);
+});
+
+test('an extraordinary event takes people available that day', function () {
+    $event = extraordinaryEvent($this);
+    $volunteer = $this->scenario->volunteer(slots: [[6, Period::Afternoon]]);
+
+    generateEvent($this, $event)->assertSessionHasNoErrors();
+
+    expect(Assignment::query()->where('event_id', $event->id)->pluck('volunteer_id')->all())->toBe([$volunteer->id]);
+});
+
+test('an extraordinary event takes people who serve other days by arrangement', function () {
+    $event = extraordinaryEvent($this);
+    $volunteer = $this->scenario->volunteer(attributes: ['other_days_by_arrangement' => true]);
 
     generateEvent($this, $event)->assertSessionHasNoErrors();
 
@@ -80,8 +98,8 @@ test('recurring events still need weekly availability', function () {
 
 test('generating one event leaves the rest of the draft untouched', function () {
     $event = extraordinaryEvent($this);
-    $this->scenario->volunteer();
-    $this->scenario->volunteer();
+    $this->scenario->volunteer(attributes: ['other_days_by_arrangement' => true]);
+    $this->scenario->volunteer(attributes: ['other_days_by_arrangement' => true]);
     $this->actingAs($this->coordinator)->post(route('coord.schedules.generate', $this->scenario->schedule));
     $sundayIds = Assignment::query()->where('event_id', $this->scenario->event->id)->pluck('id')->all();
     expect($sundayIds)->toHaveCount(2);
@@ -93,8 +111,8 @@ test('generating one event leaves the rest of the draft untouched', function () 
 });
 
 test('on a published schedule only empty places are filled and those people are told', function () {
-    $this->scenario->volunteer();
-    $this->scenario->volunteer();
+    $this->scenario->volunteer(attributes: ['other_days_by_arrangement' => true]);
+    $this->scenario->volunteer(attributes: ['other_days_by_arrangement' => true]);
     $this->actingAs($this->coordinator)->post(route('coord.schedules.generate', $this->scenario->schedule));
     $this->actingAs($this->coordinator)->post(route('coord.schedules.publish', $this->scenario->schedule));
     $event = extraordinaryEvent($this);
