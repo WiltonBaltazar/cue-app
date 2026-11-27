@@ -12,6 +12,7 @@ import {
     History,
     Grid3x3,
     LayoutGrid,
+    Lightbulb,
     Repeat,
     Settings,
     Users,
@@ -33,6 +34,7 @@ import { index as events } from '@/routes/coord/events';
 import { index as registrations } from '@/routes/coord/registrations';
 import { index as schedules } from '@/routes/coord/schedules';
 import { edit as settings } from '@/routes/coord/settings';
+import { index as suggestions } from '@/routes/coord/suggestions';
 import { index as swaps } from '@/routes/coord/swaps';
 import { index as teamRoles } from '@/routes/coord/team-roles';
 import { index as templates } from '@/routes/coord/templates';
@@ -53,6 +55,7 @@ const navItems: NavItem[] = [
     { title: 'Actividades', href: templates(), icon: Repeat },
     { title: 'Cadastros', href: registrations(), icon: ClipboardList },
     { title: 'Voluntários', href: volunteers(), icon: Users },
+    { title: 'Sugestões', href: suggestions(), icon: Lightbulb },
     { title: 'Funções', href: teamRoles(), icon: BriefcaseBusiness },
     { title: 'Declaração', href: consent(), icon: FileText },
     { title: 'Definições', href: settings(), icon: Settings },

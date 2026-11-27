@@ -15,6 +15,7 @@ use App\Http\Controllers\Coordinator\ScheduleController;
 use App\Http\Controllers\Coordinator\SchedulePdfController;
 use App\Http\Controllers\Coordinator\ServingProfileController;
 use App\Http\Controllers\Coordinator\SettingsController;
+use App\Http\Controllers\Coordinator\SuggestionController;
 use App\Http\Controllers\Coordinator\SwapController as CoordinatorSwapController;
 use App\Http\Controllers\Coordinator\TeamRoleController;
 use App\Http\Controllers\Coordinator\VolunteerAbsenceController;
@@ -116,6 +117,8 @@ Route::middleware(['auth', 'role:coordinator'])
         Route::get('voluntarios', [VolunteerController::class, 'index'])->name('volunteers.index');
         Route::get('voluntarios/{volunteer}', [VolunteerController::class, 'edit'])->name('volunteers.edit');
         Route::put('voluntarios/{volunteer}', [VolunteerController::class, 'update'])->name('volunteers.update');
+        Route::get('voluntarios/{volunteer}/dados', [VolunteerController::class, 'editProfile'])->name('volunteers.profile.edit');
+        Route::put('voluntarios/{volunteer}/dados', [VolunteerController::class, 'updateProfile'])->name('volunteers.profile.update');
         Route::get('voluntarios/{volunteer}/historico', VolunteerHistoryController::class)->name('volunteers.history');
         Route::post('voluntarios/{volunteer}/link-redefinicao', [VolunteerController::class, 'issueResetLink'])->name('reset-links.store');
         Route::post('voluntarios/{volunteer}/pausa', [VolunteerController::class, 'pause'])->name('volunteers.pause');
@@ -127,6 +130,9 @@ Route::middleware(['auth', 'role:coordinator'])
             ->name('volunteers.destroy');
         Route::post('voluntarios/{volunteer}/ausencias', [VolunteerAbsenceController::class, 'store'])->name('volunteers.absences.store');
         Route::delete('voluntarios/{volunteer}/ausencias/{absence}', [VolunteerAbsenceController::class, 'destroy'])->name('volunteers.absences.destroy');
+
+        Route::get('sugestoes', [SuggestionController::class, 'index'])->name('suggestions.index');
+        Route::put('sugestoes/{volunteer}', [SuggestionController::class, 'update'])->name('suggestions.update');
 
         Route::get('trocas', [CoordinatorSwapController::class, 'index'])->name('swaps.index');
         Route::post('trocas/{swap}/decidir', [CoordinatorSwapController::class, 'decide'])->name('swaps.decide');

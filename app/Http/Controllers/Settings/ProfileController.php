@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -29,11 +30,20 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's profile information.
+     * Update the user's profile information. The volunteer record keeps its own copy of the name
+     * (what coordinators see), so a name change is mirrored there too.
      */
     public function update(ProfileUpdateRequest $request, #[CurrentUser] User $user): RedirectResponse
     {
-        $user->fill($request->validated())->save();
+        $data = $request->validated();
+
+        DB::transaction(function () use ($user, $data): void {
+            $user->fill($data)->save();
+
+            if (isset($data['name'])) {
+                $user->volunteer?->update(['full_name' => $data['name']]);
+            }
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
 

@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use App\Enums\Frequency;
 use App\Enums\Period;
+use App\Enums\TrainingAvailability;
 use App\Models\Availability;
 use App\Models\TeamRole;
 use App\Models\Volunteer;
@@ -97,6 +99,23 @@ class VolunteerPresenter
                     'period' => $slot->period->value,
                     'label' => Availability::WEEKDAYS[$slot->weekday].' · '.$slot->period->label(),
                 ])->values(),
+        ];
+    }
+
+    /**
+     * The choices the profile form needs, for the volunteer's and the coordinator's edit pages.
+     *
+     * @return array<string, mixed>
+     */
+    public static function formOptions(): array
+    {
+        return [
+            'teamRoles' => TeamRole::query()->active()->ordered()->get(['id', 'name', 'description']),
+            'frequencies' => collect(Frequency::cases())->map(fn (Frequency $frequency) => ['value' => $frequency->value, 'label' => $frequency->label()]),
+            'periods' => collect(Period::cases())->map(fn (Period $period) => ['value' => $period->value, 'label' => $period->label()]),
+            'weekdays' => Availability::weekdayOptions(),
+            'socialNetworks' => Volunteer::SOCIAL_NETWORKS,
+            'trainingAvailabilities' => collect(TrainingAvailability::cases())->map(fn (TrainingAvailability $option) => ['value' => $option->value, 'label' => $option->label()]),
         ];
     }
 }

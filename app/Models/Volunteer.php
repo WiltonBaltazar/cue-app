@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Concerns\LogsAuditActivity;
 use App\Enums\Frequency;
 use App\Enums\GuardianConsentMethod;
+use App\Enums\SuggestionStatus;
 use App\Enums\TrainingAvailability;
 use App\Enums\VolunteerStatus;
 use Carbon\CarbonImmutable;
@@ -46,6 +47,8 @@ use Illuminate\Support\Str;
  * @property string|null $goals
  * @property string|null $comments
  * @property string|null $suggestions
+ * @property SuggestionStatus|null $suggestion_status null when there is no suggestion
+ * @property string|null $suggestion_note coordinators' follow-up note (encrypted)
  * @property Frequency $max_frequency
  * @property string|null $frequency_note
  * @property bool $variable_hours
@@ -146,6 +149,9 @@ class Volunteer extends Model
             'goals' => 'encrypted',
             'comments' => 'encrypted',
             'suggestions' => 'encrypted',
+            'suggestion_status' => SuggestionStatus::class,
+            'suggestion_note' => 'encrypted',
+            'suggestion_handled_at' => 'datetime',
             'max_frequency' => Frequency::class,
             'frequency_note' => 'encrypted',
             'variable_hours' => 'boolean',
@@ -174,6 +180,11 @@ class Volunteer extends Model
                 $volunteer->birth_year = $volunteer->birth_date === null ? null : $volunteer->birthDate()->year;
                 $volunteer->is_minor = $volunteer->birth_date !== null && $volunteer->age() < self::ADULT_AGE;
             }
+
+            // A new or rewritten suggestion goes back to the coordinators' "Nova" list.
+            if ($volunteer->isDirty('suggestions') && ! $volunteer->isDirty('suggestion_status')) {
+                $volunteer->suggestion_status = filled(trim((string) $volunteer->suggestions)) ? SuggestionStatus::New : null;
+            }
         });
     }
 
@@ -196,6 +207,8 @@ class Volunteer extends Model
             'inactive_until',
             'paused_by',
             'removal_scheduled_for',
+            'suggestion_status',
+            'suggestion_note',
         ];
     }
 
@@ -263,11 +276,28 @@ class Volunteer extends Model
     }
 
     /**
+     * Whether the volunteer may still change their own birth date (it decides minor status and
+     * guardian consent): only while the registration is under review. Coordinators always can.
+     */
+    public function canEditBirthDate(): bool
+    {
+        return in_array($this->status, [VolunteerStatus::Pending, VolunteerStatus::NeedsCorrection], true);
+    }
+
+    /**
      * The only name shown for an anonymised volunteer, in history and the audit log (FR-029).
      */
     public static function anonymousName(int $id): string
     {
         return "Voluntário #{$id}";
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function suggestionHandler(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'suggestion_handled_by');
     }
 
     /**

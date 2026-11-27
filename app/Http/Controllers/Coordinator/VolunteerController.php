@@ -8,9 +8,11 @@ use App\Actions\Volunteers\DeleteVolunteer;
 use App\Actions\Volunteers\PauseVolunteer;
 use App\Actions\Volunteers\ReactivateVolunteer;
 use App\Actions\Volunteers\ResumeVolunteer;
+use App\Actions\Volunteers\UpdateVolunteerProfile;
 use App\Enums\Level;
 use App\Enums\VolunteerStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateVolunteerProfileRequest;
 use App\Models\User;
 use App\Models\Volunteer;
 use App\Support\LocalTime;
@@ -181,6 +183,30 @@ class VolunteerController extends Controller
         });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Níveis actualizados.']);
+
+        return to_route('coord.volunteers.edit', $volunteer);
+    }
+
+    /**
+     * The volunteer's full profile form, for a coordinator correcting their data (FR-005).
+     */
+    public function editProfile(Volunteer $volunteer): Response
+    {
+        Gate::authorize('update', $volunteer);
+
+        $volunteer->load(['skills.teamRole', 'availabilities', 'user']);
+
+        return Inertia::render('coord/volunteers/profile', [
+            'volunteer' => VolunteerPresenter::full($volunteer),
+            ...VolunteerPresenter::formOptions(),
+        ]);
+    }
+
+    public function updateProfile(UpdateVolunteerProfileRequest $request, Volunteer $volunteer, UpdateVolunteerProfile $updateProfile): RedirectResponse
+    {
+        $updateProfile->handle($volunteer, $request->validated(), $request->input('guardian_phone_e164'), $request->input('whatsapp_phone_e164'));
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Dados guardados.']);
 
         return to_route('coord.volunteers.edit', $volunteer);
     }

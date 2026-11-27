@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Enums\Frequency;
 use App\Enums\Period;
 use App\Enums\TrainingAvailability;
-use App\Enums\VolunteerStatus;
 use App\Models\User;
 use App\Models\Volunteer;
 use App\Support\Phone;
@@ -17,8 +16,8 @@ use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Validator;
 
 /**
- * The volunteer's own profile data (FR-005). Name and birth date are only editable
- * while the registration is under review; levels are set by coordinators.
+ * Profile data, edited by the volunteer or a coordinator (FR-005). Birth date is only editable
+ * by the volunteer while the registration is under review; levels are set by coordinators.
  */
 class UpdateVolunteerProfileRequest extends FormRequest
 {
@@ -31,14 +30,23 @@ class UpdateVolunteerProfileRequest extends FormRequest
 
     public function volunteer(): ?Volunteer
     {
+        // A coordinator editing someone else's profile, or the volunteer editing their own.
+        $routed = $this->route('volunteer');
+        if ($routed instanceof Volunteer) {
+            return $routed;
+        }
+
         $user = $this->user();
 
         return $user instanceof User ? $user->volunteer : null;
     }
 
-    public function canEditIdentity(): bool
+    /**
+     * Birth date decides minor status and guardian consent, so after approval only a coordinator changes it.
+     */
+    public function canEditBirthDate(): bool
     {
-        return in_array($this->volunteer()?->status, [VolunteerStatus::Pending, VolunteerStatus::NeedsCorrection], true);
+        return (bool) $this->user()?->isCoordinator() || (bool) $this->volunteer()?->canEditBirthDate();
     }
 
     protected function prepareForValidation(): void
@@ -58,9 +66,9 @@ class UpdateVolunteerProfileRequest extends FormRequest
         $today = CarbonImmutable::now(config('app.display_timezone'));
 
         return [
-            'full_name' => [Rule::excludeIf(! $this->canEditIdentity()), 'required', 'string', 'min:3', 'max:160'],
+            'full_name' => ['sometimes', 'required', 'string', 'min:3', 'max:160'],
             'birth_date' => [
-                Rule::excludeIf(! $this->canEditIdentity()),
+                Rule::excludeIf(! $this->canEditBirthDate()),
                 'required',
                 'date_format:Y-m-d',
                 'before_or_equal:'.$today->subYears(Volunteer::MINIMUM_AGE)->toDateString(),

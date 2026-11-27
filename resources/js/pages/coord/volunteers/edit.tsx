@@ -29,6 +29,7 @@ import {
     pause as pauseVolunteer,
     resume as resumeVolunteer,
 } from '@/routes/coord/volunteers';
+import { edit as editProfile } from '@/routes/coord/volunteers/profile';
 import type { VolunteerFull } from '@/types';
 
 type Props = {
@@ -78,6 +79,12 @@ export default function VolunteerEdit({
                             className="text-sm underline-offset-4 hover:underline"
                         >
                             Ver histórico de participação
+                        </Link>
+                        <Link
+                            href={editProfile(volunteer.id)}
+                            className="text-sm underline-offset-4 hover:underline"
+                        >
+                            Editar dados
                         </Link>
                     </div>
                 </header>

@@ -59,6 +59,8 @@ class AnonymizeVolunteer
                 'goals' => null,
                 'comments' => null,
                 'suggestions' => null,
+                'suggestion_status' => null,
+                'suggestion_note' => null,
                 'frequency_note' => null,
                 'review_notes' => null,
                 'anonymized_at' => now(),
