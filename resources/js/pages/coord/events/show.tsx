@@ -25,13 +25,24 @@ type Props = {
         singleEvent: boolean;
         startsOn: string;
         endsOn: string;
+        published: boolean;
     } | null;
+    team: {
+        position: string;
+        people: {
+            id: number;
+            name: string;
+            status: 'confirmed' | 'declined' | 'needs_replacement';
+            statusLabel: string;
+        }[];
+    }[];
 };
 
 export default function EventShow({
     event,
     affectedVolunteers,
     schedule,
+    team,
 }: Props) {
     const cancellation = useForm({ reason: '' });
     const staffing = useForm({});
@@ -136,6 +147,59 @@ export default function EventShow({
                         ))}
                     </ul>
                 </section>
+
+                {schedule?.published && (
+                    <section className="space-y-2">
+                        <Heading
+                            variant="small"
+                            title="Equipa escalada"
+                            description="A escala está publicada: estas pessoas já foram avisadas."
+                        />
+                        <ul className="divide-y rounded-lg border">
+                            {team.map((row) => (
+                                <li
+                                    key={row.position}
+                                    className="space-y-1 p-3"
+                                >
+                                    <p className="text-sm text-muted-foreground">
+                                        {row.position}
+                                    </p>
+                                    {row.people.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground italic">
+                                            Ninguém escalado
+                                        </p>
+                                    ) : (
+                                        <ul className="space-y-1">
+                                            {row.people.map((person) => (
+                                                <li
+                                                    key={person.id}
+                                                    className="flex items-center justify-between gap-2"
+                                                >
+                                                    <span
+                                                        className={
+                                                            person.status ===
+                                                            'confirmed'
+                                                                ? ''
+                                                                : 'text-muted-foreground line-through'
+                                                        }
+                                                    >
+                                                        {person.name}
+                                                    </span>
+                                                    {person.status !==
+                                                        'confirmed' && (
+                                                        <Badge variant="outline">
+                                                            {person.statusLabel}
+                                                        </Badge>
+                                                    )}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
 
                 {!cancelled && (
                     <section className="space-y-3 rounded-lg border p-4">

@@ -9,6 +9,7 @@ use App\Actions\Scheduling\CreateEventSchedule;
 use App\Enums\Level;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveEventRequest;
+use App\Models\Assignment;
 use App\Models\Event;
 use App\Models\Schedule;
 use App\Models\TeamRole;
@@ -57,6 +58,7 @@ class EventController extends Controller
         $event->load('positions.teamRole');
 
         $schedule = Schedule::forEvent($event);
+        $published = $schedule?->isPublished() ?? false;
 
         return Inertia::render('coord/events/show', [
             'event' => EventPresenter::full($event),
@@ -66,7 +68,9 @@ class EventController extends Controller
                 'singleEvent' => $schedule->isForSingleEvent(),
                 'startsOn' => $schedule->starts_on->toDateString(),
                 'endsOn' => $schedule->ends_on->toDateString(),
+                'published' => $published,
             ],
+            'team' => $published ? $this->publishedTeam($event, $schedule) : [],
         ]);
     }
 
@@ -164,6 +168,37 @@ class EventController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Evento cancelado.']);
 
         return to_route('coord.events.show', $event);
+    }
+
+    /**
+     * The people a published schedule put on this event, grouped by position.
+     *
+     * @return list<array{position: string, people: list<array{id: int, name: string, status: string, statusLabel: string}>}>
+     */
+    private function publishedTeam(Event $event, Schedule $schedule): array
+    {
+        $assignments = $event->assignments()
+            ->where('schedule_id', $schedule->id)
+            ->with('volunteer:id,full_name')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('position_id');
+
+        return $event->positions
+            ->map(fn ($position) => [
+                'position' => $position->teamRole->name,
+                'people' => $assignments->get($position->id, collect())
+                    ->map(fn (Assignment $assignment) => [
+                        'id' => $assignment->id,
+                        'name' => $assignment->volunteer->full_name,
+                        'status' => $assignment->status->value,
+                        'statusLabel' => $assignment->status->label(),
+                    ])
+                    ->values()
+                    ->all(),
+            ])
+            ->values()
+            ->all();
     }
 
     /**

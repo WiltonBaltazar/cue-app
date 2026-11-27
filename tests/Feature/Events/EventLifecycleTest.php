@@ -339,3 +339,20 @@ test('an occurrence can not move to a date its template already fills', function
         ->put(route('coord.events.update', $first), specialEventPayload(['date' => $second->date->toDateString()]))
         ->assertSessionHasErrors('date');
 });
+
+test('the event page lists the people once the schedule is published', function () {
+    $scenario = ScheduleScenario::create();
+    $volunteer = $scenario->volunteer();
+    $this->actingAs($this->coordinator)->post(route('coord.schedules.generate', $scenario->schedule));
+
+    $this->get(route('coord.events.show', $scenario->event))
+        ->assertInertia(fn ($page) => $page->where('schedule.published', false)->where('team', []));
+
+    $this->post(route('coord.schedules.publish', $scenario->schedule))->assertSessionHasNoErrors();
+
+    $this->get(route('coord.events.show', $scenario->event))
+        ->assertInertia(fn ($page) => $page
+            ->where('schedule.published', true)
+            ->where('team.0.people.0.name', $volunteer->full_name)
+            ->where('team.0.people.0.status', 'confirmed'));
+});
